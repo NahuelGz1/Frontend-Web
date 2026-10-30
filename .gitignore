@@ -1,0 +1,6 @@
+# Secretos y entorno
+.env
+
+# Configuración del IDE (JetBrains / VS Code)
+.idea/
+.vscode/
