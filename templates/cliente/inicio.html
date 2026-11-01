@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio · Cine Paradiso{% endblock %}
+
+{% block content %}
+
+<!-- pelicula destacada de la semana -->
+<section class="hero">
+    <div class="hero-text">
+        <p class="hero-label">DESTACADA DE LA SEMANA</p>
+        <h1>Volver al Futuro</h1>
+        <p class="hero-meta">Ciencia ficción · 116 min</p>
+        <p class="hero-desc">Un DeLorean, un viaje a 1955 y una aventura para volver al futuro.</p>
+        <div class="hero-actions">
+            <a href="{{ url_for('cliente.cartelera') }}" class="btn-primary">Comprar entradas →</a>
+            <a href="{{ url_for('cliente.cartelera') }}" class="btn-secondary">Ver cartelera</a>
+        </div>
+    </div>
+    <img class="hero-poster" src="{{ url_for('static', filename='img/volver-al-futuro.jpg') }}" alt="Afiche de Volver al Futuro">
+</section>
+
+<!-- servicios -->
+<section class="home-section">
+    <div class="section-head">
+        <h2>Servicios</h2>
+        <a href="{{ url_for('cliente.servicios') }}" class="section-link">Ver servicios →</a>
+    </div>
+    <div class="services-grid">
+        <article class="card">
+            <span class="card-icon" aria-hidden="true">☕</span>
+            <h3>Bebidas</h3>
+            <p>Refrescos, jugos y bebidas calientes para acompañar tu función.</p>
+        </article>
+        <article class="card">
+            <span class="card-icon" aria-hidden="true">▾</span>
+            <h3>Pochoclos</h3>
+            <p>Pochoclos clásicos y especiales para disfrutar en sala.</p>
+        </article>
+        <article class="card">
+            <span class="card-icon" aria-hidden="true">●</span>
+            <h3>Snacks</h3>
+            <p>Snacks y acompañamientos para una experiencia más completa.</p>
+        </article>
+    </div>
+</section>
+
+<!-- peliculas de hoy -->
+<section class="home-section">
+    <div class="section-head">
+        <h2>Hoy en Paradiso</h2>
+        <a href="{{ url_for('cliente.cartelera') }}" class="section-link">Ver todas →</a>
+    </div>
+    <div class="movies-grid">
+        <a href="{{ url_for('cliente.cartelera') }}" class="movie-item">
+            <img src="{{ url_for('static', filename='img/volver-al-futuro.jpg') }}" alt="">
+            <div><strong>Volver al Futuro</strong><span>116 min</span></div>
+        </a>
+        <a href="{{ url_for('cliente.cartelera') }}" class="movie-item">
+            <img src="{{ url_for('static', filename='img/el-rey-leon.jpg') }}" alt="">
+            <div><strong>El Rey León</strong><span>88 min</span></div>
+        </a>
+        <a href="{{ url_for('cliente.cartelera') }}" class="movie-item">
+            <img src="{{ url_for('static', filename='img/terminator-2.jpg') }}" alt="">
+            <div><strong>Terminator 2</strong><span>137 min</span></div>
+        </a>
+        <a href="{{ url_for('cliente.cartelera') }}" class="movie-item">
+            <img src="{{ url_for('static', filename='img/club-de-la-pelea.jpg') }}" alt="">
+            <div><strong>El Club de la Pelea</strong><span>139 min</span></div>
+        </a>
+    </div>
+</section>
+
+<!-- proximos estrenos -->
+<section class="home-section">
+    <div class="section-head">
+        <h2>Próximos estrenos</h2>
+        <a href="{{ url_for('cliente.cartelera') }}" class="section-link">Ver estrenos →</a>
+    </div>
+    <div class="upcoming-grid">
+        <article class="movie-item card">
+            <img src="{{ url_for('static', filename='img/spider-man.jpg') }}" alt="">
+            <div><strong>Spider-Man</strong><span class="date">6 de noviembre</span></div>
+        </article>
+        <article class="movie-item card">
+            <img src="{{ url_for('static', filename='img/toy-story.jpg') }}" alt="">
+            <div><strong>Toy Story</strong><span class="date">13 de

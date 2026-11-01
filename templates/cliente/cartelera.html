@@ -1,9 +1,62 @@
-{% extends "layouts/base.html" %}
+{% extends "base.html" %}
 
-<!-- nombre de la pestana del navegador -->
 {% block title %}Cartelera · Cine Paradiso{% endblock %}
 
-<!-- aca van los posters de las peliculas y los botones de comprar -->
 {% block content %}
-<!-- pegar aca las tarjetas de la cartelera -->
+
+<!-- titulo y semana de la cartelera -->
+<div class="section-head">
+    <h1>Cartelera</h1>
+    <p class="cartelera-fechas">Del 30 de octubre al 5 de noviembre</p>
+</div>
+
+<!-- peliculas en cartelera -->
+<section class="cartelera-grid">
+    <article class="poster-card">
+        <img src="{{ url_for('static', filename='img/volver-al-futuro.jpg') }}" alt="Afiche de Volver al Futuro">
+        <h3>Volver al Futuro</h3>
+        <p>116 min</p>
+        <!-- cambiar el # por la ruta de detalle cuando exista -->
+        <a href="#" class="btn-primary btn-block">Entradas</a>
+    </article>
+
+    <article class="poster-card">
+        <img src="{{ url_for('static', filename='img/el-rey-leon.jpg') }}" alt="Afiche de El Rey León">
+        <h3>El Rey León</h3>
+        <p>88 min</p>
+        <a href="#" class="btn-primary btn-block">Entradas</a>
+    </article>
+
+    <article class="poster-card">
+        <img src="{{ url_for('static', filename='img/terminator-2.jpg') }}" alt="Afiche de Terminator 2">
+        <h3>Terminator 2</h3>
+        <p>137 min</p>
+        <a href="#" class="btn-primary btn-block">Entradas</a>
+    </article>
+
+    <article class="poster-card">
+        <img src="{{ url_for('static', filename='img/club-de-la-pelea.jpg') }}" alt="Afiche de El Club de la Pelea">
+        <h3>El Club de la Pelea</h3>
+        <p>139 min</p>
+        <a href="#" class="btn-primary btn-block">Entradas</a>
+    </article>
+</section>
+
+<!-- proximos estrenos -->
+<section class="home-section">
+    <div class="section-head">
+        <h2>Próximos estrenos</h2>
+    </div>
+    <div class="upcoming-grid">
+        <article class="movie-item card">
+            <img src="{{ url_for('static', filename='img/spider-man.jpg') }}" alt="">
+            <div><strong>Spider-Man</strong><span class="date">6 de noviembre</span></div>
+        </article>
+        <article class="movie-item card">
+            <img src="{{ url_for('static', filename='img/toy-story.jpg') }}" alt="">
+            <div><strong>Toy Story</strong><span class="date">13 de noviembre</span></div>
+        </article>
+    </div>
+</section>
+
 {% endblock %}

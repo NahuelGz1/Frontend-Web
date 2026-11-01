@@ -1,9 +1,116 @@
-{% extends "layouts/base.html" %}
+{% extends "base.html" %}
 
-<!-- nombre de la pestana del navegador -->
-{% block title %}Detalle de Pelicula · Cine Paradiso{% endblock %}
+{% block title %}Detalle de película · Cine Paradiso{% endblock %}
 
-<!-- aca va la sinopsis, trailer, duracion y los horarios -->
 {% block content %}
-<!-- pegar aca el detalle de la pelicula -->
+
+<!-- ruta de navegacion y titulo -->
+<p class="breadcrumb">
+    <a href="{{ url_for('cliente.cartelera') }}">Cartelera</a> / Detalle de película y funciones
+</p>
+<h1>Detalle de película y funciones</h1>
+<p class="subtitulo">Elegí el complejo, la fecha y el horario de tu próxima función.</p>
+
+<!-- datos de la pelicula -->
+<section class="detalle-pelicula">
+    <img src="{{ url_for('static', filename='img/volver-al-futuro.jpg') }}" alt="Afiche de Volver al Futuro">
+    <div class="detalle-info">
+        <span class="badge">Reestreno en cartelera</span>
+        <h2>Volver al Futuro</h2>
+        <div class="tags">
+            <span class="tag">116 min</span>
+            <span class="tag">ATP</span>
+            <span class="tag">1985</span>
+        </div>
+        <p class="detalle-genero">Ciencia ficción · Año original: 1985</p>
+        <h3>Sinopsis</h3>
+        <p class="detalle-sinopsis">
+            Marty McFly, un adolescente de 1985, viaja accidentalmente a 1955 en una máquina del tiempo
+            construida por el excéntrico doctor Emmett Brown a partir de un DeLorean. Allí conoce a sus
+            padres cuando eran jóvenes y altera el curso de su historia. Para no borrar su propia
+            existencia, deberá lograr que se enamoren y, con la ayuda de Doc, encontrar la forma de
+            regresar a su época antes de quedarse atrapado en el pasado.
+        </p>
+        <p class="nota">Programación de reestreno: del 30/10 al 05/11/2026. No corresponde al estreno original.</p>
+    </div>
+</section>
+
+<!-- selector de funcion -->
+<section class="card selector-funcion">
+    <h2>Elegí tu función</h2>
+
+    <div class="form-row">
+        <div class="form-field">
+            <label for="complejo">Complejo</label>
+            <select id="complejo" name="complejo">
+                <option>Paradiso Centro</option>
+                <option>Paradiso Norte</option>
+                <option>Paradiso Sur</option>
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="fecha">Fecha</label>
+            <select id="fecha" name="fecha">
+                <option>Viernes 30/10/2026</option>
+                <option>Sábado 31/10/2026</option>
+                <option>Domingo 01/11/2026</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- botones rapidos de complejo -->
+    <div class="chips">
+        <button type="button" class="chip active">Centro</button>
+        <button type="button" class="chip">Norte</button>
+        <button type="button" class="chip">Sur</button>
+    </div>
+    <p class="nota">Paradiso Norte y Paradiso Sur: nombres de ejemplo.</p>
+
+    <hr class="separador">
+
+    <!-- funcion seleccionada -->
+    <article class="funcion-card seleccionada">
+        <span class="badge">Seleccionada</span>
+        <h3>30/10/2026 · 19:30</h3>
+        <p>Paradiso Centro · Sala 1 · 80 butacas</p>
+        <p>2D · Subtitulada · 20 disponibles de 80</p>
+        <p>Entrada: $10.000 ARS</p>
+        <!-- cambiar el # por la ruta de butacas cuando exista -->
+        <a href="#" class="btn-primary">Elegir butacas</a>
+    </article>
+
+    <!-- otra funcion disponible -->
+    <article class="funcion-card">
+        <h3>30/10/2026 · 21:30</h3>
+        <p>Paradiso Norte · Sala 1 · 60 butacas</p>
+        <p>2D · Subtitulada · 30 disponibles de 60 · $10.000 ARS</p>
+        <button type="button" class="btn-secondary">Seleccionar función</button>
+    </article>
+</section>
+
+<!-- otros estados posibles -->
+<section class="home-section">
+    <h2>Otros estados de disponibilidad</h2>
+    <p class="nota">Variantes independientes del selector anterior.</p>
+
+    <div class="estados-grid">
+        <article class="card funcion-card">
+            <h3>Variante · Función agotada</h3>
+            <span class="badge">Agotada</span>
+            <h4>31/10/2026 · 19:30</h4>
+            <p>Paradiso Centro · Sala 1 · 80 butacas</p>
+            <p>0 disponibles de 80 · $10.000 ARS</p>
+            <button type="button" class="btn-secondary btn-block" disabled>Agotada</button>
+        </article>
+
+        <article class="card funcion-card">
+            <h3>Variante · Sin funciones</h3>
+            <span class="badge">Sin funciones</span>
+            <h4>31/10/2026 · Paradiso Sur</h4>
+            <p>No hay funciones de esta película para la fecha y el complejo elegidos.</p>
+            <button type="button" class="btn-secondary btn-block">Cambiar fecha o complejo</button>
+        </article>
+    </div>
+</section>
+
 {% endblock %}
