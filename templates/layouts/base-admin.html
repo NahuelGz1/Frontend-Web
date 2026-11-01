@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Administración · Cine Paradiso{% endblock %}</title>
+
+    <!-- traemos el css nativo de la carpeta static -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cine-paradiso.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+<div class="admin-shell">
+
+    <!-- encabezado superior del administrador -->
+    <header class="site-header">
+        <a href="{{ url_for('admin_views.peliculas') }}" class="brand">
+            <span class="brand-icon" aria-hidden="true">▧</span>
+            <span>Cine Paradiso · Panel</span>
+        </a>
+
+        <nav class="nav-links">
+            <a href="{{ url_for('cliente.cartelera') }}">Ver sitio público ↗</a>
+        </nav>
+
+        <div>
+            <a href="{{ url_for('auth.logout') }}" style="font-size:0.85rem; color: var(--text-muted);">
+                {{ current_user.nombre[:2]|upper if current_user is defined and current_user and current_user.nombre else "AD" }} · Salir
+            </a>
+        </div>
+    </header>
+
+    <!-- layout con menu lateral y zona central -->
+    <div class="admin-layout">
+
+        <!-- menu lateral para navegar en la gestion -->
+        <aside class="admin-sidebar" aria-label="Navegación de Administración">
+            <p class="admin-sidebar-label">Gestión del cine</p>
+
+            {% for endpoint, label, icon in [
+            ("admin_views.peliculas", "Películas", "▤"),
+            ("admin_views.funciones", "Funciones", "▱"),
+            ("admin_views.servicios", "Servicios", "♧"),
+            ("admin_views.validar_qr", "Validar QR", "⊞"),
+            ("admin_views.estadisticas", "Estadísticas", "▦")
+            ] %}
+            <a href="{{ url_for(endpoint) }}" class="{% if request.endpoint == endpoint %}active{% endif %}">
+                <span aria-hidden="true">{{ icon }}</span>
+                <span>{{ label }}</span>
+            </a>
+            {% endfor %}
+
+            <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--cinema-800);">
+                <a href="{{ url_for('auth.logout') }}" style="font-size:0.8rem;">
+                    <span>⎋</span> Cerrar sesión
+                </a>
+            </div>
+        </aside>
+
+        <!-- panel principal donde se cargan las vistas del admin -->
+        <main class="admin-main">
+            <p class="admin-breadcrumb">Administración / <strong style="color:var(--text-light)">{% block breadcrumb %}Panel{% endblock %}</strong></p>
+
+            <!-- avisos de flask para el admin -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-alert {{ category }}">
+                <span>{{ message }}</span>
+                <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; cursor:pointer;">✕</button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- pie de pagina del administrador -->
+    <footer class="site-footer" style="justify-content: center;">
+        <p>© 2026 Cine Paradiso · Panel de administración</p>
+    </footer>
+</div>
+
+{% block modals %}{% endblock %}
+<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
