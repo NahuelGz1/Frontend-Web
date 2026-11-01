@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Restablecé tu contraseña de Cine Paradiso</title>
+</head>
+<body style="margin: 0; padding: 24px 12px; background-color: #191919; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f5f5f4;">
+
+  <!-- Contenedor Principal Centrado -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center">
+        <!-- Tarjeta Principal del Email -->
+        <table role="presentation" width="100%" style="max-width: 600px; background-color: #242424; border-radius: 12px; overflow: hidden; border: 1px solid #333333;" cellpadding="0" cellspacing="0" border="0">
+          
+          <!-- Header con Logo y Etiqueta de Sección -->
+          <tr>
+            <td style="padding: 24px 32px 18px 32px; background-color: #202020; border-bottom: 1px solid #2e2e2e;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="font-size: 19px; font-weight: bold; color: #ffffff;">
+                    <span style="display: inline-block; vertical-align: middle; background-color: #73282c; color: #ffffff; padding: 4px 7px; border-radius: 6px; font-size: 13px; margin-right: 8px; line-height: 1;">🎟️</span> Cine Paradiso
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-size: 11px; color: #c48286; font-weight: 600; letter-spacing: 0.5px; padding-top: 10px;">
+                    RECUPERACIÓN DE CONTRASEÑA
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Cuerpo Principal -->
+          <tr>
+            <td style="padding: 32px;">
+              <h1 style="margin: 0 0 16px 0; font-size: 26px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px;">Creá una nueva contraseña</h1>
+              
+              <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #ffffff;">Hola, {{ nombre | default('Lucía') }}.</p>
+              <p style="margin: 0 0 24px 0; font-size: 14px; color: #cccccc; line-height: 1.5;">
+                Recibimos una solicitud para restablecer la contraseña de tu cuenta de Cine Paradiso.
+              </p>
+
+              <!-- Caja de Correo de la cuenta -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #1a1a1a; border: 1px solid #2d2d2d; border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <div style="font-size: 12px; color: #888888; margin-bottom: 4px;">Correo de tu cuenta</div>
+                    <div style="font-size: 15px; color: #ffffff; font-weight: 500;">{{ email | default('lucia@example.com') }}</div>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 16px 0; font-size: 14px; color: #cccccc;">
+                Para crear una nueva contraseña, usá el siguiente enlace:
+              </p>
+
+              <!-- Botón CTA Restablecer Contraseña -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td>
+                    <a href="{{ url_reset | default('#') }}" style="display: block; width: 100%; padding: 14px 0; background-color: #8b262a; color: #ffffff; text-align: center; text-decoration: none; font-weight: bold; font-size: 15px; border-radius: 6px; box-sizing: border-box;">Restablecer contraseña</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 24px 0; font-size: 13px; color: #a8a29e; line-height: 1.5;">
+                Tu contraseña actual seguirá siendo la misma hasta que completes el cambio.
+              </p>
+
+              <!-- Alerta de Seguridad -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #1a1a1a; border: 1px solid #2d2d2d; border-radius: 8px; margin-bottom: 32px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <div style="font-size: 14px; font-weight: bold; color: #ffffff; margin-bottom: 8px;">¿No lo solicitaste?</div>
+                    <div style="font-size: 13px; color: #a8a29e; line-height: 1.5; margin-bottom: 6px;">
+                      Podés ignorar este correo. Tu contraseña no se cambiará si no completás el proceso.
+                    </div>
+                    <div style="font-size: 13px; color: #a8a29e; line-height: 1.5;">
+                      Por tu seguridad, no compartas este enlace con nadie.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <hr style="border: 0; border-top: 1px solid #2e2e2e; margin: 24px 0;">
+
+              <!-- Soporte -->
+              <p style="font-size: 13px; color: #888888; margin: 0; line-height: 1.4;">
+                ¿Necesitás ayuda? Escribinos a <a href="mailto:Asistenciacine@gmail.com" style="color: #cccccc; text-decoration: underline;">Asistenciacine@gmail.com</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; background-color: #1e1e1e; border-top: 1px solid #2e2e2e; font-size: 12px; color: #777777; line-height: 1.5;">
+              <div style="margin-bottom: 4px; font-weight: 500; color: #888888;">Cine Paradiso · © 2026</div>
+              <div>Recibiste este correo por una solicitud para restablecer la contraseña de tu cuenta.</div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+
