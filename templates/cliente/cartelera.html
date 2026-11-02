@@ -1,62 +1,96 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
 
 {% block title %}Cartelera · Cine Paradiso{% endblock %}
 
 {% block content %}
+{% set peliculas_cartelera = peliculas|default([], true) %}
+{% set estrenos_cartelera = proximos_estrenos|default([], true) %}
 
-<!-- titulo y semana de la cartelera -->
-<div class="section-head">
-    <h1>Cartelera</h1>
-    <p class="cartelera-fechas">Del 30 de octubre al 5 de noviembre</p>
-</div>
+{% macro poster_image(movie, title) %}
+{% set image_url = movie.poster_url|default('', true) %}
+{% if not image_url and movie.poster_path is defined and movie.poster_path %}
+{% set image_url = 'https://image.tmdb.org/t/p/w500' ~ movie.poster_path %}
+{% elif image_url and image_url[:1] == '/' %}
+{% set image_url = 'https://image.tmdb.org/t/p/w500' ~ image_url %}
+{% endif %}
+{% if image_url %}
+<img src="{{ image_url }}" alt="Afiche de {{ title }}" loading="lazy">
+{% else %}
+<div class="poster-placeholder" role="img" aria-label="Afiche no disponible"></div>
+{% endif %}
+{% endmacro %}
 
-<!-- peliculas en cartelera -->
-<section class="cartelera-grid">
-    <article class="poster-card">
-        <img src="{{ url_for('static', filename='img/volver-al-futuro.jpg') }}" alt="Afiche de Volver al Futuro">
-        <h3>Volver al Futuro</h3>
-        <p>116 min</p>
-        <!-- cambiar el # por la ruta de detalle cuando exista -->
-        <a href="#" class="btn-primary btn-block">Entradas</a>
-    </article>
-
-    <article class="poster-card">
-        <img src="{{ url_for('static', filename='img/el-rey-leon.jpg') }}" alt="Afiche de El Rey León">
-        <h3>El Rey León</h3>
-        <p>88 min</p>
-        <a href="#" class="btn-primary btn-block">Entradas</a>
-    </article>
-
-    <article class="poster-card">
-        <img src="{{ url_for('static', filename='img/terminator-2.jpg') }}" alt="Afiche de Terminator 2">
-        <h3>Terminator 2</h3>
-        <p>137 min</p>
-        <a href="#" class="btn-primary btn-block">Entradas</a>
-    </article>
-
-    <article class="poster-card">
-        <img src="{{ url_for('static', filename='img/club-de-la-pelea.jpg') }}" alt="Afiche de El Club de la Pelea">
-        <h3>El Club de la Pelea</h3>
-        <p>139 min</p>
-        <a href="#" class="btn-primary btn-block">Entradas</a>
-    </article>
-</section>
-
-<!-- proximos estrenos -->
-<section class="home-section">
+<div class="cartelera-page">
     <div class="section-head">
-        <h2>Próximos estrenos</h2>
+        <h1>Cartelera</h1>
+        <p class="cartelera-fechas">Del 30 de octubre al 5 de noviembre</p>
     </div>
-    <div class="upcoming-grid">
-        <article class="movie-item card">
-            <img src="{{ url_for('static', filename='img/spider-man.jpg') }}" alt="">
-            <div><strong>Spider-Man</strong><span class="date">6 de noviembre</span></div>
-        </article>
-        <article class="movie-item card">
-            <img src="{{ url_for('static', filename='img/toy-story.jpg') }}" alt="">
-            <div><strong>Toy Story</strong><span class="date">13 de noviembre</span></div>
-        </article>
-    </div>
-</section>
 
+    <section class="cartelera-grid" aria-label="Películas en cartelera">
+        {% if peliculas_cartelera %}
+        {% for pelicula in peliculas_cartelera %}
+        {% set titulo = pelicula.titulo|default(pelicula.title|default('Película', true), true) %}
+        {% set duracion = pelicula.duracion|default(pelicula.runtime|default(0, true), true) %}
+        <article class="poster-card">
+            {{ poster_image(pelicula, titulo) }}
+            <h3>{{ titulo }}</h3>
+            {% if duracion %}<p>{{ duracion }} min</p>{% endif %}
+            <a href="#" class="btn-primary btn-block">Entradas</a>
+        </article>
+        {% endfor %}
+        {% else %}
+        <article class="poster-card">
+            <img src="{{ url_for('static', filename='img/volver-al-futuro.jpg') }}" alt="Afiche de Volver al Futuro">
+            <h3>Volver al Futuro</h3>
+            <p>116 min</p>
+            <a href="#" class="btn-primary btn-block">Entradas</a>
+        </article>
+        <article class="poster-card">
+            <img src="{{ url_for('static', filename='img/el-rey-leon.jpg') }}" alt="Afiche de El Rey León">
+            <h3>El Rey León</h3>
+            <p>88 min</p>
+            <a href="#" class="btn-primary btn-block">Entradas</a>
+        </article>
+        <article class="poster-card">
+            <img src="{{ url_for('static', filename='img/terminator-2.jpg') }}" alt="Afiche de Terminator 2">
+            <h3>Terminator 2</h3>
+            <p>137 min</p>
+            <a href="#" class="btn-primary btn-block">Entradas</a>
+        </article>
+        <article class="poster-card">
+            <img src="{{ url_for('static', filename='img/club-de-la-pelea.jpg') }}" alt="Afiche de El Club de la Pelea">
+            <h3>El Club de la Pelea</h3>
+            <p>139 min</p>
+            <a href="#" class="btn-primary btn-block">Entradas</a>
+        </article>
+        {% endif %}
+    </section>
+
+    <section class="home-section">
+        <div class="section-head">
+            <h2>Próximos estrenos</h2>
+        </div>
+        <div class="upcoming-grid">
+            {% if estrenos_cartelera %}
+            {% for estreno in estrenos_cartelera %}
+            {% set titulo = estreno.titulo|default(estreno.title|default('Película', true), true) %}
+            {% set fecha = estreno.fecha_estreno|default(estreno.release_date|default('Próximamente', true), true) %}
+            <article class="movie-item card">
+                {{ poster_image(estreno, titulo) }}
+                <div><strong>{{ titulo }}</strong><span class="date">{{ fecha }}</span></div>
+            </article>
+            {% endfor %}
+            {% else %}
+            <article class="movie-item card">
+                <img src="{{ url_for('static', filename='img/spider-man.jpg') }}" alt="Afiche de Spider-Man">
+                <div><strong>Spider-Man</strong><span class="date">6 de noviembre</span></div>
+            </article>
+            <article class="movie-item card">
+                <img src="{{ url_for('static', filename='img/toy-story.jpg') }}" alt="Afiche de Toy Story">
+                <div><strong>Toy Story</strong><span class="date">13 de noviembre</span></div>
+            </article>
+            {% endif %}
+        </div>
+    </section>
+</div>
 {% endblock %}
