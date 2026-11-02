@@ -1,12 +1,65 @@
 {% extends "layouts/base.html" %}
 
-<!-- nombre de la pestana del navegador -->
-{% block title %}Iniciar sesion · Cine Paradiso{% endblock %}
+{% block title %}Iniciar sesión · Cine Paradiso{% endblock %}
 
-<!-- vaciamos la navegacion para que no aparezca el menu arriba -->
 {% block header_nav %}{% endblock %}
+{% block header_user %}{% endblock %}
 
-<!-- aca va el formulario para ingresar a la cuenta -->
 {% block content %}
-<!-- pegar aca el html del formulario de login -->
+<div class="login-page">
+    <div class="login-layout">
+        <section class="login-intro" aria-labelledby="login-intro-title">
+            <a class="login-back-link" href="{{ url_for('cliente.cartelera') }}">
+                <span aria-hidden="true">←</span> Volver
+            </a>
+            <h1 id="login-intro-title">Entrá a tu cuenta para seguir disfrutando del cine.</h1>
+            <p>Accedé a tus compras y recomendaciones pensadas para vos.</p>
+        </section>
+
+        <section class="login-card" aria-labelledby="login-title">
+            <p class="login-kicker">TU CUENTA PARADISO</p>
+            <h2 id="login-title">Iniciar sesión</h2>
+            <p class="login-description">
+                Completá tus datos para entrar y seguir disfrutando del cine.
+            </p>
+
+            <form class="login-form" method="POST" action="{{ url_for('auth.iniciar_sesion') }}">
+                <label for="email">Email*</label>
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="tu@email.com"
+                    autocomplete="email"
+                    required
+                >
+
+                <label for="password">Contraseña*</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Escribe tu contraseña"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button class="login-submit" type="submit">
+                    Entrar <span aria-hidden="true">→</span>
+                </button>
+            </form>
+
+            <div class="login-links">
+                <p>
+                    ¿Olvidaste tu contraseña?
+                    <a href="{{ url_for('auth.recuperar_contrasena') }}">Recuperarla</a>
+                </p>
+                <p>
+                    ¿No tenés cuenta?
+                    <a href="{{ url_for('auth.registrarse') }}">Crear cuenta</a>
+                </p>
+            </div>
+        </section>
+    </div>
+</div>
 {% endblock %}

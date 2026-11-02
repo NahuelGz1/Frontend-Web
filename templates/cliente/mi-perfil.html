@@ -1,9 +1,177 @@
 {% extends "layouts/base.html" %}
 
-<!-- nombre de la pestana del navegador -->
 {% block title %}Mi Perfil · Cine Paradiso{% endblock %}
 
-<!-- aca van los datos del usuario, sus entradas compradas y los consumos -->
 {% block content %}
-<!-- pegar aca la vista del perfil -->
+<div class="profile-page">
+    <header class="profile-heading">
+        <p class="profile-kicker">TU CUENTA PARADISO</p>
+        <h1>Mi perfil</h1>
+        <p>
+            Hola, {{ current_user.nombre }}. Tus entradas, películas y consumos, en un solo lugar.
+            Ahora también podrás cancelar tu compra próxima y descargar la factura.
+        </p>
+    </header>
+
+    <div class="profile-layout">
+        <aside class="profile-sidebar">
+            <section class="profile-user-card">
+                <div class="profile-user-heading">
+                    <div class="profile-avatar" aria-hidden="true">
+                        {{ current_user.nombre[:1]|upper }}{{ current_user.apellido[:1]|upper }}
+                    </div>
+                    <div>
+                        <h2>{{ current_user.nombre }} {{ current_user.apellido }}</h2>
+                        <p>Miembro desde {{ current_user.fecha_registro }}</p>
+                    </div>
+                </div>
+
+                <div class="profile-divider"></div>
+                <h3>Datos de cuenta</h3>
+                <dl class="profile-details">
+                    <div>
+                        <dt>Correo electrónico</dt>
+                        <dd>{{ current_user.email }}</dd>
+                    </div>
+                    <div>
+                        <dt>Teléfono</dt>
+                        <dd>{{ current_user.telefono }}</dd>
+                    </div>
+                    <div>
+                        <dt>Fecha de nacimiento</dt>
+                        <dd>{{ current_user.fecha_nacimiento }}</dd>
+                    </div>
+                    <div>
+                        <dt>Complejo favorito</dt>
+                        <dd>{{ current_user.complejo_favorito }}</dd>
+                    </div>
+                </dl>
+                <a class="profile-secondary-button" href="#">✎ Editar datos</a>
+            </section>
+
+            <section class="profile-security-card">
+                <h2>Seguridad</h2>
+                <p>▣ Cuidá tu cuenta y mantené tus datos actualizados.</p>
+                <a class="profile-secondary-button" href="#">Cambiar contraseña</a>
+                <a class="profile-logout-link" href="#">⇥ Cerrar sesión</a>
+            </section>
+        </aside>
+
+        <div class="profile-content">
+            <section class="profile-section">
+                <div class="profile-section-heading">
+                    <h2>Próximas entradas</h2>
+                </div>
+
+                {% if entradas_proximas %}
+                    {% for entrada in entradas_proximas %}
+                    <article class="upcoming-ticket">
+                        <div class="upcoming-ticket-heading">
+                            <h3>{{ entrada.pelicula.titulo }}</h3>
+                            <span class="profile-status profile-status-confirmed">Confirmada</span>
+                        </div>
+                        <div class="upcoming-ticket-main">
+                            {% if entrada.pelicula.poster_url %}
+                            <img class="upcoming-poster" src="{{ entrada.pelicula.poster_url }}"
+                                 alt="Póster de {{ entrada.pelicula.titulo }}">
+                            {% else %}
+                            <div class="upcoming-poster profile-poster-placeholder" aria-hidden="true">▧</div>
+                            {% endif %}
+                            <div class="upcoming-ticket-details">
+                                <p>{{ entrada.fecha }} · {{ entrada.horario }}</p>
+                                <p>{{ entrada.complejo }} · {{ entrada.sala }}</p>
+                                <p>Butacas: {{ entrada.butacas }}</p>
+                            </div>
+                        </div>
+                        <div class="ticket-summary">
+                            <p>{{ entrada.cantidad_entradas }} entradas · {{ entrada.subtotal_entradas }} ARS</p>
+                            <p>Comida y servicios · {{ entrada.subtotal_servicios }} ARS</p>
+                            <p>Nachos con cheddar · {{ entrada.subtotal_nachos }} ARS</p>
+                            <p class="ticket-total">Total {{ entrada.total }} ARS</p>
+                            <p>Operación {{ entrada.codigo_operacion }}</p>
+                        </div>
+                        <div class="ticket-actions">
+                            <a class="profile-primary-button" href="#">⇩ Ver y descargar entradas</a>
+                            <a class="profile-secondary-button" href="#">⇩ Descargar factura</a>
+                            <a class="profile-secondary-button profile-cancel-button" href="#">⇥ Cancelar compra</a>
+                        </div>
+                        <div class="cancellation-notice">
+                            <strong>Cancelación</strong>
+                            <p>{{ entrada.mensaje_cancelacion }}</p>
+                            <small>Plazo de cancelación antes de la definición del equipo.</small>
+                        </div>
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <p>No tenés entradas activas para próximas funciones.</p>
+                        <a class="profile-primary-button" href="{{ url_for('cliente.cartelera') }}">
+                            Ver cartelera
+                        </a>
+                    </div>
+                {% endif %}
+            </section>
+
+            <section class="profile-section">
+                <div class="profile-section-heading">
+                    <h2>Películas vistas</h2>
+                    <p>Historial de entradas - Funciones anteriores</p>
+                </div>
+                <div class="watched-list">
+                    {% for pelicula in peliculas_vistas %}
+                    <article class="watched-item">
+                        <span class="profile-ticket-icon" aria-hidden="true">▣</span>
+                        <div class="watched-details">
+                            <h3>{{ pelicula.titulo }}</h3>
+                            <p>{{ pelicula.fecha }} · {{ pelicula.horario }}</p>
+                            <p>{{ pelicula.sala }} · {{ pelicula.cantidad_entradas }} entradas · {{ pelicula.total }} ARS</p>
+                            <small>Op. {{ pelicula.codigo_operacion }}</small>
+                        </div>
+                        <span class="profile-status profile-status-used">Utilizada</span>
+                    </article>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>Todavía no tenés películas vistas en tu historial.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="profile-section">
+                <div class="profile-section-heading">
+                    <h2>Consumos del candy bar</h2>
+                    {% if consumos_candy %}
+                    <p>{{ consumos_candy[0].fecha }} · Pedido {{ consumos_candy[0].codigo_pedido }}</p>
+                    {% endif %}
+                </div>
+                {% if consumos_candy %}
+                <div class="candy-list">
+                    {% for consumo in consumos_candy %}
+                    <article class="candy-item">
+                        {% if consumo.imagen_url %}
+                        <img src="{{ consumo.imagen_url }}" alt="">
+                        {% else %}
+                        <span class="candy-icon" aria-hidden="true">◉</span>
+                        {% endif %}
+                        <div>
+                            <h3>{{ consumo.nombre }}</h3>
+                            <p>{{ consumo.cantidad }} x {{ consumo.precio_unitario }} ARS</p>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+                <div class="candy-total">
+                    <span>Total de consumos</span>
+                    <strong>{{ consumos_candy_total }} ARS</strong>
+                </div>
+                <p class="candy-note">Compra independiente de tus próximas entradas de Volver al Futuro.</p>
+                {% else %}
+                <div class="empty-state">
+                    <p>No tenés consumos registrados en el candy bar.</p>
+                </div>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+</div>
 {% endblock %}
