@@ -1,12 +1,58 @@
 {% extends "layouts/base.html" %}
 
-<!-- nombre de la pestana del navegador -->
-{% block title %}Restablecer contrasena · Cine Paradiso{% endblock %}
+{% block title %}Restablecer contraseña · Cine Paradiso{% endblock %}
 
-<!-- vaciamos la navegacion para que no aparezca el menu arriba -->
 {% block header_nav %}{% endblock %}
+{% block header_user %}{% endblock %}
 
-<!-- aca va el formulario para ingresar la nueva clave desde el mail -->
 {% block content %}
-<!-- pegar aca el html del formulario para la nueva clave -->
+<div class="recuperar-page">
+    <div class="recuperar-layout">
+        <section class="recuperar-intro" aria-labelledby="restablecer-intro-titulo">
+            <a class="recuperar-back-link" href="{{ url_for('auth.iniciar_sesion') }}">
+                <span aria-hidden="true">←</span> Volver a iniciar sesión
+            </a>
+            <h1 id="restablecer-intro-titulo">Volvé a tu cuenta. El cine te espera.</h1>
+            <p>Restablecé tu contraseña y recuperá el acceso a tus entradas y compras.</p>
+        </section>
+
+        <section class="recuperar-card" aria-labelledby="restablecer-titulo">
+            <div class="cambiar-contrasena-icono" aria-hidden="true">⚿</div>
+            <p class="recuperar-kicker">TU CUENTA PARADISO</p>
+            <h2 id="restablecer-titulo">Restablecer contraseña</h2>
+            <p class="recuperar-descripcion">Elegí una nueva contraseña para volver a ingresar a tu cuenta.</p>
+
+            <form class="cambiar-contrasena-form" method="POST"
+                  action="{{ url_for('auth.restablecer_contrasena') }}">
+                {% if csrf_token is defined %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                {% endif %}
+
+                <div class="form-password-group">
+                    <label for="restablecer-password">Contraseña nueva</label>
+                    <div class="form-password-field">
+                        <input id="restablecer-password" type="password" name="password_nueva"
+                               placeholder="••••••••••" autocomplete="new-password" required>
+                        <span class="form-password-eye" aria-hidden="true">◉</span>
+                    </div>
+                </div>
+
+                <div class="form-password-group">
+                    <label for="restablecer-confirm-password">Repetir contraseña</label>
+                    <div class="form-password-field">
+                        <input id="restablecer-confirm-password" type="password" name="confirm_password"
+                               placeholder="••••••••••" autocomplete="new-password" required>
+                        <span class="form-password-eye" aria-hidden="true">◉</span>
+                    </div>
+                </div>
+
+                <button class="cambiar-contrasena-submit" type="submit">Restablecer contraseña</button>
+            </form>
+
+            <a class="recuperar-login-link" href="{{ url_for('auth.iniciar_sesion') }}">
+                <span aria-hidden="true">←</span> Volver a iniciar sesión
+            </a>
+        </section>
+    </div>
+</div>
 {% endblock %}
