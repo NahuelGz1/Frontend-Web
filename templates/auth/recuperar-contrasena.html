@@ -1,12 +1,53 @@
 {% extends "layouts/base.html" %}
 
-<!-- nombre de la pestana del navegador -->
-{% block title %}Recuperar contrasena · Cine Paradiso{% endblock %}
+{% block title %}Recuperar contraseña · Cine Paradiso{% endblock %}
 
-<!-- vaciamos la navegacion para que no aparezca el menu arriba -->
 {% block header_nav %}{% endblock %}
+{% block header_user %}{% endblock %}
 
-<!-- aca va el campo para pedir el email de recuperacion -->
 {% block content %}
-<!-- pegar aca el html para pedir el correo de recuperacion -->
+<div class="recuperar-page">
+    <div class="recuperar-layout">
+        <section class="recuperar-intro" aria-labelledby="recuperar-intro-titulo">
+            <a class="recuperar-back-link" href="{{ url_for('auth.iniciar_sesion') }}">
+                <span aria-hidden="true">←</span> Volver
+            </a>
+            <h1 id="recuperar-intro-titulo">Volvé a tu cuenta. El cine te espera.</h1>
+            <p>Recuperá el acceso a tus entradas y compras de forma simple y segura.</p>
+        </section>
+
+        <section class="recuperar-card" aria-labelledby="recuperar-titulo">
+            <div class="recuperar-icono" aria-hidden="true">⚿</div>
+            <p class="recuperar-kicker">TU CUENTA PARADISO</p>
+            <h2 id="recuperar-titulo">Recuperar contraseña</h2>
+            <p class="recuperar-descripcion">
+                Ingresá el correo de tu cuenta y solicitá un enlace para crear una nueva contraseña.
+            </p>
+
+            <form class="recuperar-form" method="POST"
+                  action="{{ url_for('auth.recuperar_contrasena') }}">
+                {% if csrf_token is defined %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                {% endif %}
+                <label for="recuperar-email">Correo electrónico</label>
+                <div class="form-input-icon">
+                    <input id="recuperar-email" name="email" type="email"
+                           placeholder="lucia@example.com" autocomplete="email" required>
+                    <span aria-hidden="true">✉</span>
+                </div>
+                <button class="recuperar-submit" type="submit">Enviar enlace <span aria-hidden="true">→</span></button>
+            </form>
+
+            <a class="recuperar-login-link" href="{{ url_for('auth.iniciar_sesion') }}">
+                <span aria-hidden="true">←</span> Volver a iniciar sesión
+            </a>
+            <p class="recuperar-ayuda">Después de solicitarlo, revisá tu bandeja de entrada y la carpeta de spam.</p>
+
+            <aside class="recuperar-privacidad">
+                <span aria-hidden="true">♢</span>
+                <p>Por tu privacidad, si el correo está asociado a una cuenta, recibirás un enlace. No informamos si una cuenta existe.</p>
+            </aside>
+        </section>
+    </div>
+</div>
 {% endblock %}
