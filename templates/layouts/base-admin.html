@@ -1,22 +1,19 @@
 <!doctype html>
 <html lang="es">
 <head>
-    <!-- Metadatos básicos para caracteres y adaptación a pantallas móviles. -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Los bloques Jinja permiten que cada página hija personalice estas secciones. -->
     <title>{% block title %}Administración · Cine Paradiso{% endblock %}</title>
 
-    <!-- url_for genera las rutas correctas a archivos de static en Flask. -->
+    <!-- traemos el css nativo de la carpeta static -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/cine-paradiso.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-global.css') }}">
     {% block head %}{% endblock %}
 </head>
 <body>
-<!-- Contenedor general del panel: encabezado, navegación, contenido y pie. -->
 <div class="admin-shell">
 
-    <!-- Encabezado compartido por todas las vistas administrativas. -->
+    <!-- encabezado superior del administrador -->
     <header class="site-header">
         <a href="{{ url_for('admin_views.peliculas') }}" class="brand">
             <span class="brand-icon" aria-hidden="true">▧</span>
@@ -28,7 +25,6 @@
                 <a href="{{ url_for('cliente.cartelera') }}">Ver sitio público ↗</a>
             </nav>
 
-            <!-- Si el servidor no entrega un nombre, se muestra una sigla neutral. -->
             <a href="{{ url_for('auth.logout') }}" class="user-avatar" aria-label="Cerrar sesión" title="Cerrar sesión">
                 {{ current_user.nombre[:2]|upper if current_user is defined and current_user and current_user.nombre else "AD" }}
             </a>
@@ -39,12 +35,10 @@
     <!-- layout con menu lateral y zona central -->
     <div class="admin-layout">
 
-        <!-- Navegación lateral. El arreglo Jinja evita repetir el mismo enlace a mano. -->
+        <!-- menu lateral para navegar en la gestion -->
         <aside class="admin-sidebar" aria-label="Navegación de Administración">
             <p class="admin-sidebar-label">Gestión del cine</p>
 
-            {# Cada elemento contiene el endpoint Flask, el texto y su icono SVG. #}
-            {# El filtro safe se usa solo para estos iconos SVG escritos aquí. #}
             {% for endpoint, label, icon in [
             ("admin_views.peliculas", "Películas", '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16v13H4zM4 7l2-4h14l-2 4M8 3l2 4m3-4 2 4m3-4 2 4"/></svg>'),
             ("admin_views.funciones", "Funciones", '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18m-9 4v3l2 1"/></svg>'),
@@ -70,11 +64,11 @@
 
         </aside>
 
-        <!-- Cada página hija inserta su contenido en el bloque content. -->
+        <!-- panel principal donde se cargan las vistas del admin -->
         <main class="admin-main">
             <p class="admin-breadcrumb">Administración / <strong style="color:var(--text-light)">{% block breadcrumb %}Panel{% endblock %}</strong></p>
 
-            <!-- Flask entrega mensajes temporales después de una acción del servidor. -->
+            <!-- avisos de flask para el admin -->
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
             {% for category, message in messages %}
@@ -90,7 +84,7 @@
         </main>
     </div>
 
-    <!-- Pie común; las páginas hijas no necesitan repetirlo. -->
+    <!-- pie de pagina del administrador -->
     <footer class="site-footer" style="justify-content: center;">
         <p>© 2026 Cine Paradiso · Panel de administración</p>
     </footer>
