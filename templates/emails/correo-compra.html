@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tu compra {{ codigo_operacion | default('CP-261030-0842') }} está confirmada</title>
+  <style>
+    /* Permite apilar los códigos QR verticalmente en pantallas de celulares chicos (como en la versión móvil del mockup) */
+    @media only screen and (max-width: 520px) {
+      .qr-stack {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin-bottom: 16px !important;
+      }
+      .qr-spacer {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 24px 12px; background-color: #191919; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f5f5f4;">
+
+  <!-- Contenedor Principal Centrado -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center">
+        <!-- Tarjeta Principal del Email -->
+        <table role="presentation" width="100%" style="max-width: 600px; background-color: #242424; border-radius: 12px; overflow: hidden; border: 1px solid #333333;" cellpadding="0" cellspacing="0" border="0">
+          
+          <!-- Header con Logo y Etiqueta de Sección -->
+          <tr>
+            <td style="padding: 24px 32px 18px 32px; background-color: #202020; border-bottom: 1px solid #2e2e2e;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="font-size: 19px; font-weight: bold; color: #ffffff;">
+                    <span style="display: inline-block; vertical-align: middle; background-color: #73282c; color: #ffffff; padding: 4px 7px; border-radius: 6px; font-size: 13px; margin-right: 8px; line-height: 1;">🎟️</span> Cine Paradiso
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-size: 11px; color: #c48286; font-weight: 600; letter-spacing: 0.5px; padding-top: 10px;">
+                    COMPRA CONFIRMADA
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Cuerpo Principal -->
+          <tr>
+            <td style="padding: 32px;">
+              <h1 style="margin: 0 0 12px 0; font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px;">¡Ya tenés tus entradas, {{ nombre | default('Lucía') }}!</h1>
+              <p style="margin: 0 0 24px 0; font-size: 14px; color: #cccccc; line-height: 1.5;">
+                Tu compra está confirmada. Guardá este correo: acá tenés tus dos entradas y el detalle para retirar tus servicios.
+              </p>
+
+              <!-- Tarjeta de la Película -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #1a1a1a; border-radius: 8px; margin-bottom: 24px; border: 1px solid #2d2d2d;">
+                <tr>
+                  <td style="padding: 14px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <!-- Póster -->
+                        <td width="72" valign="top">
+                          <img src="{{ pelicula_poster | default('https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg') }}" alt="Póster {{ pelicula_titulo | default('Volver al Futuro') }}" width="72" height="104" style="display: block; border-radius: 4px; object-fit: cover; background-color: #333333; border: 0;">
+                        </td>
+                        <!-- Datos de la Función -->
+                        <td valign="top" style="padding-left: 14px;">
+                          <div style="font-size: 18px; font-weight: bold; color: #ffffff; margin-bottom: 6px;">{{ pelicula_titulo | default('Volver al Futuro') }}</div>
+                          <div style="font-size: 13px; color: #a8a29e; margin-bottom: 4px;">{{ funcion_fecha_hora | default('Viernes 30/10/2026 · 19:30') }}</div>
+                          <div style="font-size: 13px; color: #a8a29e; margin-bottom: 4px;">{{ complejo_sala | default('Paradiso Centro · Sala 1') }}</div>
+                          <div style="font-size: 13px; color: #a8a29e;">{{ butacas_resumen | default('Fila D · Butacas D5 y D6') }}</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Detalle de la compra -->
+              <h3 style="font-size: 16px; font-weight: bold; margin: 0 0 12px 0; color: #ffffff;">Detalle de tu compra</h3>
+              <table width="100%" cellpadding="6" cellspacing="0" border="0" style="font-size: 13px; color: #cccccc; margin-bottom: 16px;">
+                <tr>
+                  <td style="padding-left: 0;">2 entradas × $10.000</td>
+                  <td align="right" style="padding-right: 0;">$20.000</td>
+                </tr>
+                <tr>
+                  <td style="padding-left: 0;">1 Combo dúo</td>
+                  <td align="right" style="padding-right: 0;">$8.500</td>
+                </tr>
+                <tr>
+                  <td style="padding-left: 0;">1 Nachos con cheddar</td>
+                  <td align="right" style="padding-right: 0;">$4.000</td>
+                </tr>
+                <tr>
+                  <td style="padding-left: 0; color: #888888;">Subtotal servicios</td>
+                  <td align="right" style="padding-right: 0; color: #888888;">$12.500</td>
+                </tr>
+              </table>
+
+              <!-- Total y Número de Operación -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 24px; border-top: 1px solid #2e2e2e; padding-top: 14px;">
+                <tr>
+                  <td style="font-size: 16px; font-weight: bold; color: #ffffff;">Total</td>
+                  <td align="right" style="font-size: 18px; font-weight: bold; color: #ffffff;">$32.500 ARS</td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="font-size: 11px; color: #777777; padding-top: 4px;">Operación {{ codigo_operacion | default('CP-261030-0842') }}</td>
+                </tr>
+              </table>
+
+              <!-- QRs Entradas Individuales -->
+              <h3 style="font-size: 16px; font-weight: bold; margin: 0 0 4px 0; color: #ffffff;">Tus entradas individuales</h3>
+              <p style="font-size: 12px; color: #a8a29e; margin: 0 0 16px 0; line-height: 1.4;">Mostrá un QR por persona al ingresar a la sala. Cada código admite un solo uso para la función y fecha indicadas.</p>
+
+              <!-- Tabla de Códigos QR (2 columnas en desktop, apiladas en mobile) -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 20px;">
+                <tr>
+                  <!-- QR 1 -->
+                  <td class="qr-stack" width="48%" valign="top" style="background-color: #1a1a1a; border-radius: 8px; padding: 16px; text-align: center; border: 1px solid #2d2d2d;">
+                    <div style="font-weight: bold; font-size: 14px; color: #ffffff; margin-bottom: 6px;">Butaca D5</div>
+                    <div style="font-size: 11px; color: #a8a29e; margin-bottom: 12px; line-height: 1.4;">Volver al Futuro · 30/10/2026 19:30<br>Paradiso Centro · Sala 1 · Un solo uso</div>
+                    <div style="background-color: #ffffff; padding: 10px; display: inline-block; border-radius: 4px; margin-bottom: 8px;">
+                      <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=CP-261030-0842-D5" alt="QR Butaca D5" width="110" height="110" style="display: block; border: 0;">
+                    </div>
+                    <div style="font-size: 11px; font-weight: bold; color: #ffffff;">CP-261030-0842-D5</div>
+                    <div style="font-size: 9px; color: #777777; margin-top: 4px;">QR ilustrativo · No válido como entrada real.</div>
+                  </td>
+                  <td class="qr-spacer" width="4%"></td>
+                  <!-- QR 2 -->
+                  <td class="qr-stack" width="48%" valign="top" style="background-color: #1a1a1a; border-radius: 8px; padding: 16px; text-align: center; border: 1px solid #2d2d2d;">
+                    <div style="font-weight: bold; font-size: 14px; color: #ffffff; margin-bottom: 6px;">Butaca D6</div>
+                    <div style="font-size: 11px; color: #a8a29e; margin-bottom: 12px; line-height: 1.4;">Volver al Futuro · 30/10/2026 19:30<br>Paradiso Centro · Sala 1 · Un solo uso</div>
+                    <div style="background-color: #ffffff; padding: 10px; display: inline-block; border-radius: 4px; margin-bottom: 8px;">
+                      <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=CP-261030-0842-D6" alt="QR Butaca D6" width="110" height="110" style="display: block; border: 0;">
+                    </div>
+                    <div style="font-size: 11px; font-weight: bold; color: #ffffff;">CP-261030-0842-D6</div>
+                    <div style="font-size: 9px; color: #777777; margin-top: 4px;">QR ilustrativo · No válido como entrada real.</div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Botón Ver Entradas -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td>
+                    <a href="{{ url_entradas | default('#') }}" style="display: block; width: 100%; padding: 14px 0; background-color: #8b262a; color: #ffffff; text-align: center; text-decoration: none; font-weight: bold; font-size: 15px; border-radius: 6px; box-sizing: border-box;">Ver entradas</a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Bloque Factura Adjunta -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #1a1a1a; border-radius: 8px; border: 1px solid #2d2d2d; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <div style="font-size: 14px; font-weight: bold; color: #ffffff; margin-bottom: 4px;">Factura adjunta</div>
+                    <div style="font-size: 12px; color: #a8a29e; margin-bottom: 12px; line-height: 1.4;">
+                      Factura de la compra {{ codigo_operacion | default('CP-261030-0842') }}<br>
+                      <span style="color: #777777;">Archivo adjunto · Representación de mockup</span>
+                    </div>
+                    <a href="{{ url_factura | default('#') }}" style="display: block; width: 100%; padding: 10px 0; background-color: transparent; color: #ffffff; text-align: center; text-decoration: none; font-size: 13px; font-weight: bold; border: 1px solid #4a4a4a; border-radius: 6px; box-sizing: border-box;">Descargar factura</a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Retiro en el Candy Bar -->
+              <div style="margin-bottom: 24px;">
+                <div style="font-size: 14px; font-weight: bold; color: #ffffff; margin-bottom: 4px;">Retiro en el candy bar</div>
+                <div style="font-size: 13px; color: #a8a29e; line-height: 1.4;">
+                  Tu Combo dúo y tus Nachos con cheddar se retiran en Paradiso Centro. Presentá el comprobante de esta compra en el candy bar antes de entrar a la sala.
+                </div>
+              </div>
+
+              <hr style="border: 0; border-top: 1px solid #2e2e2e; margin: 24px 0;">
+
+              <!-- Cancelación de Compra -->
+              <div style="margin-bottom: 24px;">
+                <div style="font-size: 14px; font-weight: bold; color: #ffffff; margin-bottom: 4px;">¿Cambiaste de planes?</div>
+                <div style="font-size: 12px; color: #a8a29e; line-height: 1.4; margin-bottom: 12px;">
+                  Podés cancelar antes del límite previo a la función que se informe al comprar. La disponibilidad de la cancelación se verifica al acceder a tu compra.
+                </div>
+                <a href="{{ url_cancelar | default('#') }}" style="display: block; width: 100%; padding: 10px 0; background-color: transparent; color: #ffffff; text-align: center; text-decoration: none; font-size: 13px; font-weight: bold; border: 1px solid #4a4a4a; border-radius: 6px; box-sizing: border-box;">Cancelar compra</a>
+              </div>
+
+              <!-- Soporte -->
+              <p style="font-size: 12px; color: #777777; margin: 0; line-height: 1.4;">
+                ¿Necesitás ayuda? Escribinos a <a href="mailto:Asistenciacine@gmail.com" style="color: #a8a29e; text-decoration: underline;">Asistenciacine@gmail.com</a>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; background-color: #1e1e1e; border-top: 1px solid #2e2e2e; font-size: 11px; color: #777777; line-height: 1.5;">
+              <div style="margin-bottom: 4px; font-weight: 500; color: #888888;">Cine Paradiso · © 2026</div>
+              <div>Recibiste este correo por tu compra {{ codigo_operacion | default('CP-261030-0842') }}. No compartas los códigos de tus entradas.</div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+
