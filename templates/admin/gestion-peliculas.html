@@ -1,12 +1,161 @@
-{% extends "layouts/base_admin.html" %}
+{% extends "layouts/base-admin.html" %}
 
-<!-- nombre de la pestana del navegador -->
-{% block title %}Gestion de Peliculas · Admin{% endblock %}
+{% block title %}Gestión de películas · Cine Paradiso{% endblock %}
+{% block breadcrumb %}Películas{% endblock %}
 
-<!-- seccion que se muestra en la barra de arriba -->
-{% block breadcrumb %}Peliculas{% endblock %}
-
-<!-- aca va la tabla de peliculas y el formulario para agregar nuevas -->
 {% block content %}
-<!-- pegar aca el html de las peliculas -->
+{% set lista_peliculas = peliculas|default([]) %}
+{% set pelicula_actual = pelicula_editar|default(none) %}
+<section aria-labelledby="movie-page-title">
+    <header class="page-header">
+        <div>
+            <h1 id="movie-page-title">Gestión de películas</h1>
+            <p>Catálogo importado desde TMDB. Revisá y editá los datos antes de programar la cartelera.</p>
+        </div>
+    </header>
+
+    <form class="form-field search-field" method="get" action="{{ url_for('admin_views.peliculas') }}">
+        <label for="movie-filter">Buscar por título</label>
+        <div class="movie-search-row">
+            <input class="form-control" id="movie-filter" name="buscar" type="search" value="{{ filtros.buscar|default('') }}" placeholder="Buscar película..." autocomplete="off">
+            <a class="btn btn-primary" href="{{ url_for('admin_views.peliculas', tmdb=1) }}">Agregar desde TMDB</a>
+        </div>
+    </form>
+
+    <section class="panel" aria-labelledby="catalog-title">
+        <div class="panel-heading">
+            <h2 id="catalog-title">Catálogo · {{ lista_peliculas|length }} películas</h2>
+        </div>
+        {% for pelicula in lista_peliculas %}
+        <article class="list-item">
+            {% if pelicula.afiche_url %}
+            <img class="poster poster-card" src="{{ pelicula.afiche_url }}" alt="Afiche de {{ pelicula.titulo }}">
+            {% endif %}
+            <div class="list-content">
+                <h3>{{ pelicula.titulo }}</h3>
+                <p class="text-muted">{{ pelicula.anio }} · {{ pelicula.duracion_minutos }} min · {{ pelicula.clasificacion }} · {{ pelicula.genero }}</p>
+                <p class="text-muted">Disponible: {{ pelicula.disponible_desde }} → {{ pelicula.disponible_hasta }}</p>
+                <span class="badge {{ 'badge-success' if pelicula.activa else 'badge-danger' }}">{{ 'Activa' if pelicula.activa else 'Inactiva' }}</span>
+                <div class="list-actions">
+                    <a class="btn" href="{{ url_for('admin_views.peliculas', editar=pelicula.id) }}">Editar</a>
+                    <form method="post" action="{{ url_for('admin_views.peliculas') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                        <input type="hidden" name="accion" value="cambiar_estado">
+                        <input type="hidden" name="pelicula_id" value="{{ pelicula.id }}">
+                        <button class="btn" type="submit">{{ 'Retirar de cartelera' if pelicula.activa else 'Activar' }}</button>
+                    </form>
+                    <form method="post" action="{{ url_for('admin_views.peliculas') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                        <input type="hidden" name="accion" value="eliminar">
+                        <input type="hidden" name="pelicula_id" value="{{ pelicula.id }}">
+                        <button class="btn btn-delete" type="submit">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </article>
+        {% else %}
+        <p class="text-muted">No hay películas para mostrar.</p>
+        {% endfor %}
+    </section>
+
+    <div class="flash-alert movie-notice" role="status" aria-live="polite" {% if not mensaje %}hidden{% endif %}>{{ mensaje|default('') }}</div>
+
+    <div class="workspace-grid">
+        <section class="panel" id="edit-panel" aria-labelledby="edit-panel-title" {% if not pelicula_actual %}hidden{% endif %}>
+            <h2 id="edit-panel-title">{{ 'Editar película' if pelicula_actual else 'Agregar película' }}</h2>
+            <p class="help-text">Los datos se guardan desde el servidor.</p>
+
+            <form method="post" action="{{ url_for('admin_views.peliculas') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                <input name="accion" type="hidden" value="guardar">
+                {% if pelicula_actual %}<input name="pelicula_id" type="hidden" value="{{ pelicula_actual.id }}">{% endif %}
+
+                <div class="form-field">
+                    <label for="movie-title">Título</label>
+                    <input class="form-control" id="movie-title" name="titulo" type="text" maxlength="150" value="{{ pelicula_actual.titulo|default('') if pelicula_actual else '' }}" required>
+                </div>
+
+                <div class="poster-field">
+                    {% if pelicula_actual and pelicula_actual.afiche_url %}
+                    <img class="poster poster-preview" src="{{ pelicula_actual.afiche_url }}" alt="Afiche de {{ pelicula_actual.titulo }}">
+                    {% else %}
+                    <div class="poster poster-preview" role="img" aria-label="Sin afiche disponible"></div>
+                    {% endif %}
+                    <div class="form-field">
+                        <span>Afiche actual</span>
+                        <label class="btn" for="movie-poster-file">Cambiar imagen</label>
+                        <input id="movie-poster-file" name="afiche" type="file" accept="image/png,image/jpeg" hidden>
+                        <span class="text-muted">JPG o PNG · Máximo 5 MB</span>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="movie-year">Año original</label>
+                        <input class="form-control" id="movie-year" name="anio" type="number" min="1888" max="2100" value="{{ pelicula_actual.anio|default('') if pelicula_actual else '' }}" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="movie-duration">Duración (min)</label>
+                        <input class="form-control" id="movie-duration" name="duracion_minutos" type="number" min="1" max="999" value="{{ pelicula_actual.duracion_minutos|default('') if pelicula_actual else '' }}" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="movie-rating">Clasificación local</label>
+                        <select class="form-control" id="movie-rating" name="clasificacion" required>
+                            <option value="" {% if not pelicula_actual %}selected{% endif %}>Seleccioná una clasificación</option>
+                            <option value="ATP" {% if pelicula_actual and pelicula_actual.clasificacion == 'ATP' %}selected{% endif %}>ATP</option>
+                            <option value="+13" {% if pelicula_actual and pelicula_actual.clasificacion == '+13' %}selected{% endif %}>+13</option>
+                            <option value="+16" {% if pelicula_actual and pelicula_actual.clasificacion == '+16' %}selected{% endif %}>+16</option>
+                            <option value="+18" {% if pelicula_actual and pelicula_actual.clasificacion == '+18' %}selected{% endif %}>+18</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="movie-genre">Género</label>
+                        <input class="form-control" id="movie-genre" name="genero" type="text" maxlength="50" value="{{ pelicula_actual.genero|default('') if pelicula_actual else '' }}" required>
+                    </div>
+                    <div class="form-field form-wide">
+                        <label for="movie-synopsis">Sinopsis</label>
+                        <textarea class="form-control" id="movie-synopsis" name="sinopsis" maxlength="3000">{{ pelicula_actual.sinopsis|default('') if pelicula_actual else '' }}</textarea>
+                    </div>
+                    <div class="form-field form-wide">
+                        <label for="movie-available-from">Disponible desde</label>
+                        <input class="form-control" id="movie-available-from" name="disponible_desde" type="date" value="{{ pelicula_actual.disponible_desde|default('') if pelicula_actual else '' }}" required>
+                    </div>
+                    <div class="form-field form-wide">
+                        <label for="movie-available-until">Disponible hasta</label>
+                        <input class="form-control" id="movie-available-until" name="disponible_hasta" type="date" value="{{ pelicula_actual.disponible_hasta|default('') if pelicula_actual else '' }}" required>
+                    </div>
+                    <div class="form-field form-wide">
+                        <label for="movie-status">Estado en cartelera</label>
+                        <select class="form-control" id="movie-status" name="activa" required>
+                            <option value="" {% if not pelicula_actual %}selected{% endif %}>Seleccioná un estado</option>
+                            <option value="1" {% if pelicula_actual and pelicula_actual.activa %}selected{% endif %}>Activa</option>
+                            <option value="0" {% if pelicula_actual and not pelicula_actual.activa %}selected{% endif %}>Inactiva</option>
+                        </select>
+                    </div>
+                </div>
+
+                <p class="help-text">El período es de programación; no cambia el año de estreno original.</p>
+                <div class="form-actions">
+                    {% if pelicula_actual %}<a class="btn" href="{{ url_for('admin_views.peliculas') }}">Cancelar</a>{% endif %}
+                    <button class="btn btn-primary" type="submit">{{ 'Guardar cambios' if pelicula_actual else 'Agregar película' }}</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel" id="tmdb-panel" aria-labelledby="tmdb-panel-title" {% if not tmdb_abierto %}hidden{% endif %}>
+            <h2 id="tmdb-panel-title">Agregar desde TMDB</h2>
+            <p class="help-text">La búsqueda real requiere conectar la API de TMDB.</p>
+
+            <form class="inline-form" method="get" action="{{ url_for('admin_views.peliculas') }}">
+                <div class="form-field">
+                    <label for="tmdb-query">Buscar en TMDB</label>
+                    <input class="form-control" id="tmdb-query" name="tmdb_buscar" type="search" placeholder="Título de película" autocomplete="off">
+                </div>
+                <button class="btn" type="submit">Buscar título</button>
+            </form>
+
+            <p class="help-text">La búsqueda se habilitará al integrar TMDB.</p>
+        </section>
+    </div>
+</section>
 {% endblock %}
