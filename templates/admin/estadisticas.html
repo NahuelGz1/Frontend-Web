@@ -1,204 +1,214 @@
 {% extends "layouts/base-admin.html" %}
 
-{% block title %}Gestión de funciones · Cine Paradiso{% endblock %}
-{% block breadcrumb %}Funciones{% endblock %}
+{% block title %}Estadísticas detalladas · Cine Paradiso{% endblock %}
+{% block breadcrumb %}Estadísticas{% endblock %}
 
 {% block content %}
-{% set lista_funciones = funciones|default([]) %}
-{% set lista_salas = salas|default([]) %}
-{% set lista_peliculas = peliculas|default([]) %}
-{% set lista_complejos = complejos|default([]) %}
-{% set funcion_actual = funcion_editar|default(none) %}
-{% set sala_actual = sala_editar|default(none) %}
-<section aria-labelledby="functions-title">
+{% set metricas = resumen|default({}) %}
+{% set funciones_por_ocupacion = ocupacion_funciones|default([]) %}
+{% set peliculas_por_ocupacion = ocupacion_peliculas|default([]) %}
+{% set ventas_por_genero = ventas_genero|default([]) %}
+{% set ventas_por_franja = ventas_franjas|default([]) %}
+{% set lista_cancelaciones = cancelaciones|default([]) %}
+<section class="stats-page" aria-labelledby="stats-title">
     <header class="page-header">
         <div>
-            <h1 id="functions-title">Gestión de funciones y salas</h1>
-            <p>Programá cada función por fecha y hora. La capacidad se toma de la sala seleccionada.</p>
+            <h1 id="stats-title">Estadísticas detalladas</h1>
+            <p>Detalle de ocupación, ventas y cancelaciones de las funciones seleccionadas.</p>
         </div>
     </header>
 
-    <form class="function-toolbar" method="get" action="{{ url_for('admin_views.funciones') }}">
+    <form class="stats-filters" method="get" action="{{ url_for('admin_views.estadisticas') }}" aria-label="Filtros de estadísticas">
         <div class="form-field">
-            <label for="complex-filter">Complejo</label>
-            <select class="form-control" id="complex-filter" name="complejo" onchange="this.form.submit()">
-                <option value="Todos">Todos los complejos</option>
-                {% for complejo in lista_complejos %}
+            <label for="stats-period">Período de funciones</label>
+            <select class="form-control" id="stats-period" name="periodo" onchange="this.form.submit()">
+                <option value="">Todos los períodos</option>
+                {% for periodo in periodos|default([]) %}
+                <option value="{{ periodo.valor }}" {% if filtros.periodo|default('') == periodo.valor|string %}selected{% endif %}>{{ periodo.etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="stats-complex">Complejo</label>
+            <select class="form-control" id="stats-complex" name="complejo" onchange="this.form.submit()">
+                <option value="">Todos los complejos</option>
+                {% for complejo in complejos|default([]) %}
                 <option value="{{ complejo.id }}" {% if filtros.complejo|default('') == complejo.id|string %}selected{% endif %}>{{ complejo.nombre }}</option>
                 {% endfor %}
             </select>
         </div>
-        <a class="btn btn-primary" href="{{ url_for('admin_views.funciones', crear='funcion') }}">Crear función</a>
     </form>
 
-    <div class="room-tabs" role="tablist" aria-label="Complejos">
-        {% for complejo in lista_complejos %}
-        <a class="btn {{ 'active' if filtros.complejo|default('') == complejo.id|string }}" href="{{ url_for('admin_views.funciones', complejo=complejo.id) }}" role="tab" aria-selected="{{ 'true' if filtros.complejo|default('') == complejo.id|string else 'false' }}">{{ complejo.nombre }}</a>
-        {% endfor %}
-    </div>
+    <section class="stats-summary" aria-label="Resumen del período">
+        <article class="panel stats-card">
+            <p>Entradas vendidas netas</p>
+            <strong>{{ metricas.entradas_netas|default('—') }}</strong>
+            <small>{{ metricas.entradas_emitidas|default('—') }} emitidas − {{ metricas.entradas_canceladas|default('—') }} canceladas</small>
+        </article>
+        <article class="panel stats-card">
+            <p>Ocupación ponderada</p>
+            <strong>{{ metricas.ocupacion_porcentaje|default('—') }}{% if metricas.ocupacion_porcentaje is defined %}%{% endif %}</strong>
+            <small>{{ metricas.entradas_netas|default('—') }} entradas / {{ metricas.capacidad_total|default('—') }} butacas</small>
+        </article>
+        <article class="panel stats-card">
+            <p>Ingresos por entradas</p>
+            <strong>{{ metricas.ingresos_entradas|default('—') }}</strong>
+            <small>ARS · Sin servicios</small>
+        </article>
+        <article class="panel stats-card">
+            <p>Entradas canceladas</p>
+            <strong>{{ metricas.entradas_canceladas|default('—') }} · {{ metricas.tasa_cancelacion|default('—') }}{% if metricas.tasa_cancelacion is defined %}%{% endif %}</strong>
+            <small>{{ metricas.entradas_canceladas|default('—') }} canceladas / {{ metricas.entradas_emitidas|default('—') }} emitidas</small>
+        </article>
+    </section>
 
-    <section class="panel" aria-labelledby="rooms-title">
-        <div class="panel-heading">
-            <h2 id="rooms-title">Salas por complejo · {{ lista_salas|length }}</h2>
-        </div>
-        <div class="room-grid" id="room-list">
-            {% for sala in lista_salas %}
-            <article class="room-card">
-                <h3>{{ sala.complejo_nombre }} · {{ sala.nombre }}</h3>
-                <p class="text-muted">{{ sala.filas }} filas · {{ sala.butacas_por_fila }} butacas por fila · {{ sala.capacidad }} butacas</p>
-                <a class="btn" href="{{ url_for('admin_views.funciones', editar_sala=sala.id) }}">Configurar sala</a>
+    <section class="panel stats-section" aria-labelledby="occupancy-title">
+        <h2 id="occupancy-title">Ocupación por función</h2>
+        <p class="help-text">Cada fila corresponde a una fecha y hora completas.</p>
+        <div class="stats-show-list">
+            {% for funcion in funciones_por_ocupacion %}
+            <article class="stats-show-row">
+                <div class="stats-show-name">
+                    <h3>{{ funcion.pelicula_titulo }}</h3>
+                    <p>{{ funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</p>
+                    <p>{{ funcion.complejo_nombre }} · {{ funcion.sala_nombre }}</p>
+                </div>
+                <div class="stats-show-occupancy">
+                    <p>Vendidas netas / capacidad</p>
+                    <strong>{{ funcion.entradas_netas }} / {{ funcion.capacidad }} · {{ funcion.ocupacion_porcentaje }}%</strong>
+                    <div class="stats-progress" role="img" aria-label="Ocupación: {{ funcion.ocupacion_porcentaje }} por ciento"><span style="--progress:{{ funcion.ocupacion_porcentaje }}%"></span></div>
+                </div>
+                <div class="stats-show-total">
+                    <p>{{ funcion.entradas_emitidas }} emitidas · {{ funcion.entradas_canceladas }} canceladas</p>
+                    <strong>{{ funcion.ingresos_formateados }}</strong>
+                </div>
             </article>
             {% else %}
-            <p class="text-muted">No hay salas para mostrar.</p>
+            <p class="text-muted">No hay funciones para mostrar en este período.</p>
             {% endfor %}
         </div>
+        <div class="stats-total">
+            <strong>Total neto / capacidad</strong>
+            <strong>{{ metricas.entradas_netas|default('—') }} / {{ metricas.capacidad_total|default('—') }} · {{ metricas.ocupacion_porcentaje|default('—') }}{% if metricas.ocupacion_porcentaje is defined %}%{% endif %}</strong>
+        </div>
     </section>
 
-    <div class="flash-alert movie-notice" role="status" aria-live="polite" {% if not mensaje %}hidden{% endif %}>{{ mensaje|default('') }}</div>
-
-    <section class="panel" aria-labelledby="schedule-title" style="margin-top: 1rem;">
-        <div class="panel-heading">
-            <h2 id="schedule-title">Funciones programadas · {{ lista_funciones|length }} registros</h2>
-        </div>
-        {% for funcion in lista_funciones %}
-        <article class="function-row">
-            <div>
-                <h3>{{ funcion.pelicula_titulo }}</h3>
-                <p class="text-muted">{{ funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</p>
-                <p class="text-muted">{{ funcion.complejo_nombre }} · {{ funcion.sala_nombre }}</p>
-                <p class="help-text">Disponible para venta: {{ funcion.venta_desde.strftime('%d/%m/%Y · %H:%M') }} → {{ funcion.venta_hasta.strftime('%d/%m/%Y · %H:%M') }}</p>
+    <section class="panel stats-section" aria-labelledby="movie-occupancy-title">
+        <h2 id="movie-occupancy-title">Ocupación por película</h2>
+        <p class="help-text">Capacidad acumulada de sus funciones. Ocupación = entradas netas / butacas disponibles.</p>
+        <div class="stats-movie-rings" aria-label="Ocupación por película">
+            {% for pelicula in peliculas_por_ocupacion %}
+            <div class="stats-movie-ring">
+                <div class="stats-ring {{ ['stats-ring-red', 'stats-ring-amber', 'stats-ring-purple'][(loop.index0 % 3)] }}" style="--progress:{{ pelicula.ocupacion_porcentaje }}%"><span>{{ pelicula.ocupacion_porcentaje }}%</span></div>
+                <small>{{ pelicula.titulo }}</small>
             </div>
-            <div>
-                <p class="text-muted">{{ funcion.entradas_vendidas }} vendidas / {{ funcion.capacidad }} butacas</p>
-                <p class="text-muted">{{ funcion.precio_formateado }} por entrada</p>
-                <div class="function-actions">
-                    <span class="badge {{ 'badge-success' if funcion.activa else 'badge-danger' }}">{{ 'Activa' if funcion.activa else 'Inactiva' }}</span>
-                    <a class="btn" href="{{ url_for('admin_views.funciones', editar=funcion.id) }}">Editar</a>
-                    <form method="post" action="{{ url_for('admin_views.funciones') }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
-                        <input type="hidden" name="accion" value="cambiar_estado">
-                        <input type="hidden" name="funcion_id" value="{{ funcion.id }}">
-                        <button class="btn" type="submit">{{ 'Desactivar función' if funcion.activa else 'Activar función' }}</button>
-                    </form>
+            {% else %}
+            <p class="text-muted">No hay datos de ocupación por película.</p>
+            {% endfor %}
+        </div>
+        <div class="stats-movie-list">
+            {% for pelicula in peliculas_por_ocupacion %}
+            <article>
+                <h3>{{ pelicula.titulo }}</h3>
+                <p>{{ pelicula.cantidad_funciones }} funciones · {{ pelicula.entradas_netas }} / {{ pelicula.capacidad }} · {{ pelicula.ocupacion_porcentaje }}%</p>
+                <small>Ingresos: {{ pelicula.ingresos_formateados }}</small>
+            </article>
+            {% else %}
+            <p class="text-muted">No hay películas para mostrar.</p>
+            {% endfor %}
+        </div>
+        <p class="stats-footnote">Total: {{ metricas.entradas_netas|default('—') }} / {{ metricas.capacidad_total|default('—') }} · {{ metricas.ocupacion_porcentaje|default('—') }}{% if metricas.ocupacion_porcentaje is defined %}%{% endif %} · {{ metricas.ingresos_entradas|default('—') }}</p>
+    </section>
+
+    <div class="stats-chart-grid">
+        <section class="panel stats-section" aria-labelledby="genre-title">
+            <h2 id="genre-title">Ventas por género</h2>
+            <p class="help-text">Entradas netas · Total: {{ metricas.entradas_netas|default('—') }}</p>
+            {% if ventas_por_genero %}
+            {% set ns = namespace(position=0, segments=[]) %}
+            {% set chart_colors = ['#b85e64', '#d3a166', '#9992b5'] %}
+            {% for genero in ventas_por_genero %}
+            {% set end = ns.position + genero.porcentaje %}
+            {% set color = chart_colors[(loop.index0 % 3)] %}
+            {% set ns.segments = ns.segments + [color ~ ' ' ~ ns.position ~ '% ' ~ end ~ '%'] %}
+            {% set ns.position = end %}
+            {% endfor %}
+            <div class="stats-donut-wrap">
+                <div class="stats-donut" role="img" aria-label="Distribución de {{ metricas.entradas_netas }} entradas por género" style="background: conic-gradient({{ ns.segments|join(', ') }})">
+                    <div><strong>{{ metricas.entradas_netas|default('—') }}</strong><small>entradas netas</small></div>
+                </div>
+                <small class="stats-chart-caption">{{ ventas_por_genero|length }} géneros · Distribución de entradas</small>
+            </div>
+            <div class="stats-legend">
+                {% for genero in ventas_por_genero %}
+                <div class="stats-legend-row {{ ['stats-red', 'stats-amber', 'stats-purple'][(loop.index0 % 3)] }}">
+                    <div><strong>{{ genero.nombre }}</strong><small>{{ genero.porcentaje }}% · {{ genero.ingresos_formateados }}</small></div><b>{{ genero.entradas_netas }}</b>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No hay ventas por género para mostrar.</p>
+            {% endif %}
+            <div class="stats-total"><span>Total</span><strong>{{ metricas.entradas_netas|default('—') }}{% if metricas.entradas_netas is defined %} · 100%{% endif %}</strong></div>
+            <p class="stats-footnote">Ingresos: {{ metricas.ingresos_entradas|default('—') }}</p>
+        </section>
+
+        <section class="panel stats-section" aria-labelledby="hours-title">
+            <h2 id="hours-title">Comparación de franjas horarias</h2>
+            <p class="help-text">Según la hora de inicio de la función · Entradas netas</p>
+            {% if ventas_por_franja %}
+            {% set max_ventas = ventas_por_franja|max(attribute='entradas_netas')|attr('entradas_netas') %}
+            <div class="stats-bar-chart" role="img" aria-label="Entradas netas por franja horaria">
+                <div class="stats-y-axis">
+                    <span>{{ max_ventas }}</span>
+                    <span>{{ (max_ventas * 0.75)|round|int }}</span>
+                    <span>{{ (max_ventas * 0.5)|round|int }}</span>
+                    <span>{{ (max_ventas * 0.25)|round|int }}</span>
+                    <span>0</span>
+                </div>
+                <div class="stats-bars">
+                    {% for franja in ventas_por_franja %}
+                    <div class="stats-bar-group {{ ['stats-red', 'stats-amber', 'stats-purple'][(loop.index0 % 3)] }}">
+                        <b>{{ franja.entradas_netas }}</b>
+                        <span style="--bar-height:{{ (franja.entradas_netas / max_ventas * 100) if max_ventas else 0 }}%"></span>
+                        <small>{{ franja.nombre }}</small>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-        </article>
-        {% else %}
-        <p class="text-muted">No hay funciones para este complejo.</p>
-        {% endfor %}
+            <div class="stats-hour-list">
+                {% for franja in ventas_por_franja %}
+                <article><span>{{ franja.nombre }}</span><b>{{ franja.entradas_netas }}</b><small>{{ franja.cantidad_funciones }} funciones · {{ franja.porcentaje }}% · {{ franja.ingresos_formateados }}</small></article>
+                {% endfor %}
+            </div>
+            {% set franja_mas_vendida = ventas_por_franja|max(attribute='entradas_netas') %}
+            <p class="stats-highlight">Más vendida: {{ franja_mas_vendida.nombre }}</p>
+            {% else %}
+            <p class="text-muted">No hay ventas por franja horaria para mostrar.</p>
+            {% endif %}
+            <p class="stats-footnote">Total: {{ metricas.entradas_netas|default('—') }} entradas · {{ metricas.ingresos_entradas|default('—') }}</p>
+        </section>
+    </div>
+
+    <section class="panel stats-section" aria-labelledby="cancellations-title">
+        <h2 id="cancellations-title">Cancelaciones por función</h2>
+        <p class="help-text">Tasa = entradas canceladas / entradas emitidas antes de cancelaciones. No representa compras ni un reintegro aprobado.</p>
+        <div class="stats-cancellation-list">
+            {% for funcion in lista_cancelaciones %}
+            <article>
+                <h3>{{ funcion.pelicula_titulo }} · {{ funcion.complejo_nombre }} · {{ funcion.sala_nombre }}</h3>
+                <p>{{ funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</p>
+                <strong>{{ funcion.entradas_canceladas }} canceladas / {{ funcion.entradas_emitidas }} emitidas · {{ funcion.tasa_cancelacion }}%</strong>
+            </article>
+            {% else %}
+            <p class="text-muted">No hay cancelaciones para mostrar.</p>
+            {% endfor %}
+        </div>
+        <div class="stats-total">
+            <strong>Tasa total</strong>
+            <strong>{{ metricas.entradas_canceladas|default('—') }} / {{ metricas.entradas_emitidas|default('—') }} · {{ metricas.tasa_cancelacion|default('—') }}{% if metricas.tasa_cancelacion is defined %}%{% endif %}</strong>
+        </div>
+        <p class="stats-footnote">Los ingresos corresponden a entradas netas; el reintegro por entradas canceladas se informará cuando los datos estén disponibles.</p>
     </section>
-
-    <div class="flash-alert movie-notice" role="status" aria-live="polite" {% if not mensaje_estado %}hidden{% endif %}>{{ mensaje_estado|default('') }}</div>
-
-    <div class="workspace-grid" id="workspace-grid" {% if not funcion_actual and not sala_actual and request.args.get('crear') != 'funcion' %}hidden{% endif %}>
-    <section class="panel" id="edit-panel" aria-labelledby="edit-title" {% if not funcion_actual and request.args.get('crear') != 'funcion' %}hidden{% endif %}>
-    <h2 id="edit-title">{{ 'Editar función' if funcion_actual else 'Crear función' }}</h2>
-    <form method="post" action="{{ url_for('admin_views.funciones') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
-        <input name="accion" type="hidden" value="guardar_funcion">
-        {% if funcion_actual %}<input name="funcion_id" type="hidden" value="{{ funcion_actual.id }}">{% endif %}
-        <div class="form-field">
-            <label for="function-movie">Película</label>
-            <select class="form-control" id="function-movie" name="pelicula_id" required>
-                <option value="">Seleccioná una película</option>
-                {% for pelicula in lista_peliculas %}
-                <option value="{{ pelicula.id }}" {% if funcion_actual and funcion_actual.pelicula_id|string == pelicula.id|string %}selected{% endif %}>{{ pelicula.titulo }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-field">
-            <label for="function-complex">Complejo</label>
-            <select class="form-control" id="function-complex" name="complejo_id" required>
-                <option value="">Seleccioná un complejo</option>
-                {% for complejo in lista_complejos %}
-                <option value="{{ complejo.id }}" {% if funcion_actual and funcion_actual.complejo_id|string == complejo.id|string %}selected{% endif %}>{{ complejo.nombre }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-field">
-            <label for="function-room">Sala</label>
-            <select class="form-control" id="function-room" name="sala_id" required>
-                <option value="">Seleccioná una sala</option>
-                {% for sala in lista_salas %}
-                <option value="{{ sala.id }}" {% if funcion_actual and funcion_actual.sala_id|string == sala.id|string %}selected{% endif %}>{{ sala.complejo_nombre }} · {{ sala.nombre }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-field">
-            <label for="function-start">Fecha y hora completas</label>
-            <input class="form-control" id="function-start" name="fecha_hora" type="datetime-local" value="{{ funcion_actual.fecha_hora_form|default('') if funcion_actual else '' }}" required>
-        </div>
-        <div class="form-grid">
-            <div class="form-field">
-                <label for="function-from">Disponible desde</label>
-                <input class="form-control" id="function-from" name="venta_desde" type="datetime-local" value="{{ funcion_actual.venta_desde_form|default('') if funcion_actual else '' }}" required>
-            </div>
-            <div class="form-field">
-                <label for="function-until">Disponible hasta</label>
-                <input class="form-control" id="function-until" name="venta_hasta" type="datetime-local" value="{{ funcion_actual.venta_hasta_form|default('') if funcion_actual else '' }}" required>
-            </div>
-        </div>
-        <div class="form-field">
-            <label for="function-price">Precio de entrada - ARS</label>
-            <input class="form-control" id="function-price" name="precio" type="number" min="0" step="1" value="{{ funcion_actual.precio|default('') if funcion_actual else '' }}" required>
-        </div>
-        <div class="form-field">
-            <label for="function-status">Estado</label>
-            <select class="form-control" id="function-status" name="activa">
-                <option value="" {% if not funcion_actual %}selected{% endif %}>Seleccioná un estado</option>
-                <option value="1" {% if funcion_actual and funcion_actual.activa %}selected{% endif %}>Activa</option>
-                <option value="0" {% if funcion_actual and not funcion_actual.activa %}selected{% endif %}>Inactiva</option>
-            </select>
-        </div>
-        <p class="help-text">La capacidad de la sala no se modifica desde una función.</p>
-        <div class="form-actions">
-            {% if funcion_actual %}<a class="btn" href="{{ url_for('admin_views.funciones') }}">Cancelar</a>{% endif %}
-            <button class="btn btn-primary" type="submit">{{ 'Guardar cambios' if funcion_actual else 'Crear función' }}</button>
-        </div>
-    </form>
-</section>
-
-<section class="panel" id="room-config-panel" aria-labelledby="room-config-title" {% if not sala_actual %}hidden{% endif %}>
-    <h2 id="room-config-title">Configuración de sala</h2>
-    <form method="post" action="{{ url_for('admin_views.funciones') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
-        <input name="accion" type="hidden" value="guardar_sala">
-        {% if sala_actual %}<input name="sala_id" type="hidden" value="{{ sala_actual.id }}">{% endif %}
-        <div class="form-field">
-            <label for="room-complex">Complejo</label>
-            <select class="form-control" id="room-complex" name="complejo_id" required>
-                <option value="">Seleccioná un complejo</option>
-                {% for complejo in lista_complejos %}
-                <option value="{{ complejo.id }}" {% if sala_actual and sala_actual.complejo_id|string == complejo.id|string %}selected{% endif %}>{{ complejo.nombre }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-field">
-            <label for="room-name">Nombre de sala</label>
-            <input class="form-control" id="room-name" name="nombre" maxlength="40" value="{{ sala_actual.nombre|default('') if sala_actual else '' }}" required>
-        </div>
-        <div class="form-grid">
-            <div class="form-field">
-                <label for="room-rows">Filas</label>
-                <input class="form-control" id="room-rows" name="filas" type="number" min="1" required value="{{ sala_actual.filas|default('') if sala_actual else '' }}">
-            </div>
-            <div class="form-field">
-                <label for="room-seats">Butacas por fila</label>
-                <input class="form-control" id="room-seats" name="butacas_por_fila" type="number" min="1" required value="{{ sala_actual.butacas_por_fila|default('') if sala_actual else '' }}">
-            </div>
-        </div>
-        <p class="help-text">La capacidad se calculará en el servidor a partir de filas y butacas por fila.</p>
-        <div class="screen-label">PANTALLA</div>
-        <div class="seat-map" aria-label="Distribución de butacas"></div>
-        <p class="help-text">La identificación de butacas se mostrará según la configuración de la sala.</p>
-        <p class="help-text">Los cambios de distribución deben revisarse si hay funciones con entradas vendidas.</p>
-        <div class="form-actions">
-            <button class="btn btn-primary" type="submit">Guardar configuración</button>
-            {% if sala_actual %}<a class="btn" href="{{ url_for('admin_views.funciones') }}">Cancelar cambios de sala</a>{% endif %}
-        </div>
-    </form>
-</section>
-</div>
-
 </section>
 {% endblock %}
