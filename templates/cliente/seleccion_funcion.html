@@ -1,0 +1,84 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Elegir función · Cine Paradiso{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/compra.css') }}">
+{% endblock %}
+
+{% block header_nav %}{% endblock %}
+
+{% block content %}
+<section class="compra" aria-labelledby="compra-titulo">
+    <a class="compra-volver" href="{{ url_for('cliente.cartelera') }}">
+        <img src="{{ url_for('static', filename='images/compra-volver.svg') }}" alt="" width="16" height="16">
+        Volver a cartelera
+    </a>
+
+    <header class="compra-encabezado">
+        <h1 id="compra-titulo">Elegir función</h1>
+        <p>Elegí la película, fecha y horario. En el siguiente paso vas a elegir tus butacas.</p>
+    </header>
+
+    <nav class="compra-pasos" aria-label="Pasos de la compra">
+        <ol>
+            <li aria-current="step"><span aria-hidden="true">1</span> Función</li>
+            <li><span aria-hidden="true">2</span> Butacas</li>
+            <li><span aria-hidden="true">3</span> Servicios y pago</li>
+            <li><span aria-hidden="true">4</span> Confirmación</li>
+        </ol>
+    </nav>
+
+    <section class="compra-cartelera" aria-labelledby="funciones-titulo">
+        <h2 id="funciones-titulo">Funciones en cartelera</h2>
+        {% if error_funciones %}
+        <div class="compra-estado compra-estado--error" role="alert">
+            <h3>No pudimos cargar las funciones</h3>
+            <p>{{ error_funciones }}</p>
+            <a class="compra-volver" href="{{ url_for('cliente.cartelera') }}">Volver a cartelera</a>
+        </div>
+        {% else %}
+        <ul class="compra-funciones">
+            {% for funcion in funciones %}
+            <li>
+                <article class="compra-funcion" aria-labelledby="funcion-{{ funcion.id }}-titulo">
+                    <h3 id="funcion-{{ funcion.id }}-titulo">{{ funcion.pelicula.titulo }}</h3>
+                    <dl class="compra-datos">
+                        <div>
+                            <dt>Fecha</dt>
+                            <dd><time datetime="{{ funcion.fecha }}">{{ funcion.fecha }}</time></dd>
+                        </div>
+                        <div>
+                            <dt>Horario</dt>
+                            <dd><time class="compra-horario" datetime="{{ funcion.horario }}">{{ funcion.horario }}</time></dd>
+                        </div>
+                        <div>
+                            <dt>Sala</dt>
+                            <dd>{{ funcion.sala.nombre }}</dd>
+                        </div>
+                    </dl>
+                    {% if funcion.disponible %}
+                    <a class="btn-primary compra-continuar"
+                       href="{{ url_for('cliente.elegir_butacas', funcion_id=funcion.id) }}"
+                       aria-label="Elegir butacas para {{ funcion.pelicula.titulo }}, {{ funcion.fecha }} a las {{ funcion.horario }}, {{ funcion.sala.nombre }}">
+                        Elegir butacas
+                    </a>
+                    {% else %}
+                    <p class="compra-agotada">Función sin disponibilidad</p>
+                    {% endif %}
+                </article>
+            </li>
+            {% else %}
+            <li class="compra-estado">
+                <h3>No hay funciones disponibles</h3>
+                <p>Volvé a consultar la cartelera más adelante.</p>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+
+    <p class="compra-aviso">La disponibilidad de las butacas se confirma al crear la reserva.</p>
+</section>
+{% endblock %}

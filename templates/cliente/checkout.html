@@ -1,0 +1,129 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Resumen y servicios · Cine Paradiso{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/compra.css') }}">
+{% endblock %}
+
+{% block header_nav %}{% endblock %}
+
+{% block content %}
+<section class="compra compra--checkout" aria-labelledby="checkout-titulo">
+    <a class="compra-volver" href="{{ url_for('cliente.elegir_butacas', funcion_id=funcion.id) }}">
+        <img src="{{ url_for('static', filename='images/compra-volver.svg') }}" alt="" width="16" height="16">
+        Volver a elegir butacas
+    </a>
+
+    <header class="compra-encabezado">
+        <h1 id="checkout-titulo">Revisá tu compra</h1>
+        <p>Revisá tus entradas y agregá los servicios que quieras antes de continuar al pago.</p>
+    </header>
+
+    <nav class="compra-pasos" aria-label="Pasos de la compra">
+        <ol>
+            <li><span aria-hidden="true">1</span> Función</li>
+            <li><span aria-hidden="true">2</span> Butacas</li>
+            <li aria-current="step"><span aria-hidden="true">3</span> Servicios y pago</li>
+            <li><span aria-hidden="true">4</span> Confirmación</li>
+        </ol>
+    </nav>
+
+    {% if error_checkout %}
+    <div class="compra-estado compra-estado--error" role="alert">
+        <h2>No pudimos cargar el checkout</h2>
+        <p>{{ error_checkout }}</p>
+    </div>
+    {% elif not resumen.butacas %}
+    <div class="compra-estado" role="status">
+        <h2>Primero elegí tus butacas</h2>
+        <p>Volvé al plano de la sala para seleccionar las entradas.</p>
+    </div>
+    {% else %}
+    <form class="checkout-formulario" method="POST"
+          action="{{ url_for('cliente.checkout', funcion_id=funcion.id) }}"
+          aria-describedby="checkout-aviso-total">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        {% if error_formulario %}
+        <div class="compra-estado compra-estado--error checkout-error" role="alert">
+            <h2>Revisá los servicios seleccionados</h2>
+            <p>{{ error_formulario }}</p>
+        </div>
+        {% endif %}
+
+        <section class="checkout-panel checkout-servicios" aria-labelledby="checkout-servicios-titulo">
+            <h2 id="checkout-servicios-titulo">Servicios opcionales</h2>
+            <p class="checkout-ayuda">Podés comprar solo las entradas. Dejá la cantidad en cero para no agregar un servicio.</p>
+
+            {% for clave, titulo in [
+                ('combos', 'Combos de comida'),
+                ('bebidas', 'Bebidas'),
+                ('estacionamiento', 'Estacionamiento'),
+                ('vip', 'Pase VIP')
+            ] %}
+            <fieldset class="checkout-categoria">
+                <legend>{{ titulo }}</legend>
+                {% for servicio in servicios[clave] %}
+                {% set disponible = servicio.disponible and servicio.maximo > 0 %}
+                <div class="checkout-servicio">
+                    <div class="checkout-servicio-detalle">
+                        <label for="servicio-{{ servicio.id }}">Cantidad de {{ servicio.nombre }}</label>
+                        <p class="checkout-ayuda" id="servicio-{{ servicio.id }}-ayuda">
+                            {{ servicio.precio_unitario }} por unidad.
+                            {% if not disponible %}No disponible.{% endif %}
+                        </p>
+                    </div>
+                    {% if clave in ('combos', 'bebidas') %}
+                    <input type="number" id="servicio-{{ servicio.id }}" name="servicio_{{ servicio.id }}"
+                           min="0" max="{{ servicio.maximo }}" step="1" required
+                           value="{{ servicio.cantidad if disponible else 0 }}"
+                           aria-describedby="servicio-{{ servicio.id }}-ayuda{% if servicio.error %} servicio-{{ servicio.id }}-error{% endif %}"
+                           {% if servicio.error %}aria-invalid="true"{% endif %}
+                           {% if not disponible %}disabled{% endif %}>
+                    {% else %}
+                    <select id="servicio-{{ servicio.id }}" name="servicio_{{ servicio.id }}"
+                            aria-describedby="servicio-{{ servicio.id }}-ayuda{% if servicio.error %} servicio-{{ servicio.id }}-error{% endif %}"
+                            {% if servicio.error %}aria-invalid="true"{% endif %}
+                            {% if not disponible %}disabled{% endif %}>
+                        {% for cantidad in range(servicio.maximo + 1) %}
+                        <option value="{{ cantidad }}"
+                                {% if cantidad == (servicio.cantidad if disponible else 0) %}selected{% endif %}>
+                            {% if cantidad == 0 %}No agregar{% else %}{{ cantidad }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                    {% if servicio.error %}
+                    <p class="checkout-error-campo" id="servicio-{{ servicio.id }}-error">{{ servicio.error }}</p>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="checkout-ayuda">No hay servicios disponibles en esta categoría.</p>
+                {% endfor %}
+            </fieldset>
+            {% endfor %}
+        </section>
+
+        {% include "cliente/_resumen_compra.html" %}
+
+        <div class="checkout-finalizar">
+            <p class="compra-aviso" id="checkout-aviso-total">
+                El resumen muestra el último cálculo del servidor. Si cambiás las cantidades,
+                actualizalo para ver el nuevo total. Al continuar se volverán a validar los
+                importes y la disponibilidad; todavía no se realiza ningún cobro.
+            </p>
+            <div class="checkout-acciones">
+                <button class="checkout-actualizar" type="submit" name="accion" value="actualizar">
+                    Actualizar resumen
+                </button>
+                <button class="btn-primary compra-continuar" type="submit" name="accion" value="continuar">
+                    Continuar al pago
+                </button>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+</section>
+{% endblock %}

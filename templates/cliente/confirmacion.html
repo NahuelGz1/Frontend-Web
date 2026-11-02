@@ -1,0 +1,128 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Confirmación de compra · Cine Paradiso{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/compra.css') }}">
+{% endblock %}
+
+{% block header_nav %}{% endblock %}
+
+{% block content %}
+{% set confirmada = not error_confirmacion and reserva and reserva.estado == 'confirmada' %}
+<section class="compra compra--confirmacion" aria-labelledby="confirmacion-titulo">
+    <header class="compra-encabezado confirmacion-encabezado">
+        {% if confirmada %}
+        <div class="confirmacion-icono">
+            <img src="{{ url_for('static', filename='images/confirmacion-check.svg') }}" alt="" width="28" height="28">
+        </div>
+        <div>
+            <p class="confirmacion-estado">
+                <img class="confirmacion-icono-movil"
+                     src="{{ url_for('static', filename='images/confirmacion-check-movil.svg') }}" alt="" width="18" height="18">
+                Pago aprobado
+            </p>
+            <h1 id="confirmacion-titulo">¡Tu compra fue exitosa!</h1>
+            <p>Reserva {{ reserva.codigo }} · Guardá tus entradas para presentarlas en el cine.</p>
+        </div>
+        {% else %}
+        <h1 id="confirmacion-titulo">Confirmación de reserva</h1>
+        {% endif %}
+    </header>
+
+    {% if error_confirmacion %}
+    <div class="compra-estado compra-estado--error" role="alert">
+        <h2>No pudimos consultar la confirmación</h2>
+        <p>{{ error_confirmacion }}</p>
+    </div>
+    {% elif not confirmada %}
+    <div class="compra-estado" role="status">
+        {% if reserva and reserva.estado == 'cancelada' %}
+        <h2>Reserva cancelada</h2>
+        <p>Las entradas de esta reserva ya no son válidas.</p>
+        {% else %}
+        <h2>La compra todavía no está confirmada</h2>
+        <p>No podemos mostrar entradas válidas hasta recibir la confirmación del servidor.</p>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="confirmacion-contenido">
+        <div class="confirmacion-pedido">
+            {% with etiqueta_total='Total pagado' %}
+            {% include "cliente/_resumen_compra.html" %}
+            {% endwith %}
+        </div>
+
+        <section class="checkout-panel confirmacion-entradas" aria-labelledby="confirmacion-entradas-titulo">
+            <h2 id="confirmacion-entradas-titulo">Tus entradas digitales</h2>
+            <p class="compra-aviso">Presentá el código QR de cada entrada al ingresar a la sala.</p>
+            <ol class="confirmacion-lista-entradas">
+                {% for entrada in reserva.entradas %}
+                <li>
+                    <article class="confirmacion-entrada" aria-labelledby="entrada-{{ loop.index }}-titulo">
+                        <header class="confirmacion-entrada-cabecera">
+                            <h3 id="entrada-{{ loop.index }}-titulo">Entrada {{ loop.index }} de {{ loop.length }}</h3>
+                            <p>Fila {{ entrada.fila }} · Butaca {{ entrada.numero }}</p>
+                        </header>
+                        <p class="confirmacion-entrada-pelicula">{{ funcion.pelicula.titulo }}</p>
+                        <p class="confirmacion-entrada-detalle">
+                            <time datetime="{{ funcion.fecha }}">{{ funcion.fecha }}</time>
+                            · <time datetime="{{ funcion.horario }}">{{ funcion.horario }}</time>
+                            · {{ funcion.sala.nombre }}
+                        </p>
+                        {% if entrada.qr_url %}
+                        <figure class="confirmacion-qr">
+                            <img src="{{ entrada.qr_url }}" width="148" height="148"
+                                 alt="Código QR de la entrada para la fila {{ entrada.fila }}, butaca {{ entrada.numero }}">
+                            <figcaption>{{ entrada.codigo }}</figcaption>
+                        </figure>
+                        {% else %}
+                        <div class="compra-estado compra-estado--error" role="alert">
+                            <p>El código QR de esta entrada no está disponible. Consultá el estado de tu compra antes de ingresar.</p>
+                        </div>
+                        {% endif %}
+                    </article>
+                </li>
+                {% else %}
+                <li class="compra-estado compra-estado--error" role="alert">
+                    <p>No se recibieron las entradas digitales. Consultá el estado de tu compra antes de ingresar.</p>
+                </li>
+                {% endfor %}
+            </ol>
+        </section>
+
+        <section class="checkout-panel confirmacion-cancelacion" aria-labelledby="confirmacion-cancelacion-titulo">
+            <h2 id="confirmacion-cancelacion-titulo">Cancelación de la reserva</h2>
+            <p>{{ reserva.mensaje_cancelacion }}</p>
+            {% if error_cancelacion %}
+            <div class="compra-estado compra-estado--error" role="alert">
+                <p>{{ error_cancelacion }}</p>
+            </div>
+            {% endif %}
+            {% if reserva.cancelacion_permitida %}
+            <form class="confirmacion-formulario" method="POST"
+                  action="{{ url_for('cliente.cancelar_reserva', reserva_id=reserva.id) }}"
+                  aria-describedby="confirmacion-cancelacion-aviso">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <p class="compra-aviso" id="confirmacion-cancelacion-aviso">
+                    Vas a solicitar la cancelación de esta reserva y sus entradas.
+                    El servidor volverá a verificar que siga dentro del plazo permitido.
+                </p>
+                <button class="checkout-actualizar" type="submit" name="accion" value="cancelar">
+                    Cancelar reserva
+                </button>
+            </form>
+            {% else %}
+            <p class="compra-aviso">La cancelación no está habilitada para esta reserva.</p>
+            {% endif %}
+        </section>
+    </div>
+    {% endif %}
+
+    <nav class="confirmacion-enlaces" aria-label="Navegación después de la compra">
+        <a class="compra-volver" href="{{ url_for('cliente.mi_perfil') }}">Ir a mi perfil</a>
+        <a class="compra-volver" href="{{ url_for('cliente.cartelera') }}">Volver a cartelera</a>
+    </nav>
+</section>
+{% endblock %}

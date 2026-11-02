@@ -1,0 +1,125 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Elegir butacas · Cine Paradiso{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/compra.css') }}">
+{% endblock %}
+
+{% block header_nav %}{% endblock %}
+
+{% block content %}
+<section class="compra compra--asientos" aria-labelledby="asientos-titulo">
+    <a class="compra-volver" href="{{ url_for('cliente.cartelera') }}">
+        <img src="{{ url_for('static', filename='images/compra-volver.svg') }}" alt="" width="16" height="16">
+        Volver a cartelera
+    </a>
+
+    <header class="compra-encabezado">
+        <h1 id="asientos-titulo">Elegir butacas · {{ funcion.sala.nombre }}</h1>
+        <h2 class="asientos-pelicula">{{ funcion.pelicula.titulo }}</h2>
+        <p>
+            <time datetime="{{ funcion.fecha }}">{{ funcion.fecha }}</time>
+            · <time class="compra-horario" datetime="{{ funcion.horario }}">{{ funcion.horario }}</time>
+        </p>
+    </header>
+
+    <nav class="compra-pasos" aria-label="Pasos de la compra">
+        <ol>
+            <li><span aria-hidden="true">1</span> Función</li>
+            <li aria-current="step"><span aria-hidden="true">2</span> Butacas</li>
+            <li><span aria-hidden="true">3</span> Servicios y pago</li>
+            <li><span aria-hidden="true">4</span> Confirmación</li>
+        </ol>
+    </nav>
+
+    {% if error_mapa %}
+    <div class="compra-estado compra-estado--error" role="alert">
+        <h2>No pudimos cargar las butacas</h2>
+        <p>{{ error_mapa }}</p>
+    </div>
+    {% else %}
+    {% set butacas = filas|map(attribute='butacas')|sum(start=[]) %}
+    {% set disponibles = butacas|rejectattr('ocupada')|list %}
+    {% if butacas %}
+    <form class="asientos-formulario" method="POST"
+          action="{{ url_for('cliente.elegir_butacas', funcion_id=funcion.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        {% if error_seleccion %}
+        <div class="compra-estado compra-estado--error" id="asientos-error" role="alert">
+            <h2>Revisá tu selección</h2>
+            <p>{{ error_seleccion }}</p>
+        </div>
+        {% endif %}
+
+        <fieldset class="asientos-campo"
+                  aria-describedby="asientos-ayuda{% if error_seleccion %} asientos-error{% endif %}">
+            <legend>Seleccioná tus butacas</legend>
+            <p class="compra-aviso" id="asientos-ayuda">
+                Marcá una o más butacas libres. Para quitar una selección, volvé a marcarla.
+                Si el plano no entra en la pantalla, desplazalo horizontalmente.
+            </p>
+
+            <div class="asientos-plano" role="region" aria-label="Plano de la sala" tabindex="0">
+                <div class="asientos-distribucion">
+                    <p class="asientos-pantalla">Pantalla</p>
+                    <table class="asientos-mapa">
+                        <caption class="asientos-solo-lectores">Butacas por fila y número</caption>
+                        <tbody>
+                            {% for fila in filas %}
+                            <tr>
+                                <th scope="row"><span class="asientos-solo-lectores">Fila </span>{{ fila.nombre }}</th>
+                                {% for butaca in fila.butacas %}
+                                <td>
+                                    <div class="asiento">
+                                        <input type="checkbox" name="butacas" id="butaca-{{ butaca.id }}"
+                                               value="{{ butaca.id }}"
+                                               {% if butaca.ocupada %}disabled{% elif butaca.id in seleccionadas %}checked{% endif %}>
+                                        <label for="butaca-{{ butaca.id }}">
+                                            <span aria-hidden="true">{{ butaca.numero }}</span>
+                                            <span class="asientos-solo-lectores">
+                                                Fila {{ fila.nombre }}, butaca {{ butaca.numero }}{% if butaca.ocupada %}, ocupada{% endif %}
+                                            </span>
+                                        </label>
+                                    </div>
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <ul class="asientos-leyenda" aria-label="Estados de las butacas">
+                <li><span class="asientos-muestra" aria-hidden="true"></span> Libre</li>
+                <li><span class="asientos-muestra asientos-muestra--ocupada" aria-hidden="true"></span> Ocupada</li>
+                <li><span class="asientos-muestra asientos-muestra--seleccionada" aria-hidden="true"></span> Seleccionada</li>
+            </ul>
+        </fieldset>
+
+        <section class="asientos-continuacion" aria-labelledby="asientos-seleccion-titulo">
+            <h2 id="asientos-seleccion-titulo">Tu selección</h2>
+            {% if disponibles %}
+            <p>En el siguiente paso vas a revisar tus entradas y elegir los servicios adicionales.</p>
+            {% else %}
+            <p role="status">No quedan butacas libres para esta función. Volvé a cartelera para elegir otra.</p>
+            {% endif %}
+            <p class="compra-aviso">La disponibilidad y el importe se confirman en el servidor. Marcar una butaca no la reserva.</p>
+            <button type="submit" class="btn-primary compra-continuar"
+                    {% if not disponibles %}disabled{% endif %}>
+                Continuar a servicios y pago
+            </button>
+        </section>
+    </form>
+    {% else %}
+    <div class="compra-estado" role="status">
+        <h2>No hay un plano de butacas disponible</h2>
+        <p>Volvé a cartelera para elegir otra función.</p>
+    </div>
+    {% endif %}
+    {% endif %}
+</section>
+{% endblock %}

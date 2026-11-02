@@ -1,0 +1,54 @@
+<aside class="checkout-panel checkout-resumen" aria-labelledby="checkout-resumen-titulo">
+    <h2 id="checkout-resumen-titulo">Resumen de compra</h2>
+    <div class="checkout-pelicula">
+        {% if funcion.pelicula.poster_url is defined and funcion.pelicula.poster_url %}
+        <img class="checkout-poster" src="{{ funcion.pelicula.poster_url }}" alt="" width="96" height="120">
+        {% endif %}
+        <div class="checkout-sesion">
+            <h3>{{ funcion.pelicula.titulo }}</h3>
+            <p><time datetime="{{ funcion.fecha }}">{{ funcion.fecha }}</time></p>
+            <p><time datetime="{{ funcion.horario }}">{{ funcion.horario }}</time> · {{ funcion.sala.nombre }}</p>
+            <ul class="checkout-butacas" aria-label="Asientos elegidos">
+                {% for butaca in resumen.butacas %}
+                <li>Fila {{ butaca.fila }} · Butaca {{ butaca.numero }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <dl class="checkout-importes">
+        <div>
+            <dt>{{ resumen.butacas|length }} {{ 'entrada' if resumen.butacas|length == 1 else 'entradas' }}</dt>
+            <dd>{{ resumen.subtotal_entradas }}</dd>
+        </div>
+    </dl>
+
+    <section class="checkout-servicios-aplicados" aria-labelledby="checkout-aplicados-titulo">
+        <h3 id="checkout-aplicados-titulo">Servicios en el resumen</h3>
+        {% if resumen.servicios %}
+        <dl class="checkout-importes checkout-importes--servicios">
+            {% for servicio in resumen.servicios %}
+            <div>
+                <dt>{{ servicio.cantidad }} × {{ servicio.nombre }}</dt>
+                <dd>{{ servicio.subtotal }}</dd>
+            </div>
+            {% endfor %}
+        </dl>
+        {% else %}
+        <p class="checkout-ayuda">Sin servicios adicionales.</p>
+        {% endif %}
+        <dl class="checkout-importes checkout-importes--servicios">
+            <div>
+                <dt>Subtotal servicios</dt>
+                <dd>{{ resumen.subtotal_servicios }}</dd>
+            </div>
+        </dl>
+    </section>
+
+    <dl class="checkout-importes checkout-total">
+        <div>
+            <dt>{{ etiqueta_total|default('Total calculado') }}</dt>
+            <dd>{{ resumen.total }}</dd>
+        </div>
+    </dl>
+</aside>
