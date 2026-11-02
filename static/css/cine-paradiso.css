@@ -57,7 +57,14 @@ a {
 }
 
 .brand-icon {
-    color: var(--cinema-red);
+    display: inline-grid;
+    width: 1.5rem;
+    height: 1.5rem;
+    place-items: center;
+    border-radius: 4px;
+    background: var(--cinema-red);
+    color: white;
+    font-size: 0.8rem;
 }
 
 /* menu del header para inicio, cartelera y servicios */
@@ -66,6 +73,12 @@ a {
     gap: 1.5rem;
     font-size: 0.9rem;
     align-items: center;
+}
+
+.admin-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
 .nav-links a:hover {
@@ -213,6 +226,21 @@ a {
     color: white;
 }
 
+.admin-sidebar-logout {
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--cinema-800);
+}
+
+.admin-sidebar-logout a {
+    font-size: 0.82rem;
+}
+
+.admin-sidebar-logout a:hover {
+    background-color: transparent;
+    color: var(--text-light);
+}
+
 /* area central del admin donde van las tablas y formularios */
 .admin-main {
     flex: 1;
@@ -243,6 +271,10 @@ a {
         justify-content: center;
     }
 
+    .admin-header-actions {
+        justify-content: center;
+    }
+
     /* pasa la pantalla del admin a una sola columna */
     .admin-layout {
         flex-direction: column;
@@ -266,6 +298,19 @@ a {
     /* evita que se corten los textos del menu al scrolear */
     .admin-sidebar a {
         white-space: nowrap;
+    }
+
+    .admin-sidebar-logout {
+        flex: 0 0 auto;
+        margin-top: 0;
+        padding-top: 0;
+        border-top: 0;
+        border-left: 1px solid var(--cinema-800);
+        padding-left: 0.5rem;
+    }
+
+    .admin-sidebar-logout a {
+        height: 100%;
     }
 
     /* achica el espacio interno del panel central */

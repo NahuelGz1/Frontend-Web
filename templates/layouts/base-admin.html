@@ -7,6 +7,7 @@
 
     <!-- traemos el css nativo de la carpeta static -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/cine-paradiso.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-global.css') }}">
     {% block head %}{% endblock %}
 </head>
 <body>
@@ -16,18 +17,19 @@
     <header class="site-header">
         <a href="{{ url_for('admin_views.peliculas') }}" class="brand">
             <span class="brand-icon" aria-hidden="true">▧</span>
-            <span>Cine Paradiso · Panel</span>
+            <span>Cine Paradiso</span>
         </a>
 
-        <nav class="nav-links">
-            <a href="{{ url_for('cliente.cartelera') }}">Ver sitio público ↗</a>
-        </nav>
+        <div class="admin-header-actions">
+            <nav class="nav-links">
+                <a href="{{ url_for('cliente.cartelera') }}">Ver sitio público ↗</a>
+            </nav>
 
-        <div>
-            <a href="{{ url_for('auth.logout') }}" style="font-size:0.85rem; color: var(--text-muted);">
-                {{ current_user.nombre[:2]|upper if current_user is defined and current_user and current_user.nombre else "AD" }} · Salir
+            <a href="{{ url_for('auth.logout') }}" class="user-avatar" aria-label="Cerrar sesión" title="Cerrar sesión">
+                {{ current_user.nombre[:2]|upper if current_user is defined and current_user and current_user.nombre else "AD" }}
             </a>
         </div>
+
     </header>
 
     <!-- layout con menu lateral y zona central -->
@@ -38,23 +40,28 @@
             <p class="admin-sidebar-label">Gestión del cine</p>
 
             {% for endpoint, label, icon in [
-            ("admin_views.peliculas", "Películas", "▤"),
-            ("admin_views.funciones", "Funciones", "▱"),
-            ("admin_views.servicios", "Servicios", "♧"),
-            ("admin_views.validar_qr", "Validar QR", "⊞"),
-            ("admin_views.estadisticas", "Estadísticas", "▦")
+            ("admin_views.peliculas", "Películas", '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16v13H4zM4 7l2-4h14l-2 4M8 3l2 4m3-4 2 4m3-4 2 4"/></svg>'),
+            ("admin_views.funciones", "Funciones", '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18m-9 4v3l2 1"/></svg>'),
+            ("admin_views.servicios", "Servicios", '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 10h16l-2 11H6L4 10Zm3 0 2-7m8 7-2-7M8 14v3m4-3v3m4-3v3M3 7l2 3m16-3-2 3"/></svg>'),
+            ("admin_views.validar_qr", "Validar QR", '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 9V4h5m6 0h5v5M20 15v5h-5m-6 0H4v-5"/><path d="M7 7h3v3H7zm7 0h3v3h-3zm-7 7h3v3H7zm7 0h3v3h-3z"/></svg>'),
+            ("admin_views.estadisticas", "Estadísticas", '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V4m0 16h17"/><rect x="7" y="12" width="3" height="6" rx=".5"/><rect x="13" y="8" width="3" height="10" rx=".5"/><rect x="19" y="5" width="2" height="13" rx=".5"/></svg>')
             ] %}
             <a href="{{ url_for(endpoint) }}" class="{% if request.endpoint == endpoint %}active{% endif %}">
-                <span aria-hidden="true">{{ icon }}</span>
+                <span>{{ icon|safe }}</span>
                 <span>{{ label }}</span>
             </a>
             {% endfor %}
 
-            <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--cinema-800);">
-                <a href="{{ url_for('auth.logout') }}" style="font-size:0.8rem;">
-                    <span>⎋</span> Cerrar sesión
+            <div class="admin-sidebar-logout">
+                <a href="{{ url_for('auth.logout') }}" aria-label="Cerrar sesión">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                        <path d="M10 17l5-5-5-5m5 5H3"/>
+                        <path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/>
+                    </svg>
+                    <span>Cerrar sesión</span>
                 </a>
             </div>
+
         </aside>
 
         <!-- panel principal donde se cargan las vistas del admin -->
@@ -84,7 +91,6 @@
 </div>
 
 {% block modals %}{% endblock %}
-<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

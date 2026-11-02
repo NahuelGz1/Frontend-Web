@@ -1,12 +1,179 @@
-{% extends "layouts/base_admin.html" %}
+{% extends "layouts/base-admin.html" %}
 
-<!-- nombre de la pestana del navegador -->
-{% block title %}Validar QR · Admin{% endblock %}
-
-<!-- seccion que se muestra en la barra de arriba -->
+{% block title %}Validar QR · Cine Paradiso{% endblock %}
 {% block breadcrumb %}Validar QR{% endblock %}
 
-<!-- aca va el buscador o el escaner para revisar las entradas -->
 {% block content %}
-<!-- pegar aca el html para validar el qr -->
+{% set validacion = resultado|default(none) %}
+{% set servicios_pedido = validacion.servicios|default([]) if validacion else [] %}
+{% set modo_actual = modo|default('entrada') %}
+{% set entradas_registradas = historial_entradas|default([]) %}
+{% set servicios_registrados = historial_servicios|default([]) %}
+<section class="qr-page" aria-labelledby="qr-title">
+    <header class="page-header">
+        <div>
+            <h1 id="qr-title">Validar QR</h1>
+            <p>Validá el ingreso al cine o la entrega de un pedido de servicios.</p>
+        </div>
+    </header>
+
+    <form method="get" action="{{ url_for('admin_views.validar_qr') }}">
+        <fieldset class="qr-mode-selector">
+            <legend>¿Qué querés validar?</legend>
+            <label><input type="radio" name="modo" value="entrada" {% if modo_actual == 'entrada' %}checked{% endif %} onchange="this.form.submit()"> Validar entrada</label>
+            <label><input type="radio" name="modo" value="servicio" {% if modo_actual == 'servicio' %}checked{% endif %} onchange="this.form.submit()"> Validar servicio</label>
+        </fieldset>
+    </form>
+
+    {% if validacion %}
+    {% if modo_actual == 'entrada' and validacion.funcion %}
+    <section class="qr-current-show" aria-label="Función asociada al QR">
+        <h2 class="qr-context-title">Función asociada al QR</h2>
+        <span>Función del código · Control de acceso</span>
+        <h2>{{ validacion.funcion.pelicula_titulo }}</h2>
+        <div class="qr-show-details">
+            <p><strong>Estado:</strong> <span class="qr-show-state {{ 'is-active' if validacion.funcion.activa else 'is-inactive' }}">{{ 'Activa' if validacion.funcion.activa else 'Inactiva' }}</span></p>
+            <p><strong>Fecha y hora:</strong> {{ validacion.funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</p>
+            <p><strong>Sala:</strong> {{ validacion.funcion.complejo_nombre }} · {{ validacion.funcion.sala_nombre }}</p>
+            <p><strong>Butacas:</strong> {{ validacion.butacas_texto }}</p>
+        </div>
+    </section>
+    {% elif modo_actual == 'servicio' %}
+    <section class="qr-current-show qr-service-order" aria-label="Pedido de servicios asociado al QR">
+        <h2 class="qr-context-title">Pedido de servicios asociado al QR</h2>
+        <span>Control de entrega</span>
+        <h2>{{ validacion.pedido_codigo|default('Pedido no identificado') }}</h2>
+        <div class="qr-show-details">
+            <p><strong>Estado:</strong> <span class="qr-show-state is-unknown">{{ validacion.estado|default('No identificado') }}</span></p>
+            <p><strong>Servicios asociados:</strong> {{ servicios_pedido|length }}</p>
+        </div>
+    </section>
+    {% endif %}
+    {% else %}
+    <section class="qr-current-show" aria-label="Esperando una validación">
+        <h2 class="qr-context-title">Datos asociados al QR</h2>
+        <span>Control de acceso</span>
+        <h2>Pendiente de escaneo</h2>
+        <div class="qr-show-details">
+            <p><strong>Estado:</strong> <span class="qr-show-state is-unknown">Pendiente</span></p>
+            <p><strong>Fecha y hora:</strong> —</p>
+            <p><strong>Sala:</strong> —</p>
+            <p><strong>Butacas:</strong> —</p>
+        </div>
+    </section>
+    {% endif %}
+
+    <div class="qr-workspace">
+        <section class="panel qr-scanner" aria-labelledby="scanner-title">
+            <h2 id="scanner-title">{{ 'Validar servicio' if modo_actual == 'servicio' else 'Escanear entrada' }}</h2>
+            <div class="qr-camera" aria-label="Área reservada para integrar el lector QR">
+                <div class="qr-scan-frame" aria-hidden="true">
+                    <span class="qr-corner"></span><span class="qr-corner"></span>
+                    <span class="qr-corner"></span><span class="qr-corner"></span>
+                    <span class="qr-code-mark"></span>
+                </div>
+                <span>El lector de cámara se integrará en una etapa posterior.</span>
+            </div>
+            <form method="post" action="{{ url_for('admin_views.validar_qr') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                <input type="hidden" name="modo" value="{{ modo_actual }}">
+                <div class="form-field">
+                    <label for="qr-identifier">Identificador del QR</label>
+                    <input class="form-control" id="qr-identifier" name="identificador" type="text" autocomplete="off" required>
+                </div>
+                <button class="btn btn-primary" type="submit">Validar identificador</button>
+            </form>
+        </section>
+
+        {% if validacion %}
+        <section class="panel qr-result" aria-labelledby="qr-result-title" aria-live="polite">
+            <h2 id="qr-result-title">{{ validacion.titulo }}</h2>
+            <span class="qr-status-badge {{ 'is-approved' if validacion.aprobada else 'is-rejected' }}">{{ validacion.mensaje_estado }}</span>
+            <h3>{{ validacion.estado }}</h3>
+            {% if modo_actual == 'entrada' and validacion.funcion %}
+            <p>{{ validacion.funcion.pelicula_titulo }} · {{ validacion.funcion.complejo_nombre }} · {{ validacion.funcion.sala_nombre }}</p>
+            <p>Butacas: {{ validacion.butacas_texto }}</p>
+            {% elif modo_actual == 'servicio' %}
+            <p>Pedido {{ validacion.pedido_codigo }}</p>
+            <div class="qr-service-items" aria-label="Servicios asociados al pedido">
+                {% for servicio in servicios_pedido %}
+                <article class="qr-service-item">
+                    <div class="qr-service-item-info">
+                        <h4>{{ servicio.nombre }}</h4>
+                        <p class="text-muted">{{ servicio.detalle }}</p>
+                    </div>
+                    <div class="qr-service-item-controls">
+                        <span class="qr-service-status {{ 'is-consumed' if servicio.consumido else 'is-pending' }}">{{ 'Consumido' if servicio.consumido else 'Pendiente' }}</span>
+                        {% if not servicio.consumido and validacion.aprobada %}
+                        <form method="post" action="{{ url_for('admin_views.validar_qr') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                            <input type="hidden" name="modo" value="servicio">
+                            <input type="hidden" name="accion" value="consumir_servicio">
+                            <input type="hidden" name="identificador" value="{{ validacion.identificador }}">
+                            <input type="hidden" name="servicio_id" value="{{ servicio.id }}">
+                            <button class="btn qr-service-action" type="submit">{{ 'Entregar' if servicio.tipo == 'candy-bar' else 'Validar' }}</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </article>
+                {% else %}
+                <p class="text-muted">El pedido no contiene servicios asociados.</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <p class="help-text">{{ validacion.detalle }}</p>
+        </section>
+        {% else %}
+        <section class="panel qr-result" id="qr-result" aria-labelledby="qr-result-title" aria-live="polite">
+            <h2 id="qr-result-title">Esperando una entrada</h2>
+            <h3>Listo para validar</h3>
+            <p class="help-text">Escaneá un código o ingresá el identificador para ver el resultado.</p>
+        </section>
+        {% endif %}
+    </div>
+
+    <div class="flash-alert movie-notice" role="status" aria-live="polite" {% if not mensaje %}hidden{% endif %}>{{ mensaje|default('') }}</div>
+
+    <section class="panel qr-log" aria-labelledby="qr-log-title">
+        <h2 id="qr-log-title">Registro de validaciones</h2>
+        {% if modo_actual == 'entrada' %}
+        {% for ingreso in entradas_registradas %}
+        <article class="qr-log-entry">
+            <p class="text-muted">{{ ingreso.fecha_hora.strftime('%d/%m/%Y · %H:%M') }} · {{ ingreso.administrador }}</p>
+            <p>{{ ingreso.detalle }}</p>
+        </article>
+        {% else %}
+        <p class="text-muted">Todavía no hay ingresos registrados.</p>
+        {% endfor %}
+        {% else %}
+        {% for entrega in servicios_registrados %}
+        <article class="qr-log-entry">
+            <p class="text-muted">{{ entrega.fecha_hora.strftime('%d/%m/%Y · %H:%M') }} · {{ entrega.administrador }}</p>
+            <p>{{ entrega.detalle }}</p>
+        </article>
+        {% else %}
+        <p class="text-muted">Todavía no hay servicios consumidos.</p>
+        {% endfor %}
+        {% endif %}
+    </section>
+
+    <section class="qr-alternatives" aria-labelledby="qr-alternatives-title">
+        <h2 id="qr-alternatives-title">Guía de respuestas de validación</h2>
+        <p class="help-text">Consultá qué significa cada estado y cómo actuar ante cada respuesta.</p>
+        <div class="qr-alternative-list">
+            {% if modo_actual == 'entrada' %}
+            <article class="panel qr-alternative"><h3>Entrada válida</h3><span class="qr-status-badge is-approved">Aprobada · Ingreso registrado</span><p class="qr-guide-instruction">Verificá la función, fecha y butacas. Permití el ingreso; el código no debe volver a usarse.</p></article>
+            <article class="panel qr-alternative"><h3>Entrada ya utilizada</h3><span class="qr-status-badge is-rejected">Rechazada · Sin ingreso</span><p class="qr-guide-instruction">No permitas un segundo ingreso. Revisá el registro de accesos.</p></article>
+            <article class="panel qr-alternative"><h3>Entrada cancelada</h3><span class="qr-status-badge is-rejected">Rechazada · Sin ingreso</span><p class="qr-guide-instruction">No permitas el ingreso y derivá la consulta a atención.</p></article>
+            <article class="panel qr-alternative"><h3>Otra función o fecha</h3><span class="qr-status-badge is-rejected">Rechazada · Sin ingreso</span><p class="qr-guide-instruction">Confirmá que el código corresponda a la función y fecha vigentes.</p></article>
+            <article class="panel qr-alternative"><h3>Código no reconocido</h3><span class="qr-status-badge is-rejected">Rechazada · Sin ingreso</span><p class="qr-guide-instruction">Revisá el código y volvé a ingresarlo; si persiste, consultá soporte.</p></article>
+            {% else %}
+            <article class="panel qr-alternative"><h3>Pedido con servicios pendientes</h3><span class="qr-status-badge is-approved">Aprobado · Entrega habilitada</span><p class="qr-guide-instruction">Verificá el pedido. Entregá o validá cada servicio pendiente individualmente.</p></article>
+            <article class="panel qr-alternative"><h3>Servicios ya consumidos</h3><span class="qr-status-badge is-rejected">Rechazado · Sin entrega</span><p class="qr-guide-instruction">No vuelvas a entregar servicios consumidos. Revisá el registro.</p></article>
+            <article class="panel qr-alternative"><h3>Pedido cancelado</h3><span class="qr-status-badge is-rejected">Rechazado · Sin entrega</span><p class="qr-guide-instruction">No entregues productos y derivá la consulta a atención.</p></article>
+            <article class="panel qr-alternative"><h3>Código no reconocido</h3><span class="qr-status-badge is-rejected">Rechazado · Sin entrega</span><p class="qr-guide-instruction">Revisá el código y consultá soporte si el problema continúa.</p></article>
+            {% endif %}
+        </div>
+    </section>
+</section>
 {% endblock %}

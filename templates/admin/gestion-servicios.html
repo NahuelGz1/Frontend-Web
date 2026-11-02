@@ -1,12 +1,117 @@
-{% extends "layouts/base_admin.html" %}
+{% extends "layouts/base-admin.html" %}
 
-<!-- nombre de la pestana del navegador -->
-{% block title %}Gestion de Servicios · Admin{% endblock %}
-
-<!-- seccion que se muestra en la barra de arriba -->
+{% block title %}Gestión de servicios · Cine Paradiso{% endblock %}
 {% block breadcrumb %}Servicios{% endblock %}
 
-<!-- aca va la lista de productos del candybar y precios -->
 {% block content %}
-<!-- pegar aca el html del candybar -->
+{% set lista_servicios = servicios|default([]) %}
+{% set servicio_actual = servicio_editar|default(none) %}
+<section aria-labelledby="services-title">
+    <header class="page-header">
+        <div>
+            <h1 id="services-title">Gestión de servicios</h1>
+            <p>Administrá el catálogo global del candy bar, sus precios y su disponibilidad.</p>
+        </div>
+    </header>
+
+    <div class="service-toolbar">
+        <div>
+            <span class="badge">Todas las salas y complejos</span>
+            <p class="help-text">Los cambios se aplican a los complejos configurados.</p>
+        </div>
+        <a class="btn btn-primary" href="{{ url_for('admin_views.servicios', crear=1) }}">Agregar servicio</a>
+    </div>
+
+    <section class="panel" aria-labelledby="service-catalog-title">
+        <div class="panel-heading">
+            <h2 id="service-catalog-title">Catálogo de servicios · ARS · {{ lista_servicios|length }}</h2>
+        </div>
+        {% for servicio in lista_servicios %}
+        <article class="list-item">
+            {% if servicio.imagen_url %}
+            <img class="service-image" src="{{ servicio.imagen_url }}" alt="Imagen de {{ servicio.nombre }}">
+            {% else %}
+            <div class="service-image" role="img" aria-label="Imagen no disponible">🍿</div>
+            {% endif %}
+            <div class="list-content">
+                <h3>{{ servicio.nombre }}</h3>
+                <p class="text-muted">{{ servicio.descripcion }}</p>
+                <p class="service-price">{{ servicio.precio_formateado }}</p>
+                <span class="badge {% if servicio.activo is sameas true %}badge-success{% elif servicio.activo is sameas false %}badge-danger{% endif %}">{{ 'Activo' if servicio.activo is sameas true else 'Inactivo' if servicio.activo is sameas false else 'Estado no informado' }}</span>
+                <div class="list-actions">
+                    <a class="btn" href="{{ url_for('admin_views.servicios', editar=servicio.id) }}">Editar</a>
+                    <form method="post" action="{{ url_for('admin_views.servicios') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                        <input type="hidden" name="accion" value="cambiar_estado">
+                        <input type="hidden" name="servicio_id" value="{{ servicio.id }}">
+                        <button class="btn" type="submit">{{ 'Dar de baja' if servicio.activo else 'Activar' }}</button>
+                    </form>
+                    <form method="post" action="{{ url_for('admin_views.servicios') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                        <input type="hidden" name="accion" value="eliminar">
+                        <input type="hidden" name="servicio_id" value="{{ servicio.id }}">
+                        <button class="btn btn-delete" type="submit">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </article>
+        {% else %}
+        <p class="text-muted">No hay servicios en el catálogo.</p>
+        {% endfor %}
+    </section>
+    <div class="flash-alert movie-notice" role="status" aria-live="polite" {% if not mensaje %}hidden{% endif %}>{{ mensaje|default('') }}</div>
+
+    <div class="workspace-grid" {% if not servicio_actual and not request.args.get('crear') %}hidden{% endif %}>
+    <section class="panel" aria-labelledby="service-edit-title">
+        <h2 id="service-edit-title">{{ 'Editar servicio' if servicio_actual else 'Agregar servicio' }}</h2>
+        <form method="post" action="{{ url_for('admin_views.servicios') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+            <input name="accion" type="hidden" value="guardar">
+            {% if servicio_actual %}<input name="servicio_id" type="hidden" value="{{ servicio_actual.id }}">{% endif %}
+            <div class="form-field">
+                <label for="service-name">Nombre</label>
+                <input class="form-control" id="service-name" name="nombre" type="text" maxlength="80" value="{{ servicio_actual.nombre|default('') if servicio_actual else '' }}" required>
+            </div>
+            <div class="service-image-field">
+                {% if servicio_actual and servicio_actual.imagen_url %}
+                <img class="service-image service-image-preview" src="{{ servicio_actual.imagen_url }}" alt="Imagen de {{ servicio_actual.nombre }}">
+                {% else %}
+                <div class="service-image service-image-preview" role="img" aria-label="Imagen no disponible">🍿</div>
+                {% endif %}
+                <div class="form-field">
+                    <span>Imagen actual</span>
+                    <label class="btn" for="service-image-file">Cambiar imagen</label>
+                    <input id="service-image-file" name="imagen" type="file" accept="image/png,image/jpeg" hidden>
+                    <span class="text-muted">JPG o PNG · Máximo 5 MB</span>
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="service-description">Descripción</label>
+                <textarea class="form-control" id="service-description" name="descripcion" maxlength="300" required>{{ servicio_actual.descripcion|default('') if servicio_actual else '' }}</textarea>
+            </div>
+            <div class="form-field">
+                <label for="service-price">Precio · ARS</label>
+                <input class="form-control" id="service-price" name="precio" type="number" min="1" step="1" value="{{ servicio_actual.precio|default('') if servicio_actual else '' }}" required>
+            </div>
+            <div class="form-field">
+                <label for="service-status">Estado</label>
+                <select class="form-control" id="service-status" name="activo" required>
+                    <option value="" {% if not servicio_actual %}selected{% endif %}>Seleccioná un estado</option>
+                    <option value="1" {% if servicio_actual and servicio_actual.activo %}selected{% endif %}>Activo</option>
+                    <option value="0" {% if servicio_actual and not servicio_actual.activo %}selected{% endif %}>Inactivo</option>
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="service-scope">Alcance</label>
+                <input class="form-control" id="service-scope" value="Todas las salas y complejos" readonly>
+            </div>
+            <p class="help-text">La modificación no cambia los importes de compras ya confirmadas.</p>
+            <div class="form-actions">
+                {% if servicio_actual %}<a class="btn" href="{{ url_for('admin_views.servicios') }}">Cancelar</a>{% endif %}
+                <button class="btn btn-primary" type="submit">{{ 'Guardar cambios' if servicio_actual else 'Agregar servicio' }}</button>
+            </div>
+        </form>
+    </section>
+    </div>
+</section>
 {% endblock %}
