@@ -281,3 +281,470 @@ a {
         align-items: center;
     }
 }
+
+/* ===== pantalla de inicio ===== */
+
+/* pelicula destacada: texto a la izquierda, afiche a la derecha */
+.hero {
+    background-color: var(--cinema-900);
+    border: 1px solid var(--cinema-800);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+}
+
+.hero-text {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.hero-label {
+    font-size: 0.7rem;
+    color: var(--cinema-red-light);
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+}
+
+.hero-meta,
+.hero-desc {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.hero-poster {
+    width: 260px;
+    object-fit: cover;
+}
+
+/* boton secundario con borde */
+.btn-secondary {
+    border: 1px solid var(--cinema-700);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.btn-secondary:hover {
+    border-color: var(--cinema-red);
+}
+
+/* separacion entre bloques */
+.home-section {
+    margin-top: 2rem;
+}
+
+/* titulo a la izquierda y enlace "ver mas" a la derecha */
+.section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 1rem;
+}
+
+.section-link {
+    font-size: 0.85rem;
+    color: var(--cinema-red-light);
+}
+
+/* tarjeta basica */
+.card {
+    background-color: var(--cinema-900);
+    border: 1px solid var(--cinema-800);
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-color: var(--cinema-red);
+    margin-bottom: 0.75rem;
+}
+
+.card h3 {
+    margin-bottom: 0.4rem;
+    font-size: 0.95rem;
+}
+
+.card p {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* columnas de cada bloque */
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.movies-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.upcoming-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+/* afiche chico + nombre y duracion */
+.movie-item {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.movie-item img {
+    width: 50px;
+    height: 68px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+    background-color: var(--cinema-800);
+}
+
+.movie-item strong {
+    display: block;
+    font-size: 0.9rem;
+}
+
+.movie-item span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.movie-item .date {
+    color: var(--cinema-red-light);
+}
+
+/* celulares */
+@media (max-width: 768px) {
+    /* el afiche pasa arriba y el texto abajo */
+    .hero {
+        flex-direction: column-reverse;
+    }
+
+    .hero-poster {
+        width: 100%;
+        height: 220px;
+        object-position: top;
+    }
+
+    .hero-text {
+        padding: 1.25rem;
+    }
+
+    .hero h1 {
+        font-size: 1.75rem;
+    }
+
+    /* botones apilados a todo el ancho */
+    .hero-actions {
+        flex-direction: column;
+        width: 100%;
+        text-align: center;
+    }
+
+    /* servicios y estrenos: una columna */
+    .services-grid,
+    .upcoming-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* peliculas de hoy: dos columnas */
+    .movies-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ===== pantalla de cartelera ===== */
+
+/* fechas de la semana, a la derecha del titulo */
+.cartelera-fechas {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* peliculas en cartelera: 4 columnas */
+.cartelera-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+/* tarjeta de pelicula: afiche, nombre, duracion y boton */
+.poster-card img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: contain;
+    background-color: #000;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.poster-card h3 {
+    font-size: 0.95rem;
+}
+
+.poster-card p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+/* boton que ocupa todo el ancho */
+.btn-block {
+    display: block;
+    text-align: center;
+}
+
+/* celulares */
+@media (max-width: 768px) {
+    /* titulo y fechas se apilan */
+    .section-head {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    /* peliculas: dos columnas */
+    .cartelera-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ===== pantalla de detalle de pelicula ===== */
+
+/* ruta de navegacion */
+.breadcrumb {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.breadcrumb a:hover {
+    color: var(--cinema-red-light);
+}
+
+.subtitulo {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+/* textos chicos grises */
+.nota {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* etiquetas chicas (reestreno, agotada, seleccionada) */
+.badge {
+    display: inline-block;
+    background-color: var(--cinema-800);
+    color: var(--cinema-red-light);
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+/* afiche a la izquierda, datos a la derecha */
+.detalle-pelicula {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.detalle-pelicula > img {
+    width: 160px;
+    align-self: flex-start;
+    object-fit: cover;
+    border-radius: 8px;
+    background-color: var(--cinema-800);
+    flex-shrink: 0;
+}
+
+.detalle-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+.detalle-info h2 {
+    font-size: 2rem;
+}
+
+/* duracion, clasificacion y año */
+.tags {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tag {
+    background-color: var(--cinema-800);
+    color: var(--cinema-red-light);
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+}
+
+.detalle-genero,
+.detalle-sinopsis {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* caja del selector de funcion */
+.selector-funcion {
+    padding: 1.25rem;
+}
+
+.selector-funcion h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+/* complejo y fecha lado a lado */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-field label {
+    display: block;
+    font-size: 0.8rem;
+    margin-bottom: 0.3rem;
+}
+
+.form-field select {
+    width: 100%;
+    background-color: var(--cinema-850);
+    color: var(--text-light);
+    border: 1px solid var(--cinema-700);
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+/* botones rapidos de complejo */
+.chips {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.chip {
+    background: none;
+    color: var(--text-light);
+    border: 1px solid var(--cinema-700);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.chip:hover {
+    border-color: var(--cinema-red);
+}
+
+.chip.active {
+    background-color: var(--cinema-red);
+    border-color: var(--cinema-red);
+    color: white;
+}
+
+.separador {
+    border: none;
+    border-top: 1px solid var(--cinema-800);
+    margin: 1rem 0;
+}
+
+/* tarjeta de cada funcion */
+.funcion-card {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+}
+
+.funcion-card p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* la funcion elegida se marca con borde rojo */
+.funcion-card.seleccionada {
+    border: 1px solid var(--cinema-red);
+    border-radius: 10px;
+    background-color: var(--cinema-950);
+}
+
+/* los botones de tipo button se ven igual que los enlaces */
+button.btn-secondary {
+    background: none;
+    color: var(--text-light);
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+button.btn-secondary:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+/* las dos variantes de estado */
+.estados-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.estados-grid .btn-block {
+    width: 100%;
+}
+
+/* celulares */
+@media (max-width: 768px) {
+    .detalle-pelicula {
+        gap: 1rem;
+    }
+
+    .detalle-pelicula > img {
+        width: 110px;
+    }
+
+    .detalle-info h2 {
+        font-size: 1.5rem;
+    }
+
+    /* las variantes quedan una debajo de la otra */
+    .estados-grid {
+        grid-template-columns: 1fr;
+    }
+}
