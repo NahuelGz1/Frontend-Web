@@ -13,18 +13,21 @@
 {% set total = total_compra|default('32.500') %}
 
 <div class="payment-page">
-    <a class="payment-back-link" href="{{ url_for('cliente.servicios') }}">
+    <a class="payment-back-link" href="{{ url_for('cliente_views.servicios') }}">
         <span aria-hidden="true">←</span> Volver
     </a>
     <h1>Pagar</h1>
 
     <div class="payment-layout">
         <form class="payment-form" method="POST" action="{{ request.path }}">
+            {% if csrf_token is defined %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% endif %}
+
             <section class="payment-card" aria-labelledby="contact-title">
                 <h2 id="contact-title">Datos de contacto</h2>
                 <label for="payment-email">Email</label>
-                <input id="payment-email" type="email" name="email"
-                       placeholder="tu@email.com" autocomplete="email" required>
+                <input id="payment-email" type="email" name="email" placeholder="tu@email.com" autocomplete="email" required>
                 <p class="payment-help">Enviaremos tus entradas con QR y la factura a este email.</p>
             </section>
 
@@ -33,34 +36,28 @@
                 <div class="payment-fields">
                     <div>
                         <label for="card-holder">Titular de la tarjeta</label>
-                        <input id="card-holder" type="text" name="titular"
-                               placeholder="Nombre y apellidos" autocomplete="cc-name" required>
+                        <input id="card-holder" type="text" name="titular" placeholder="Nombre y apellidos" autocomplete="cc-name" required>
                     </div>
                     <div>
                         <label for="card-number">Número de tarjeta</label>
-                        <input id="card-number" type="text" name="numero_tarjeta"
-                               placeholder="0000 0000 0000 0000" inputmode="numeric"
-                               autocomplete="cc-number" required>
+                        <input id="card-number" type="text" name="numero_tarjeta" placeholder="0000 0000 0000 0000" inputmode="numeric" autocomplete="cc-number" required>
                     </div>
                     <div>
                         <label for="card-expiration">Caducidad</label>
-                        <input id="card-expiration" type="text" name="caducidad"
-                               placeholder="MM / AA" inputmode="numeric" autocomplete="cc-exp" required>
+                        <input id="card-expiration" type="text" name="caducidad" placeholder="MM / AA" inputmode="numeric" autocomplete="cc-exp" required>
                     </div>
                     <div>
                         <label for="card-cvc">CVC</label>
-                        <input id="card-cvc" type="text" name="cvc"
-                               placeholder="123" inputmode="numeric" autocomplete="cc-csc" required>
+                        <input id="card-cvc" type="text" name="cvc" placeholder="123" inputmode="numeric" autocomplete="cc-csc" required>
                     </div>
                 </div>
                 <p class="payment-legal">
                     Al confirmar la compra, aceptás nuestros
                     <a href="#">Términos y condiciones</a> y la
-                    <a href="#">Política de privacidad</a>. Nota de diseño: el plazo de
-                    cancelación previo a la función aún está pendiente de definición del equipo.
+                    <a href="#">Política de privacidad</a>.
                 </p>
                 <button class="payment-submit" type="submit">
-                    Pagar {{ total }}$
+                    Pagar ${{ total }} ARS
                 </button>
             </section>
         </form>
@@ -113,9 +110,11 @@
 
             <div class="payment-total">
                 <span>Total</span>
-                <strong>{{ total }}$</strong>
+                <strong>${{ total }} ARS</strong>
             </div>
         </aside>
     </div>
 </div>
 {% endblock %}
+
+{% block scripts %}{% endblock %}

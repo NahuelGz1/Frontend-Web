@@ -16,7 +16,7 @@
 {% if image_url %}
 <img src="{{ image_url }}" alt="Afiche de {{ title }}" loading="lazy">
 {% else %}
-<div class="poster-placeholder" role="img" aria-label="Afiche no disponible"></div>
+<div class="poster-placeholder" role="img" aria-label="Afiche no disponible">▧</div>
 {% endif %}
 {% endmacro %}
 
@@ -31,37 +31,41 @@
         {% for pelicula in peliculas_cartelera %}
         {% set titulo = pelicula.titulo|default(pelicula.title|default('Película', true), true) %}
         {% set duracion = pelicula.duracion|default(pelicula.runtime|default(0, true), true) %}
+        {% set pelicula_id = pelicula.id|default(loop.index, true) %}
         <article class="poster-card">
             {{ poster_image(pelicula, titulo) }}
             <h3>{{ titulo }}</h3>
             {% if duracion %}<p>{{ duracion }} min</p>{% endif %}
-            <a href="#" class="btn-primary btn-block">Entradas</a>
+            <a href="{{ url_for('cliente_views.detalle_pelicula', pelicula_id=pelicula_id) }}" class="btn-primary btn-block">
+                Ver funciones
+            </a>
         </article>
         {% endfor %}
         {% else %}
+        <!-- Mockup dinámico de prueba sin imágenes locales fijas -->
         <article class="poster-card">
-            <img src="{{ url_for('static', filename='img/volver-al-futuro.jpg') }}" alt="Afiche de Volver al Futuro">
+            <div class="poster-placeholder" role="img" aria-label="Afiche Volver al Futuro">▧</div>
             <h3>Volver al Futuro</h3>
             <p>116 min</p>
-            <a href="#" class="btn-primary btn-block">Entradas</a>
+            <a href="{{ url_for('cliente_views.detalle_pelicula', pelicula_id=1) }}" class="btn-primary btn-block">Ver funciones</a>
         </article>
         <article class="poster-card">
-            <img src="{{ url_for('static', filename='img/el-rey-leon.jpg') }}" alt="Afiche de El Rey León">
+            <div class="poster-placeholder" role="img" aria-label="Afiche El Rey León">▧</div>
             <h3>El Rey León</h3>
             <p>88 min</p>
-            <a href="#" class="btn-primary btn-block">Entradas</a>
+            <a href="{{ url_for('cliente_views.detalle_pelicula', pelicula_id=2) }}" class="btn-primary btn-block">Ver funciones</a>
         </article>
         <article class="poster-card">
-            <img src="{{ url_for('static', filename='img/terminator-2.jpg') }}" alt="Afiche de Terminator 2">
+            <div class="poster-placeholder" role="img" aria-label="Afiche Terminator 2">▧</div>
             <h3>Terminator 2</h3>
             <p>137 min</p>
-            <a href="#" class="btn-primary btn-block">Entradas</a>
+            <a href="{{ url_for('cliente_views.detalle_pelicula', pelicula_id=3) }}" class="btn-primary btn-block">Ver funciones</a>
         </article>
         <article class="poster-card">
-            <img src="{{ url_for('static', filename='img/club-de-la-pelea.jpg') }}" alt="Afiche de El Club de la Pelea">
+            <div class="poster-placeholder" role="img" aria-label="Afiche El Club de la Pelea">▧</div>
             <h3>El Club de la Pelea</h3>
             <p>139 min</p>
-            <a href="#" class="btn-primary btn-block">Entradas</a>
+            <a href="{{ url_for('cliente_views.detalle_pelicula', pelicula_id=4) }}" class="btn-primary btn-block">Ver funciones</a>
         </article>
         {% endif %}
     </section>
@@ -82,11 +86,11 @@
             {% endfor %}
             {% else %}
             <article class="movie-item card">
-                <img src="{{ url_for('static', filename='img/spider-man.jpg') }}" alt="Afiche de Spider-Man">
+                <div class="poster-placeholder" role="img" aria-label="Afiche Spider-Man">▧</div>
                 <div><strong>Spider-Man</strong><span class="date">6 de noviembre</span></div>
             </article>
             <article class="movie-item card">
-                <img src="{{ url_for('static', filename='img/toy-story.jpg') }}" alt="Afiche de Toy Story">
+                <div class="poster-placeholder" role="img" aria-label="Afiche Toy Story">▧</div>
                 <div><strong>Toy Story</strong><span class="date">13 de noviembre</span></div>
             </article>
             {% endif %}

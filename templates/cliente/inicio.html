@@ -4,98 +4,117 @@
 
 {% block content %}
 
-<!-- pelicula destacada de la semana -->
+<!-- Película destacada de la semana -->
+{% set destacada = pelicula_destacada|default(none) %}
+{% if destacada %}
 <section class="hero">
     <div class="hero-text">
         <p class="hero-label">DESTACADA DE LA SEMANA</p>
-        <h1>Volver al Futuro</h1>
-        <p class="hero-meta">Ciencia ficción · 116 min</p>
-        <p class="hero-desc">Un DeLorean, un viaje a 1955 y una aventura para volver al futuro.</p>
+        <h1>{{ destacada.titulo }}</h1>
+        <p class="hero-meta">{{ destacada.genero }} · {{ destacada.duracion_minutos }} min</p>
+        <p class="hero-desc">{{ destacada.sinopsis }}</p>
         <div class="hero-actions">
-            <a href="{{ url_for('cliente.cartelera') }}" class="btn-primary">Comprar entradas →</a>
-            <a href="{{ url_for('cliente.cartelera') }}" class="btn-secondary">Ver cartelera</a>
+            <a href="{{ url_for('cliente_views.detalle_pelicula', pelicula_id=destacada.id) }}" class="btn btn-primary">Comprar entradas →</a>
+            <a href="{{ url_for('cliente_views.cartelera') }}" class="btn btn-secondary">Ver cartelera</a>
         </div>
     </div>
-    <img class="hero-poster" src="{{ url_for('static', filename='img/volver-al-futuro.jpg') }}" alt="Afiche de Volver al Futuro">
+    {% if destacada.afiche_url %}
+    <img class="hero-poster" src="{{ destacada.afiche_url }}" alt="Afiche de {{ destacada.titulo }}">
+    {% else %}
+    <div class="hero-poster hero-poster-placeholder">▧</div>
+    {% endif %}
 </section>
+{% endif %}
 
-<!-- servicios -->
+<!-- Servicios (Candy Bar) -->
 <section class="home-section">
     <div class="section-head">
         <h2>Servicios</h2>
-        <a href="{{ url_for('cliente.servicios') }}" class="section-link">Ver servicios →</a>
+        <a href="{{ url_for('cliente_views.servicios') }}" class="section-link">Ver servicios →</a>
     </div>
     <div class="services-grid">
         <article class="card">
-            <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M5 8h12v8a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V8Z"/><path d="M17 10h1a2 2 0 0 1 0 4h-1M8 4h.01M12 4h.01M16 4h.01"/></svg></span>
+            <span class="card-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>
+            </span>
             <h3>Bebidas</h3>
             <p>Refrescos, jugos y bebidas calientes para acompañar tu función.</p>
         </article>
         <article class="card">
-            <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M5 8h14l-2 12H7L5 8Z"/><path d="m4 8 2-4 3 2 2-3 3 3 3-2 3 4M9 11v5m3-5v5m3-5v5"/></svg></span>
+            <span class="card-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a2 2 0 0 0 0-4 2 2 0 0 0-4 0 2 2 0 0 0-4 0 2 2 0 0 0 0 4"/><path d="M6 8v11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"/></svg>
+            </span>
             <h3>Pochoclos</h3>
             <p>Pochoclos clásicos y especiales para disfrutar en sala.</p>
         </article>
         <article class="card">
-            <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="8"/><path d="m8 6 2 3-2 2 3 2-1 4m5-12-1 3 3 2-2 3m-9-1 2 1m5-6h.01m-2 7h.01"/></svg></span>
+            <span class="card-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 14a4 4 0 1 1 4-4 4 4 0 0 1-4 4Z"/></svg>
+            </span>
             <h3>Snacks</h3>
             <p>Snacks y acompañamientos para una experiencia más completa.</p>
         </article>
         <article class="card">
-            <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="m4 15 1.5-5h13L20 15v4h-2v-2H6v2H4v-4Z"/><path d="m6 10 1.5-4h9l1.5 4M7 14h.01M17 14h.01"/></svg></span>
+            <span class="card-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>
+            </span>
             <h3>Estacionamiento</h3>
             <p>Zona de estacionamiento.</p>
         </article>
         <article class="card">
-            <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="9" r="5"/><path d="m9 13-1 8 4-2 4 2-1-8m-3-7 .8 1.6 1.7.2-1.3 1.2.3 1.7-1.5-.8-1.5.8.3-1.7-1.3-1.2 1.7-.2L12 6Z"/></svg></span>
+            <span class="card-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </span>
             <h3>Acceso VIP</h3>
             <p>Zona de espera previa a la película con souvenir temático de regalo.</p>
         </article>
     </div>
 </section>
 
-<!-- peliculas de hoy -->
+<!-- Películas de hoy -->
 <section class="home-section">
     <div class="section-head">
         <h2>Hoy en Paradiso</h2>
-        <a href="{{ url_for('cliente.cartelera') }}" class="section-link">Ver todas →</a>
+        <a href="{{ url_for('cliente_views.cartelera') }}" class="section-link">Ver todas →</a>
     </div>
     <div class="movies-grid">
-        <a href="{{ url_for('cliente.cartelera') }}" class="movie-item">
-            <img src="{{ url_for('static', filename='img/volver-al-futuro.jpg') }}" alt="">
-            <div><strong>Volver al Futuro</strong><span>116 min</span></div>
+        {% for pelicula in peliculas_hoy|default([]) %}
+        <a href="{{ url_for('cliente_views.detalle_pelicula', pelicula_id=pelicula.id) }}" class="movie-item">
+            {% if pelicula.afiche_url %}
+            <img src="{{ pelicula.afiche_url }}" alt="{{ pelicula.titulo }}">
+            {% else %}
+            <div class="movie-poster-placeholder">▧</div>
+            {% endif %}
+            <div><strong>{{ pelicula.titulo }}</strong><span>{{ pelicula.duracion_minutos }} min</span></div>
         </a>
-        <a href="{{ url_for('cliente.cartelera') }}" class="movie-item">
-            <img src="{{ url_for('static', filename='img/el-rey-leon.jpg') }}" alt="">
-            <div><strong>El Rey León</strong><span>88 min</span></div>
-        </a>
-        <a href="{{ url_for('cliente.cartelera') }}" class="movie-item">
-            <img src="{{ url_for('static', filename='img/terminator-2.jpg') }}" alt="">
-            <div><strong>Terminator 2</strong><span>137 min</span></div>
-        </a>
-        <a href="{{ url_for('cliente.cartelera') }}" class="movie-item">
-            <img src="{{ url_for('static', filename='img/club-de-la-pelea.jpg') }}" alt="">
-            <div><strong>El Club de la Pelea</strong><span>139 min</span></div>
-        </a>
+        {% else %}
+        <p class="text-muted">No hay funciones programadas para el día de hoy.</p>
+        {% endfor %}
     </div>
 </section>
 
-<!-- proximos estrenos -->
+<!-- Próximos estrenos -->
 <section class="home-section">
     <div class="section-head">
         <h2>Próximos estrenos</h2>
-        <a href="{{ url_for('cliente.cartelera') }}" class="section-link">Ver estrenos →</a>
+        <a href="{{ url_for('cliente_views.cartelera') }}" class="section-link">Ver estrenos →</a>
     </div>
     <div class="upcoming-grid">
+        {% for estreno in proximos_estrenos|default([]) %}
         <article class="movie-item card">
-            <img src="{{ url_for('static', filename='img/spider-man.jpg') }}" alt="">
-            <div><strong>Spider-Man</strong><span class="date">6 de noviembre</span></div>
+            {% if estreno.afiche_url %}
+            <img src="{{ estreno.afiche_url }}" alt="{{ estreno.titulo }}">
+            {% else %}
+            <div class="movie-poster-placeholder">▧</div>
+            {% endif %}
+            <div><strong>{{ estreno.titulo }}</strong><span class="date">{{ estreno.disponible_desde }}</span></div>
         </article>
-        <article class="movie-item card">
-            <img src="{{ url_for('static', filename='img/toy-story.jpg') }}" alt="">
-            <div><strong>Toy Story</strong><span class="date">13 de noviembre</span></div>
-        </article>
+        {% else %}
+        <p class="text-muted">No hay próximos estrenos cargados por el momento.</p>
+        {% endfor %}
     </div>
 </section>
 
 {% endblock %}
+
+{% block scripts %}{% endblock %}

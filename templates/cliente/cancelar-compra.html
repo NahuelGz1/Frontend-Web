@@ -8,7 +8,7 @@
 <section class="cancelacion-page" aria-labelledby="cancelacion-titulo">
     <header class="cancelacion-heading">
         <nav class="cancelacion-breadcrumb" aria-label="Migas de pan">
-            <a href="{{ url_for('cliente.cartelera') }}">Cartelera</a>
+            <a href="{{ url_for('cliente_views.cartelera') }}">Cartelera</a>
             <span aria-hidden="true">/</span>
             <span>Cancelar compra</span>
         </nav>
@@ -64,8 +64,8 @@
                 <p>No podrás usar estas entradas después de cancelar.</p>
             </div>
             <div class="cancelacion-acciones">
-                <a class="cancelacion-btn cancelacion-btn--secondary" href="{{ url_for('cliente.mi_perfil') }}">Conservar compra</a>
-                <form method="post" action="{{ url_for('cliente.cancelar_reserva', reserva_id=reserva.id|default(42, true)) }}">
+                <a class="cancelacion-btn cancelacion-btn--secondary" href="{{ url_for('cliente_views.mi_perfil') }}">Conservar compra</a>
+                <form method="post" action="{{ url_for('cliente_views.cancelar_reserva', reserva_id=reserva.id|default(42, true)) }}">
                     {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token }}">{% endif %}
                     <button class="cancelacion-btn cancelacion-btn--danger" type="submit" name="accion" value="cancelar">Sí, cancelar compra</button>
                 </form>
@@ -86,7 +86,7 @@
                     <p>Combo dúo y Nachos con cheddar cancelados.</p>
                     <p>La cancelación no implica una confirmación de reintegro.</p>
                 </div>
-                <a class="cancelacion-btn cancelacion-btn--secondary" href="{{ url_for('cliente.mi_perfil') }}">Volver a mis compras</a>
+                <a class="cancelacion-btn cancelacion-btn--secondary" href="{{ url_for('cliente_views.mi_perfil') }}">Volver a mis compras</a>
             </article>
 
             <article class="cancelacion-estado" aria-labelledby="vencida-titulo">
@@ -100,7 +100,7 @@
                 </div>
                 <div class="cancelacion-acciones cancelacion-acciones--vencida">
                     <button class="cancelacion-btn cancelacion-btn--disabled" type="button" disabled>Cancelar compra - Bloqueada</button>
-                    <a class="cancelacion-btn cancelacion-btn--secondary" href="{{ url_for('cliente.mi_perfil') }}">Conservar compra</a>
+                    <a class="cancelacion-btn cancelacion-btn--secondary" href="{{ url_for('cliente_views.mi_perfil') }}">Conservar compra</a>
                 </div>
             </article>
         </div>
@@ -112,3 +112,5 @@
     </aside>
 </section>
 {% endblock %}
+
+{% block scripts %}{% endblock %}

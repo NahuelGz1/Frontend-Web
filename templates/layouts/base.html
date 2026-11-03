@@ -16,17 +16,19 @@
 <header class="site-header">
 
     <!-- logo a la izquierda -->
-    <a href="{{ url_for('cliente.cartelera') }}" class="brand">
-        <span class="brand-icon" aria-hidden="true">▧</span>
+    <a href="{{ url_for('cliente_views.inicio') }}" class="brand">
+        <span class="brand-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+        </span>
         <span>Cine Paradiso</span>
     </a>
 
     <!-- links del menu central (inicio, cartelera, servicios) -->
     {% block header_nav %}
-    <nav class="nav-links" aria-label="Navegación principal">
-        <a href="{{ url_for('cliente.cartelera') }}">Inicio</a>
-        <a href="{{ url_for('cliente.cartelera') }}">Cartelera</a>
-        <a href="{{ url_for('cliente.servicios') }}">Servicios</a>
+    <nav class="nav-links" id="nav-menu" aria-label="Navegación principal">
+        <a href="{{ url_for('cliente_views.inicio') }}">Inicio</a>
+        <a href="{{ url_for('cliente_views.cartelera') }}">Cartelera</a>
+        <a href="{{ url_for('cliente_views.servicios') }}">Servicios</a>
     </nav>
     {% endblock %}
 
@@ -34,11 +36,11 @@
     {% block header_user %}
     <div>
         {% if current_user is defined and current_user and current_user.is_authenticated %}
-        <a href="{{ url_for('cliente.mi_perfil') }}" class="user-avatar" title="Mi Perfil">
+        <a href="{{ url_for('cliente_views.mi_perfil') }}" class="user-avatar" title="Mi Perfil">
             {{ current_user.nombre[:2]|upper }}
         </a>
         {% else %}
-        <a href="{{ url_for('auth.iniciar_sesion') }}" class="btn-primary">
+        <a href="{{ url_for('auth_views.iniciar_sesion') }}" class="btn-primary">
             Iniciar sesión
         </a>
         {% endif %}
@@ -53,9 +55,9 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     {% for category, message in messages %}
-    <div class="flash-alert {{ category }}">
+    <div class="flash-alert alert {{ category }}">
         <span>{{ message }}</span>
-        <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; cursor:pointer;">✕</button>
+        <button class="alert-close" style="background:none; border:none; color:inherit; cursor:pointer;">✕</button>
     </div>
     {% endfor %}
     {% endif %}
@@ -68,16 +70,43 @@
 </main>
 
 <!-- pie de pagina publico -->
-<footer class="site-footer">
-    <p>© 2026 Cine Paradiso · Todos los derechos reservados.</p>
-    <div style="display:flex; gap:1rem;">
-        <a href="{{ url_for('cliente.cartelera') }}">Cartelera</a>
-        <a href="{{ url_for('cliente.servicios') }}">Servicios</a>
+{% block footer %}
+<footer class="site-footer" style="display: flex; flex-direction: column; gap: 1.5rem; padding: 2rem 1rem; background-color: #1a1a1a; border-top: 1px solid #2a2a2a;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="{{ url_for('cliente_views.inicio') }}" class="brand" style="display: flex; align-items: center; gap: 0.5rem; font-weight: bold; font-size: 1.2rem; text-decoration: none; color: white;">
+                <span class="brand-icon" style="background: #a83232; padding: 0.4rem; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+                </span>
+                <span>Cine Paradiso</span>
+            </a>
+            <span style="color: #888; font-size: 0.9rem;">Grandes historias. Tu lugar para vivirlas.</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem;">
+            <span style="font-weight: bold; color: white; font-size: 0.95rem;">¿Necesitás ayuda?</span>
+            <a href="mailto:Asistenciacine@gmail.com" style="color: #aaa; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                Asistenciacine@gmail.com
+            </a>
+        </div>
+    </div>
+
+    <div style="border-top: 1px solid #2a2a2a; padding-top: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; color: #777; font-size: 0.85rem;">
+        <p>© 2026 Cine Paradiso. Todos los derechos reservados.</p>
+        <div style="display: flex; gap: 1.5rem;">
+            <a href="#" style="color: #777; text-decoration: none;">Términos y condiciones</a>
+            <a href="#" style="color: #777; text-decoration: none;">Privacidad</a>
+        </div>
     </div>
 </footer>
+{% endblock %}
 
 {% block modals %}{% endblock %}
+
+<!-- script global para alertas y menu hamburguesa -->
 <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+
 {% block scripts %}{% endblock %}
 </body>
 </html>

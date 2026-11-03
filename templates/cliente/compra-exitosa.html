@@ -79,24 +79,24 @@
                     <strong>Total pagado</strong>
                     <strong>{{ datos_resumen.total|default('$32.500 ARS', true) }}</strong>
                 </div>
-                <p class="compra-exitosa-operacion">Pago aprobado · Operación {{ codigo_compra }}</p>
+                <p class="compra-exitosa-operacion">Pago approved · Operación {{ codigo_compra }}</p>
             </article>
 
             <nav class="compra-exitosa-acciones" aria-label="Acciones de la compra">
                 {% if entradas %}
-                <a class="compra-exitosa-btn compra-exitosa-btn--primary" href="{{ entradas[0].qr_url|default(url_for('cliente.mi_perfil'), true) }}" download>
+                <a class="compra-exitosa-btn compra-exitosa-btn--primary" href="{{ entradas[0].qr_url|default(url_for('cliente_views.mi_perfil'), true) }}" download>
                     <span aria-hidden="true">⇩</span> Descargar entradas
                 </a>
                 {% else %}
-                <a class="compra-exitosa-btn compra-exitosa-btn--primary" href="{{ url_for('cliente.mi_perfil') }}">
+                <a class="compra-exitosa-btn compra-exitosa-btn--primary" href="{{ url_for('cliente_views.mi_perfil') }}">
                     <span aria-hidden="true">⇩</span> Descargar entradas
                 </a>
                 {% endif %}
-                <a class="compra-exitosa-btn compra-exitosa-btn--primary" href="{{ url_for('cliente.mi_perfil') }}">
+                <a class="compra-exitosa-btn compra-exitosa-btn--primary" href="{{ url_for('cliente_views.mi_perfil') }}">
                     <span aria-hidden="true">⇩</span> Descargar factura
                 </a>
-                <a class="compra-exitosa-btn compra-exitosa-btn--outline" href="{{ url_for('cliente.mi_perfil') }}">Ver mis compras</a>
-                <a class="compra-exitosa-btn compra-exitosa-btn--outline" href="{{ url_for('cliente.cancelar_compra') }}">Cancelar compra</a>
+                <a class="compra-exitosa-btn compra-exitosa-btn--outline" href="{{ url_for('cliente_views.mi_perfil') }}">Ver mis compras</a>
+                <a class="compra-exitosa-btn compra-exitosa-btn--outline" href="{{ url_for('cliente_views.cancelar_compra') }}">Cancelar compra</a>
             </nav>
         </div>
 
@@ -153,3 +153,5 @@
     </div>
 </section>
 {% endblock %}
+
+{% block scripts %}{% endblock %}
