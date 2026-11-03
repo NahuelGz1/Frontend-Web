@@ -9,7 +9,7 @@
 <div class="recuperar-page">
     <div class="recuperar-layout">
         <section class="recuperar-intro" aria-labelledby="recuperar-intro-titulo">
-            <a class="recuperar-back-link" href="{{ url_for('auth.iniciar_sesion') }}">
+            <a class="recuperar-back-link" href="{{ url_for('auth_views.iniciar_sesion') }}">
                 <span aria-hidden="true">←</span> Volver
             </a>
             <h1 id="recuperar-intro-titulo">Volvé a tu cuenta. El cine te espera.</h1>
@@ -24,21 +24,19 @@
                 Ingresá el correo de tu cuenta y solicitá un enlace para crear una nueva contraseña.
             </p>
 
-            <form class="recuperar-form" method="POST"
-                  action="{{ url_for('auth.recuperar_contrasena') }}">
+            <form class="recuperar-form" method="POST" action="{{ url_for('auth_views.recuperar_contrasena') }}">
                 {% if csrf_token is defined %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% endif %}
                 <label for="recuperar-email">Correo electrónico</label>
                 <div class="form-input-icon">
-                    <input id="recuperar-email" name="email" type="email"
-                           placeholder="lucia@example.com" autocomplete="email" required>
+                    <input id="recuperar-email" name="email" type="email" placeholder="lucia@example.com" autocomplete="email" required>
                     <span aria-hidden="true">✉</span>
                 </div>
                 <button class="recuperar-submit" type="submit">Enviar enlace <span aria-hidden="true">→</span></button>
             </form>
 
-            <a class="recuperar-login-link" href="{{ url_for('auth.iniciar_sesion') }}">
+            <a class="recuperar-login-link" href="{{ url_for('auth_views.iniciar_sesion') }}">
                 <span aria-hidden="true">←</span> Volver a iniciar sesión
             </a>
             <p class="recuperar-ayuda">Después de solicitarlo, revisá tu bandeja de entrada y la carpeta de spam.</p>
@@ -51,3 +49,5 @@
     </div>
 </div>
 {% endblock %}
+
+{% block scripts %}{% endblock %}
