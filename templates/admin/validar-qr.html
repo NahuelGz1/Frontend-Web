@@ -33,7 +33,7 @@
         <h2>{{ validacion.funcion.pelicula_titulo }}</h2>
         <div class="qr-show-details">
             <p><strong>Estado:</strong> <span class="qr-show-state {{ 'is-active' if validacion.funcion.activa else 'is-inactive' }}">{{ 'Activa' if validacion.funcion.activa else 'Inactiva' }}</span></p>
-            <p><strong>Fecha y hora:</strong> {{ validacion.funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</p>
+            <p><strong>Fecha y hora:</strong> {{ validacion.funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') if validacion.funcion.fecha_hora is defined and validacion.funcion.fecha_hora.strftime else validacion.funcion.fecha_hora }}</p>
             <p><strong>Sala:</strong> {{ validacion.funcion.complejo_nombre }} · {{ validacion.funcion.sala_nombre }}</p>
             <p><strong>Butacas:</strong> {{ validacion.butacas_texto }}</p>
         </div>
@@ -74,12 +74,12 @@
                 </div>
                 <span>El lector de cámara se integrará en una etapa posterior.</span>
             </div>
-            <form method="post" action="{{ url_for('admin_views.validar_qr') }}">
+            <form id="form-validar-qr" method="post" action="{{ url_for('admin_views.validar_qr') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                 <input type="hidden" name="modo" value="{{ modo_actual }}">
                 <div class="form-field">
                     <label for="qr-identifier">Identificador del QR</label>
-                    <input class="form-control" id="qr-identifier" name="identificador" type="text" autocomplete="off" required>
+                    <input class="form-control" id="qr-identifier" name="codigo_qr" type="text" autocomplete="off" required>
                 </div>
                 <button class="btn btn-primary" type="submit">Validar identificador</button>
             </form>
@@ -139,7 +139,7 @@
         {% if modo_actual == 'entrada' %}
         {% for ingreso in entradas_registradas %}
         <article class="qr-log-entry">
-            <p class="text-muted">{{ ingreso.fecha_hora.strftime('%d/%m/%Y · %H:%M') }} · {{ ingreso.administrador }}</p>
+            <p class="text-muted">{{ ingreso.fecha_hora.strftime('%d/%m/%Y · %H:%M') if ingreso.fecha_hora is defined and ingreso.fecha_hora.strftime else ingreso.fecha_hora }} · {{ ingreso.administrador }}</p>
             <p>{{ ingreso.detalle }}</p>
         </article>
         {% else %}
@@ -148,7 +148,7 @@
         {% else %}
         {% for entrega in servicios_registrados %}
         <article class="qr-log-entry">
-            <p class="text-muted">{{ entrega.fecha_hora.strftime('%d/%m/%Y · %H:%M') }} · {{ entrega.administrador }}</p>
+            <p class="text-muted">{{ entrega.fecha_hora.strftime('%d/%m/%Y · %H:%M') if entrega.fecha_hora is defined and entrega.fecha_hora.strftime else entrega.fecha_hora }} · {{ entrega.administrador }}</p>
             <p>{{ entrega.detalle }}</p>
         </article>
         {% else %}
@@ -177,3 +177,5 @@
     </section>
 </section>
 {% endblock %}
+
+{% block scripts %}{% endblock %}
