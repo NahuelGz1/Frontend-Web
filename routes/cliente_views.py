@@ -10,7 +10,14 @@ def inicio():
 
 @cliente_views_bp.route("/cartelera")
 def cartelera():
-    return render_template("cliente/cartelera.html")
+    status_code, respuesta = consumir_api("GET", "/peliculas/cartelera")
+
+    peliculas = []
+    if status_code == 200:
+        peliculas = respuesta.get("data", [])
+
+    return render_template("cliente/cartelera.html", peliculas=peliculas)
+
 
 @cliente_views_bp.route("/pelicula/", defaults={"id": 1})
 @cliente_views_bp.route("/pelicula/<int:id>")
