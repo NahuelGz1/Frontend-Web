@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for, flash
 from services.api_client import consumir_api
 
 
@@ -7,6 +7,8 @@ cliente_views_bp = Blueprint("cliente_views", __name__)
 @cliente_views_bp.route("/")
 def inicio():
     return render_template("cliente/inicio.html")
+
+
 
 @cliente_views_bp.route("/cartelera")
 def cartelera():
@@ -22,6 +24,8 @@ def cartelera():
 
     return render_template("cliente/cartelera.html", peliculas=peliculas)
 
+
+
 @cliente_views_bp.route("/pelicula/", defaults={"id": 1, "pelicula_id": 1})
 @cliente_views_bp.route("/pelicula/<int:id>")
 @cliente_views_bp.route("/pelicula/<int:pelicula_id>")
@@ -29,14 +33,21 @@ def detalle_pelicula(id=1, pelicula_id=None):
     pelicula_id = pelicula_id or id
     status_code, respuesta = consumir_api("GET", f"/peliculas/{pelicula_id}")
 
-    pelicula = {}
-    if status_code == 200:
-        pelicula = respuesta.get("data") or {}
+    # Si no se encuentra (404) o hubo error en el backend
+    if status_code != 200:
+        mensaje_error = respuesta.get("error", {}).get("message", "Película no encontrada.")
+        flash(mensaje_error, "danger")
+        return redirect(url_for("cliente_views.cartelera"))
+
+    pelicula = respuesta.get("data") or {}
 
     if not pelicula.get("poster_url"):
         pelicula["poster_url"] = pelicula.get("poster")
 
     return render_template("cliente/detalle-pelicula.html", pelicula=pelicula)
+
+
+
 
 @cliente_views_bp.route("/seleccion-funcion")
 def seleccion_funcion():
