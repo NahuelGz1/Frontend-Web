@@ -11,12 +11,23 @@ def inicio():
     peliculas = []
     if status_code == 200:
         peliculas = respuesta.get("data") or []
-    for p in peliculas:
-        if not p.get("afiche_url"):
-            p["afiche_url"] = p.get("poster")
-        if not p.get("duracion_minutos"):
-            p["duracion_minutos"] = p.get("duracion")
-    return render_template("cliente/inicio.html",peliculas_hoy=peliculas)
+
+    # Normalizamos los nombres de campos que espera inicio.html
+    for peli in peliculas:
+        if not peli.get("afiche_url"):
+            p["afiche_url"] = peli.get("poster")
+        if not peli.get("duracion_minutos"):
+            peli["duracion_minutos"] = peli.get("duracion")
+
+    # La primera pelicula como destacada, las demas para la grilla de hoy
+    pelicula_destacada = peliculas[0] if peliculas else None
+    peliculas_hoy = peliculas[1:] if len(peliculas) > 1 else peliculas
+    return render_template(
+        "cliente/inicio.html",
+        pelicula_destacada=pelicula_destacada,
+        peliculas_hoy=peliculas_hoy,
+        proximos_estrenos=[]
+)
 
 
 
