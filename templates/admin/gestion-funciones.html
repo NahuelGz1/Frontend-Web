@@ -74,7 +74,7 @@
                 <div class="function-actions">
                     <span class="badge {{ 'badge-success' if funcion.activa else 'badge-danger' }}">{{ 'Activa' if funcion.activa else 'Inactiva' }}</span>
                     <a class="btn" href="{{ url_for('admin_views.funciones', editar=funcion.id) }}">Editar</a>
-                    <form method="post" action="{{ url_for('admin_views.funciones') }}">
+                    <form method="post" action="{{ url_for('admin_views.funciones') }}" data-confirm-delete="¿Estás seguro de que deseas cambiar el estado de esta función?">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="cambiar_estado">
                         <input type="hidden" name="funcion_id" value="{{ funcion.id }}">
@@ -202,3 +202,5 @@
 
 </section>
 {% endblock %}
+
+{% block scripts %}{% endblock %}

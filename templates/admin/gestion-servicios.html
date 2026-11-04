@@ -46,7 +46,7 @@
                         <input type="hidden" name="servicio_id" value="{{ servicio.id }}">
                         <button class="btn" type="submit">{{ 'Dar de baja' if servicio.activo else 'Activar' }}</button>
                     </form>
-                    <form method="post" action="{{ url_for('admin_views.servicios') }}">
+                    <form method="post" action="{{ url_for('admin_views.servicios') }}" data-confirm-delete="¿Estás seguro de que deseas eliminar este servicio del catálogo?">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="eliminar">
                         <input type="hidden" name="servicio_id" value="{{ servicio.id }}">
@@ -74,14 +74,15 @@
             </div>
             <div class="service-image-field">
                 {% if servicio_actual and servicio_actual.imagen_url %}
-                <img class="service-image service-image-preview" src="{{ servicio_actual.imagen_url }}" alt="Imagen de {{ servicio_actual.nombre }}">
+                <img class="service-image service-image-preview" id="service-preview-img" src="{{ servicio_actual.imagen_url }}" alt="Imagen de {{ servicio_actual.nombre }}">
                 {% else %}
-                <div class="service-image service-image-preview" role="img" aria-label="Imagen no disponible">🍿</div>
+                <img class="service-image service-image-preview" id="service-preview-img" src="" alt="Vista previa de servicio" style="display:none;">
+                <div class="service-image service-image-preview" id="service-preview-placeholder" role="img" aria-label="Imagen no disponible">🍿</div>
                 {% endif %}
                 <div class="form-field">
                     <span>Imagen actual</span>
                     <label class="btn" for="service-image-file">Cambiar imagen</label>
-                    <input id="service-image-file" name="imagen" type="file" accept="image/png,image/jpeg" hidden>
+                    <input id="service-image-file" name="imagen" type="file" accept="image/png,image/jpeg" data-preview-target="service-preview-img" hidden>
                     <span class="text-muted">JPG o PNG · Máximo 5 MB</span>
                 </div>
             </div>
@@ -115,3 +116,5 @@
     </div>
 </section>
 {% endblock %}
+
+{% block scripts %}{% endblock %}

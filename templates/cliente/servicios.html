@@ -7,6 +7,7 @@
 {% set contexto = contexto_compra|default(none) %}
 {% set entrada = contexto.entrada|default(none) if contexto else none %}
 {% set entradas_asociadas = contexto.cantidad_entradas|default(entrada.cantidad|default(1, true), true)|int if entrada else 0 %}
+
 {% if not lista_servicios %}
 {% set lista_servicios = [
 {'id': 'gaseosa-grande', 'categoria': 'Bebidas', 'nombre': 'Gaseosa grande', 'descripcion': 'Vaso de 750 ml · Cola o lima limón', 'precio': 2500, 'precio_formateado': '$2.500'},
@@ -19,6 +20,7 @@
 {'id': 'acceso-vip', 'categoria': 'Mejoras de experiencia', 'nombre': 'Acceso VIP', 'descripcion': 'Zona de espera previa con souvenir temático', 'precio': 0, 'precio_formateado': 'Consultar'}
 ] %}
 {% endif %}
+
 {% set categorias = [
 {'nombre': 'Bebidas', 'slug': 'bebidas', 'detalle': 'Bebidas frías, para acompañar tu función.'},
 {'nombre': 'Pochoclos', 'slug': 'pochoclos', 'detalle': 'Recién hechos. Elegí entre dulces o salados.'},
@@ -29,9 +31,9 @@
 <section class="services-page" aria-labelledby="services-title">
     <div class="services-breadcrumb">
         {% if entrada %}
-        <a href="{{ url_for('cliente.cartelera') }}">Películas</a><span>/</span><span>Funciones</span><span>/</span><span>Butacas</span><span>/</span><strong>Servicios</strong><span>/</span><span>Pago</span>
+        <a href="{{ url_for('cliente_views.cartelera') }}">Películas</a><span>/</span><span>Funciones</span><span>/</span><span>Butacas</span><span>/</span><strong>Servicios</strong><span>/</span><span>Pago</span>
         {% else %}
-        <a href="{{ url_for('cliente.inicio') }}">Inicio</a><span>/</span><strong>Servicios</strong><span>/</span><span>Pago</span>
+        <a href="{{ url_for('cliente_views.inicio') }}">Inicio</a><span>/</span><strong>Servicios</strong><span>/</span><span>Pago</span>
         {% endif %}
     </div>
 
@@ -52,22 +54,22 @@
         <div class="services-promo-image" role="img" aria-label="Espacio reservado para la imagen promocional"></div>
     </div>
 
-    <div class="services-layout">
+    <div class="services-layout" id="servicios-contenedor">
         <div class="services-catalog">
             {% for categoria in categorias %}
             <section class="service-category" aria-labelledby="category-{{ loop.index }}">
                 <header class="service-category-heading">
-					<span class="service-category-icon" aria-hidden="true">
-						{% if categoria.slug == 'bebidas' %}
-						<svg viewBox="0 0 24 24"><path d="M5 8h12v8a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V8Zm12 2h1a2 2 0 0 1 0 4h-1M8 4h.01M12 4h.01M16 4h.01"/></svg>
-						{% elif categoria.slug == 'pochoclos' %}
-						<svg viewBox="0 0 24 24"><path d="M5 8h14l-2 12H7L5 8Zm-1 0 2-4 3 2 3-3 3 3 3-2 3 4M9 11v5m3-5v5m3-5v5"/></svg>
-						{% elif categoria.slug == 'snacks' %}
-						<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m8 6 2 3-2 2 3 2-1 4m5-12-1 3 3 2-2 3m-9-1 2 1m5-6h.01"/></svg>
-						{% else %}
-						<svg viewBox="0 0 24 24"><path d="M4 15 6 9h12l2 6v4h-2v-2H6v2H4v-4Zm2-6 2-4h8l2 4M7 13h.01M17 13h.01"/></svg>
-						{% endif %}
-					</span>
+                    <span class="service-category-icon" aria-hidden="true">
+                        {% if categoria.slug == 'bebidas' %}
+                        <svg viewBox="0 0 24 24"><path d="M5 8h12v8a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V8Zm12 2h1a2 2 0 0 1 0 4h-1M8 4h.01M12 4h.01M16 4h.01"/></svg>
+                        {% elif categoria.slug == 'pochoclos' %}
+                        <svg viewBox="0 0 24 24"><path d="M5 8h14l-2 12H7L5 8Zm-1 0 2-4 3 2 3-3 3 3 3-2 3 4M9 11v5m3-5v5m3-5v5"/></svg>
+                        {% elif categoria.slug == 'snacks' %}
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m8 6 2 3-2 2 3 2-1 4m5-12-1 3 3 2-2 3m-9-1 2 1m5-6h.01"/></svg>
+                        {% else %}
+                        <svg viewBox="0 0 24 24"><path d="M4 15 6 9h12l2 6v4h-2v-2H6v2H4v-4Zm2-6 2-4h8l2 4M7 13h.01M17 13h.01"/></svg>
+                        {% endif %}
+                    </span>
                     <div>
                         <h2 id="category-{{ loop.index }}">{{ categoria.nombre }}</h2>
                         <p>{{ categoria.detalle }}</p>
@@ -84,7 +86,7 @@
                     {% set nombre_normalizado = servicio.nombre|lower %}
                     {% set requiere_entrada = servicio.requiere_entrada|default(('estacionamiento' in nombre_normalizado or 'vip' in nombre_normalizado), true) %}
                     {% set limite_cantidad = entradas_asociadas if 'estacionamiento' in nombre_normalizado else 9999 %}
-                    <article class="service-product" data-service-card data-service-id="{{ servicio.id|default(servicio.nombre|lower|replace(' ', '-'), true) }}" data-service-name="{{ servicio.nombre }}" data-price="{{ precio }}" data-requires-ticket="{{ 'true' if requiere_entrada else 'false' }}" data-max-quantity="{{ limite_cantidad }}">
+                    <article class="service-product servicio-card" data-precio="{{ precio }}" data-service-card data-service-id="{{ servicio.id|default(servicio.nombre|lower|replace(' ', '-'), true) }}" data-service-name="{{ servicio.nombre }}" data-requires-ticket="{{ 'true' if requiere_entrada else 'false' }}" data-max-quantity="{{ limite_cantidad }}">
                         {% if servicio.imagen_url|default('', true) %}
                         <img class="service-product-image" src="{{ servicio.imagen_url }}" alt="Imagen de {{ servicio.nombre }}" loading="lazy">
                         {% else %}
@@ -95,12 +97,12 @@
                             <p>{{ servicio.descripcion|default('', true) }}</p>
                             <strong>{{ servicio.precio_formateado|default('$ ' ~ precio|string, true) }}</strong>
                         </div>
-                        <div class="service-product-controls">
-                            <button class="service-add-button" type="button" data-add aria-label="Agregar {{ servicio.nombre }}" {% if requiere_entrada and not entrada %}disabled title="Disponible solo con una entrada"{% endif %}>Agregar <span aria-hidden="true">+</span></button>
+                        <div class="service-product-controls controles-cantidad">
+                            <button class="service-add-button btn-sumar" type="button" data-add aria-label="Agregar {{ servicio.nombre }}" {% if requiere_entrada and not entrada %}disabled title="Disponible solo con una entrada"{% endif %}>Agregar <span aria-hidden="true">+</span></button>
                             <div class="service-quantity" data-quantity-controls hidden>
-                                <button type="button" data-decrease aria-label="Quitar una unidad de {{ servicio.nombre }}">−</button>
-                                <output data-quantity>0</output>
-                                <button type="button" data-increase aria-label="Agregar una unidad de {{ servicio.nombre }}">+</button>
+                                <button type="button" class="btn-restar" data-decrease aria-label="Quitar una unidad de {{ servicio.nombre }}">−</button>
+                                <output class="input-cantidad" data-quantity>0</output>
+                                <button type="button" class="btn-sumar" data-increase aria-label="Agregar una unidad de {{ servicio.nombre }}">+</button>
                             </div>
                             {% if requiere_entrada and not entrada %}<small class="service-requirement">Requiere entrada</small>{% elif 'estacionamiento' in nombre_normalizado %}<small class="service-requirement">Máx. {{ entradas_asociadas }} por entrada</small>{% endif %}
                         </div>
@@ -125,7 +127,7 @@
             </div>
             <div class="service-order-total">
                 <strong>Total de servicios</strong>
-                <strong data-service-total>$0</strong>
+                <strong id="total-servicios" data-service-total>$0</strong>
             </div>
             <p class="service-order-note">Precios en pesos argentinos. Retirá el pedido en el complejo de tu función.</p>
             <button class="service-checkout-button" type="button" data-checkout disabled>Continuar al pago</button>
@@ -177,112 +179,11 @@
             <p>El importe final se confirma antes de completar el pago.</p>
         </div>
         <button class="service-context-checkout" type="button" data-checkout-secondary disabled>Continuar al pago</button>
-        <a class="service-context-back" href="{{ url_for('cliente.cartelera') }}">Seguir explorando películas</a>
+        <a class="service-context-back" href="{{ url_for('cliente_views.cartelera') }}">Seguir explorando películas</a>
     </section>
 </section>
 {% endblock %}
 
 {% block scripts %}
-{% set contexto_script = contexto_compra|default(none) %}
-{% set entrada_script = contexto_script.entrada|default(none) if contexto_script else none %}
-{% set entradas_script = contexto_script.cantidad_entradas|default(entrada_script.cantidad|default(1, true), true)|int if entrada_script else 0 %}
-<script>
-    (() => {
-        const cards = [...document.querySelectorAll('[data-service-card]')];
-        const cartItems = document.querySelector('[data-cart-items]');
-        const cartEmpty = document.querySelector('[data-cart-empty]');
-        const purchaseLines = document.querySelector('[data-purchase-lines]');
-        const purchaseEmpty = document.querySelector('[data-purchase-empty]');
-        const totalNodes = document.querySelectorAll('[data-service-total], [data-service-total-summary]');
-        const purchaseTotal = document.querySelector('[data-purchase-total]');
-        const ticketTotalNode = document.querySelector('[data-ticket-total-display]');
-        const countNode = document.querySelector('[data-cart-count]');
-        const checkoutButtons = document.querySelectorAll('[data-checkout], [data-checkout-secondary]');
-        const checkoutMessage = document.querySelector('[data-checkout-message]');
-        const ticketTotal = Number('{{ contexto_script.total_entradas|default(0, true)|int if contexto_script else 0 }}');
-        const ticketCount = {{ entradas_script }};
-        const quantities = new Map();
-        const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
-
-        const renderCart = () => {
-            cartItems.querySelectorAll('[data-cart-line]').forEach((line) => line.remove());
-            purchaseLines.querySelectorAll('[data-purchase-line]').forEach((line) => line.remove());
-            let total = 0;
-            let count = 0;
-
-            cards.forEach((card) => {
-                const id = card.dataset.serviceId;
-                const quantity = quantities.get(id) || 0;
-                const maxQuantity = Number(card.dataset.maxQuantity);
-                const requiresTicket = card.dataset.requiresTicket === 'true';
-                const canPurchase = !requiresTicket || ticketCount > 0;
-                const quantityOutput = card.querySelector('[data-quantity]');
-                const quantityControls = card.querySelector('[data-quantity-controls]');
-                const addButton = card.querySelector('[data-add]');
-                const increaseButton = card.querySelector('[data-increase]');
-                quantityOutput.value = quantity;
-                quantityControls.hidden = quantity === 0;
-                addButton.hidden = quantity > 0;
-                addButton.disabled = !canPurchase || maxQuantity === 0;
-                increaseButton.disabled = !canPurchase || quantity >= maxQuantity;
-                if (!quantity) return;
-
-                const price = Number(card.dataset.price) || 0;
-                const lineTotal = price * quantity;
-                total += lineTotal;
-                count += quantity;
-
-                const line = document.createElement('div');
-                line.className = 'service-cart-line';
-                line.dataset.cartLine = '';
-                const name = document.createElement('span');
-                name.textContent = `${card.dataset.serviceName} × ${quantity}`;
-                const amount = document.createElement('strong');
-                amount.textContent = price ? currency.format(lineTotal) : 'Consultar';
-                line.append(name, amount);
-                cartItems.append(line);
-
-                const summaryLine = document.createElement('div');
-                summaryLine.className = 'service-summary-line';
-                summaryLine.dataset.purchaseLine = '';
-                const summaryName = document.createElement('span');
-                summaryName.textContent = `${card.dataset.serviceName} × ${quantity}`;
-                const summaryAmount = document.createElement('strong');
-                summaryAmount.textContent = price ? currency.format(lineTotal) : 'Consultar';
-                summaryLine.append(summaryName, summaryAmount);
-                purchaseLines.append(summaryLine);
-            });
-
-            cartEmpty.hidden = count > 0;
-            purchaseEmpty.hidden = count > 0;
-            totalNodes.forEach((node) => { node.textContent = currency.format(total); });
-            ticketTotalNode.textContent = currency.format(ticketTotal);
-            purchaseTotal.textContent = currency.format(ticketTotal + total);
-            countNode.textContent = `${count} ${count === 1 ? 'artículo' : 'artículos'}`;
-            checkoutButtons.forEach((button) => { button.disabled = count === 0; });
-        };
-
-        cards.forEach((card) => {
-            const id = card.dataset.serviceId;
-            const change = (amount) => {
-                const requiresTicket = card.dataset.requiresTicket === 'true';
-                const maxQuantity = Number(card.dataset.maxQuantity);
-                if (requiresTicket && ticketCount === 0) return;
-                quantities.set(id, Math.max(0, Math.min(maxQuantity, (quantities.get(id) || 0) + amount)));
-                renderCart();
-            };
-            card.querySelector('[data-add]').addEventListener('click', () => change(1));
-            card.querySelector('[data-increase]').addEventListener('click', () => change(1));
-            card.querySelector('[data-decrease]').addEventListener('click', () => change(-1));
-        });
-
-        checkoutButtons.forEach((button) => {
-            button.addEventListener('click', () => {
-                checkoutMessage.textContent = 'Tu selección está lista. El pago se habilitará al integrar el checkout.';
-            });
-        });
-
-        renderCart();
-    })();
-</script>
+<script src="{{ url_for('static', filename='js/servicios.js') }}"></script>
 {% endblock %}

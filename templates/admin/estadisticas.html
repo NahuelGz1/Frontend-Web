@@ -70,7 +70,7 @@
             <article class="stats-show-row">
                 <div class="stats-show-name">
                     <h3>{{ funcion.pelicula_titulo }}</h3>
-                    <p>{{ funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</p>
+                    <p>{{ funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') if funcion.fecha_hora is defined and funcion.fecha_hora.strftime else funcion.fecha_hora }}</p>
                     <p>{{ funcion.complejo_nombre }} · {{ funcion.sala_nombre }}</p>
                 </div>
                 <div class="stats-show-occupancy">
@@ -197,7 +197,7 @@
             {% for funcion in lista_cancelaciones %}
             <article>
                 <h3>{{ funcion.pelicula_titulo }} · {{ funcion.complejo_nombre }} · {{ funcion.sala_nombre }}</h3>
-                <p>{{ funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</p>
+                <p>{{ funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') if funcion.fecha_hora is defined and funcion.fecha_hora.strftime else funcion.fecha_hora }}</p>
                 <strong>{{ funcion.entradas_canceladas }} canceladas / {{ funcion.entradas_emitidas }} emitidas · {{ funcion.tasa_cancelacion }}%</strong>
             </article>
             {% else %}
@@ -212,3 +212,5 @@
     </section>
 </section>
 {% endblock %}
+
+{% block scripts %}{% endblock %}

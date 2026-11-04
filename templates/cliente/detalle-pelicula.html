@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
 
 {% block title %}Detalle de película · Cine Paradiso{% endblock %}
 
@@ -6,7 +6,7 @@
 
 <!-- ruta de navegacion y titulo -->
 <p class="breadcrumb">
-    <a href="{{ url_for('cliente.cartelera') }}">Cartelera</a> / Detalle de película y funciones
+    <a href="{{ url_for('cliente_views.cartelera') }}">Cartelera</a> / Detalle de película y funciones
 </p>
 <h1>Detalle de película y funciones</h1>
 <p class="subtitulo">Elegí el complejo, la fecha y el horario de tu próxima función.</p>
@@ -43,55 +43,57 @@
         <div class="form-field">
             <label for="complejo">Complejo</label>
             <select id="complejo" name="complejo">
-                <option>Paradiso Centro</option>
-                <option>Paradiso Norte</option>
-                <option>Paradiso Sur</option>
+                <option value="Paradiso Centro">Paradiso Centro</option>
+                <option value="Paradiso Norte">Paradiso Norte</option>
+                <option value="Paradiso Sur">Paradiso Sur</option>
             </select>
         </div>
         <div class="form-field">
             <label for="fecha">Fecha</label>
             <select id="fecha" name="fecha">
-                <option>Viernes 30/10/2026</option>
-                <option>Sábado 31/10/2026</option>
-                <option>Domingo 01/11/2026</option>
+                <option value="30/10/2026">Viernes 30/10/2026</option>
+                <option value="31/10/2026">Sábado 31/10/2026</option>
+                <option value="01/11/2026">Domingo 01/11/2026</option>
             </select>
         </div>
     </div>
 
-    <!-- botones rapidos de complejo -->
     <div class="chips">
-        <button type="button" class="chip active">Centro</button>
-        <button type="button" class="chip">Norte</button>
-        <button type="button" class="chip">Sur</button>
+        <button type="button" class="chip active" data-complejo="Paradiso Centro">Centro</button>
+        <button type="button" class="chip" data-complejo="Paradiso Norte">Norte</button>
+        <button type="button" class="chip" data-complejo="Paradiso Sur">Sur</button>
     </div>
-    <p class="nota">Paradiso Norte y Paradiso Sur: nombres de ejemplo.</p>
 
     <hr class="separador">
 
-    <!-- funcion seleccionada -->
-    <article class="funcion-card seleccionada">
-        <span class="badge">Seleccionada</span>
-        <h3>30/10/2026 · 19:30</h3>
-        <p>Paradiso Centro · Sala 1 · 80 butacas</p>
-        <p>2D · Subtitulada · 20 disponibles de 80</p>
-        <p>Entrada: $10.000 ARS</p>
-        <!-- cambiar el # por la ruta de butacas cuando exista -->
-        <a href="#" class="btn-primary">Elegir butacas</a>
-    </article>
+    <!-- contenedor de tarjetas filtrables por JS -->
+    <div id="funciones-contenedor">
+        <p id="sin-funciones-msg" style="display: none;" class="nota">No hay funciones disponibles para la combinación elegida.</p>
 
-    <!-- otra funcion disponible -->
-    <article class="funcion-card">
-        <h3>30/10/2026 · 21:30</h3>
-        <p>Paradiso Norte · Sala 1 · 60 butacas</p>
-        <p>2D · Subtitulada · 30 disponibles de 60 · $10.000 ARS</p>
-        <button type="button" class="btn-secondary">Seleccionar función</button>
-    </article>
+        <!-- funcion seleccionada -->
+        <article class="funcion-card seleccionada" data-complejo="Paradiso Centro" data-fecha="30/10/2026">
+            <span class="badge" data-badge>Seleccionada</span>
+            <h3>30/10/2026 · 19:30</h3>
+            <p>Paradiso Centro · Sala 1 · 80 butacas</p>
+            <p>2D · Subtitulada · 20 disponibles de 80</p>
+            <p>Entrada: $10.000 ARS</p>
+            <a href="{{ url_for('cliente_views.elegir_butacas', funcion_id=1) }}" class="btn-primary" data-btn-accion>Elegir butacas</a>
+        </article>
+
+        <!-- otra funcion disponible -->
+        <article class="funcion-card" data-complejo="Paradiso Norte" data-fecha="30/10/2026">
+            <span class="badge" data-badge style="display: none;">Seleccionada</span>
+            <h3>30/10/2026 · 21:30</h3>
+            <p>Paradiso Norte · Sala 1 · 60 butacas</p>
+            <p>2D · Subtitulada · 30 disponibles de 60 · $10.000 ARS</p>
+            <a href="{{ url_for('cliente_views.elegir_butacas', funcion_id=2) }}" class="btn-secondary" data-btn-accion>Seleccionar función</a>
+        </article>
+    </div>
 </section>
 
 <!-- otros estados posibles -->
 <section class="home-section">
     <h2>Otros estados de disponibilidad</h2>
-    <p class="nota">Variantes independientes del selector anterior.</p>
 
     <div class="estados-grid">
         <article class="card funcion-card">
@@ -113,4 +115,8 @@
     </div>
 </section>
 
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cartelera.js') }}"></script>
 {% endblock %}

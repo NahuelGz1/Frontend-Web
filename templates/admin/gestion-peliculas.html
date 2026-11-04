@@ -4,6 +4,7 @@
 {% block breadcrumb %}Películas{% endblock %}
 
 {% block content %}
+{% set filtros = filtros|default({'buscar': ''}) %}
 {% set lista_peliculas = peliculas|default([]) %}
 {% set pelicula_actual = pelicula_editar|default(none) %}
 <section aria-labelledby="movie-page-title">
@@ -44,7 +45,7 @@
                         <input type="hidden" name="pelicula_id" value="{{ pelicula.id }}">
                         <button class="btn" type="submit">{{ 'Retirar de cartelera' if pelicula.activa else 'Activar' }}</button>
                     </form>
-                    <form method="post" action="{{ url_for('admin_views.peliculas') }}">
+                    <form method="post" action="{{ url_for('admin_views.peliculas') }}" data-confirm-delete="¿Estás seguro de que deseas eliminar esta película del catálogo?">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="eliminar">
                         <input type="hidden" name="pelicula_id" value="{{ pelicula.id }}">
@@ -77,14 +78,15 @@
 
                 <div class="poster-field">
                     {% if pelicula_actual and pelicula_actual.afiche_url %}
-                    <img class="poster poster-preview" src="{{ pelicula_actual.afiche_url }}" alt="Afiche de {{ pelicula_actual.titulo }}">
+                    <img class="poster poster-preview" id="poster-preview-img" src="{{ pelicula_actual.afiche_url }}" alt="Afiche de {{ pelicula_actual.titulo }}">
                     {% else %}
-                    <div class="poster poster-preview" role="img" aria-label="Sin afiche disponible"></div>
+                    <img class="poster poster-preview" id="poster-preview-img" src="" alt="Vista previa de afiche" style="display:none;">
+                    <div class="poster poster-preview" id="poster-preview-placeholder" role="img" aria-label="Sin afiche disponible"></div>
                     {% endif %}
                     <div class="form-field">
                         <span>Afiche actual</span>
                         <label class="btn" for="movie-poster-file">Cambiar imagen</label>
-                        <input id="movie-poster-file" name="afiche" type="file" accept="image/png,image/jpeg" hidden>
+                        <input id="movie-poster-file" name="afiche" type="file" accept="image/png,image/jpeg" data-preview-target="poster-preview-img" hidden>
                         <span class="text-muted">JPG o PNG · Máximo 5 MB</span>
                     </div>
                 </div>
@@ -159,3 +161,5 @@
     </div>
 </section>
 {% endblock %}
+
+{% block scripts %}{% endblock %}

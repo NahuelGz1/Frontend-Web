@@ -10,18 +10,26 @@
 {% block header_nav %}{% endblock %}
 
 {% block content %}
+{% set datos_funcion = funcion|default({}) %}
+{% set pelicula = datos_funcion.pelicula|default({}) %}
+{% set sala = datos_funcion.sala|default({}) %}
+{% set error_m = error_mapa|default(none) %}
+{% set error_s = error_seleccion|default(none) %}
+{% set lista_filas = filas|default([]) %}
+{% set selec = seleccionadas|default([]) %}
+
 <section class="compra compra--asientos" aria-labelledby="asientos-titulo">
-    <a class="compra-volver" href="{{ url_for('cliente.cartelera') }}">
+    <a class="compra-volver" href="{{ url_for('cliente_views.cartelera') }}">
         <img src="{{ url_for('static', filename='images/compra-volver.svg') }}" alt="" width="16" height="16">
         Volver a cartelera
     </a>
 
     <header class="compra-encabezado">
-        <h1 id="asientos-titulo">Elegir butacas · {{ funcion.sala.nombre }}</h1>
-        <h2 class="asientos-pelicula">{{ funcion.pelicula.titulo }}</h2>
+        <h1 id="asientos-titulo">Elegir butacas · {{ sala.nombre|default('Sala 1') }}</h1>
+        <h2 class="asientos-pelicula">{{ pelicula.titulo|default('Volver al Futuro') }}</h2>
         <p>
-            <time datetime="{{ funcion.fecha }}">{{ funcion.fecha }}</time>
-            · <time class="compra-horario" datetime="{{ funcion.horario }}">{{ funcion.horario }}</time>
+            <time datetime="{{ datos_funcion.fecha|default('') }}">{{ datos_funcion.fecha|default('Viernes 30/10/2026') }}</time>
+            · <time class="compra-horario" datetime="{{ datos_funcion.horario|default('') }}">{{ datos_funcion.horario|default('19:30') }}</time>
         </p>
     </header>
 
@@ -34,60 +42,60 @@
         </ol>
     </nav>
 
-    {% if error_mapa %}
+    {% if error_m %}
     <div class="compra-estado compra-estado--error" role="alert">
         <h2>No pudimos cargar las butacas</h2>
-        <p>{{ error_mapa }}</p>
+        <p>{{ error_m }}</p>
     </div>
     {% else %}
-    {% set butacas = filas|map(attribute='butacas')|sum(start=[]) %}
+    {% set butacas = lista_filas|map(attribute='butacas')|sum(start=[]) %}
     {% set disponibles = butacas|rejectattr('ocupada')|list %}
     {% if butacas %}
     <form class="asientos-formulario" method="POST"
-          action="{{ url_for('cliente.elegir_butacas', funcion_id=funcion.id) }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          action="{{ url_for('cliente_views.elegir_butacas', funcion_id=datos_funcion.id|default(1)) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
 
-        {% if error_seleccion %}
+        {% if error_s %}
         <div class="compra-estado compra-estado--error" id="asientos-error" role="alert">
             <h2>Revisá tu selección</h2>
-            <p>{{ error_seleccion }}</p>
+            <p>{{ error_s }}</p>
         </div>
         {% endif %}
 
         <fieldset class="asientos-campo"
-                  aria-describedby="asientos-ayuda{% if error_seleccion %} asientos-error{% endif %}">
+                  aria-describedby="asientos-ayuda{% if error_s %} asientos-error{% endif %}">
             <legend>Seleccioná tus butacas</legend>
             <p class="compra-aviso" id="asientos-ayuda">
                 Marcá una o más butacas libres. Para quitar una selección, volvé a marcarla.
-                Si el plano no entra en la pantalla, desplazalo horizontalmente.
             </p>
 
-            <div class="asientos-plano" role="region" aria-label="Plano de la sala" tabindex="0">
+            <div class="asientos-plano" id="mapa-butacas" role="region" aria-label="Plano de la sala" tabindex="0">
                 <div class="asientos-distribucion">
                     <p class="asientos-pantalla">Pantalla</p>
                     <table class="asientos-mapa">
                         <caption class="asientos-solo-lectores">Butacas por fila y número</caption>
                         <tbody>
-                            {% for fila in filas %}
-                            <tr>
-                                <th scope="row"><span class="asientos-solo-lectores">Fila </span>{{ fila.nombre }}</th>
-                                {% for butaca in fila.butacas %}
-                                <td>
-                                    <div class="asiento">
-                                        <input type="checkbox" name="butacas" id="butaca-{{ butaca.id }}"
-                                               value="{{ butaca.id }}"
-                                               {% if butaca.ocupada %}disabled{% elif butaca.id in seleccionadas %}checked{% endif %}>
-                                        <label for="butaca-{{ butaca.id }}">
-                                            <span aria-hidden="true">{{ butaca.numero }}</span>
-                                            <span class="asientos-solo-lectores">
+                        {% for fila in lista_filas %}
+                        <tr>
+                            <th scope="row"><span class="asientos-solo-lectores">Fila </span>{{ fila.nombre }}</th>
+                            {% for butaca in fila.butacas %}
+                            <td>
+                                <div class="asiento">
+                                    <input type="checkbox" name="butacas" id="butaca-{{ butaca.id }}"
+                                           value="{{ butaca.id }}"
+                                           data-precio="{{ datos_funcion.precio|default(10000) }}"
+                                           {% if butaca.ocupada %}disabled{% elif butaca.id in selec %}checked{% endif %}>
+                                    <label for="butaca-{{ butaca.id }}">
+                                        <span aria-hidden="true">{{ butaca.numero }}</span>
+                                        <span class="asientos-solo-lectores">
                                                 Fila {{ fila.nombre }}, butaca {{ butaca.numero }}{% if butaca.ocupada %}, ocupada{% endif %}
                                             </span>
-                                        </label>
-                                    </div>
-                                </td>
-                                {% endfor %}
-                            </tr>
+                                    </label>
+                                </div>
+                            </td>
                             {% endfor %}
+                        </tr>
+                        {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -102,14 +110,13 @@
 
         <section class="asientos-continuacion" aria-labelledby="asientos-seleccion-titulo">
             <h2 id="asientos-seleccion-titulo">Tu selección</h2>
+            <p>Butacas elegidas: <strong id="cant-butacas">0</strong> · Total entradas: <strong id="total-precio-butacas">$0</strong></p>
             {% if disponibles %}
             <p>En el siguiente paso vas a revisar tus entradas y elegir los servicios adicionales.</p>
             {% else %}
             <p role="status">No quedan butacas libres para esta función. Volvé a cartelera para elegir otra.</p>
             {% endif %}
-            <p class="compra-aviso">La disponibilidad y el importe se confirman en el servidor. Marcar una butaca no la reserva.</p>
-            <button type="submit" class="btn-primary compra-continuar"
-                    {% if not disponibles %}disabled{% endif %}>
+            <button type="submit" id="btn-continuar-pago" class="btn-primary compra-continuar" disabled>
                 Continuar a servicios y pago
             </button>
         </section>
@@ -122,4 +129,8 @@
     {% endif %}
     {% endif %}
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/mapa_asientos.js') }}"></script>
 {% endblock %}
