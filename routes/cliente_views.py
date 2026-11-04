@@ -88,9 +88,19 @@ def mapa_asientos():
 def elegir_butacas():
     return render_template("cliente/elegir-butacas.html")
 
+
+
 @cliente_views_bp.route("/servicios")
 def servicios():
-    return render_template("cliente/servicios.html")
+    status_code, respuesta = consumir_api("GET", "/servicios")
+    
+    lista_servicios = []
+    if status_code == 200:
+        lista_servicios = respuesta.get("data") or []
+
+    return render_template("cliente/servicios.html", servicios=lista_servicios)
+
+
 
 @cliente_views_bp.route("/pagar")
 def pagar():
