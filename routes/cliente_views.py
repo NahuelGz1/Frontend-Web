@@ -6,7 +6,17 @@ cliente_views_bp = Blueprint("cliente_views", __name__)
 
 @cliente_views_bp.route("/")
 def inicio():
-    return render_template("cliente/inicio.html")
+    status_code, respuesta = consumir_api("GET", "/peliculas/cartelera")
+    
+    peliculas = []
+    if status_code == 200:
+        peliculas = respuesta.get("data") or []
+    for p in peliculas:
+        if not p.get("afiche_url"):
+            p["afiche_url"] = p.get("poster")
+        if not p.get("duracion_minutos"):
+            p["duracion_minutos"] = p.get("duracion")
+    return render_template("cliente/inicio.html",peliculas_hoy=peliculas)
 
 
 
