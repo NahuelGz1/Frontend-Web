@@ -26,10 +26,16 @@ def cartelera():
 
 
 
-@cliente_views_bp.route("/pelicula/", defaults={"id": 1, "pelicula_id": 1})
+# Si entran a la ruta vacia sin ID (con o sin barra al final), los mandamos a la cartelera
+@cliente_views_bp.route("/pelicula")
+@cliente_views_bp.route("/pelicula/")
+def detalle_pelicula_vacia():
+    return redirect(url_for("cliente_views.cartelera"))
+
+# Las rutas que esperan si o si un ID de película
 @cliente_views_bp.route("/pelicula/<int:id>")
 @cliente_views_bp.route("/pelicula/<int:pelicula_id>")
-def detalle_pelicula(id=1, pelicula_id=None):
+def detalle_pelicula(id=None, pelicula_id=None):
     pelicula_id = pelicula_id or id
     status_code, respuesta = consumir_api("GET", f"/peliculas/{pelicula_id}")
 
