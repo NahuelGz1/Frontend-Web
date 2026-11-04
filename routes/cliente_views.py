@@ -1,4 +1,6 @@
 from flask import Blueprint, render_template
+from services.api_client import consumir_api
+
 
 cliente_views_bp = Blueprint("cliente_views", __name__)
 
