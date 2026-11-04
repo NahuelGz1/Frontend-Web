@@ -22,10 +22,21 @@ def cartelera():
 
     return render_template("cliente/cartelera.html", peliculas=peliculas)
 
-@cliente_views_bp.route("/pelicula/", defaults={"id": 1})
+@cliente_views_bp.route("/pelicula/", defaults={"id": 1, "pelicula_id": 1})
 @cliente_views_bp.route("/pelicula/<int:id>")
-def detalle_pelicula(id):
-    return render_template("cliente/detalle-pelicula.html")
+@cliente_views_bp.route("/pelicula/<int:pelicula_id>")
+def detalle_pelicula(id=1, pelicula_id=None):
+    pelicula_id = pelicula_id or id
+    status_code, respuesta = consumir_api("GET", f"/peliculas/{pelicula_id}")
+
+    pelicula = {}
+    if status_code == 200:
+        pelicula = respuesta.get("data") or {}
+
+    if not pelicula.get("poster_url"):
+        pelicula["poster_url"] = pelicula.get("poster")
+
+    return render_template("cliente/detalle-pelicula.html", pelicula=pelicula)
 
 @cliente_views_bp.route("/seleccion-funcion")
 def seleccion_funcion():
