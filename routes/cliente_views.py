@@ -98,6 +98,25 @@ def servicios():
     if status_code == 200:
         lista_servicios = respuesta.get("data") or []
 
+    for servicio in lista_servicios:
+        nombre = servicio.get("nombre", "").lower()
+        
+        if not servicio.get("categoria"):
+            if "pochoclo" in nombre or "combo" in nombre:
+                servicio["categoria"] = "pochoclos"
+
+            elif "agua" in nombre or "gaseosa" in nombre or "bebida" in nombre:
+                servicio["categoria"] = "bebidas"
+
+            elif "estacionamiento" in nombre or "vip" in nombre:
+                servicio["categoria"] = "mejoras de experiencia"
+                
+            else:
+                servicio["categoria"] = "snacks"
+
+        if not servicio.get("precio_formateado") and "precio" in servicio:
+            servicio["precio_formateado"] = f"${int(servicio['precio']):,}".replace(",", ".")
+
     return render_template("cliente/servicios.html", servicios=lista_servicios)
 
 
