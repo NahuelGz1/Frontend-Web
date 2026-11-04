@@ -14,10 +14,13 @@ def cartelera():
 
     peliculas = []
     if status_code == 200:
-        peliculas = respuesta.get("data", [])
+        peliculas = respuesta.get("data") or []
+
+    for pelicula in peliculas:
+        if not pelicula.get("poster_url"):
+            pelicula["poster_url"] = pelicula.get("poster")
 
     return render_template("cliente/cartelera.html", peliculas=peliculas)
-
 
 @cliente_views_bp.route("/pelicula/", defaults={"id": 1})
 @cliente_views_bp.route("/pelicula/<int:id>")
