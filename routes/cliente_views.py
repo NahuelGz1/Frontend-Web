@@ -15,7 +15,7 @@ def inicio():
     # Normalizamos los nombres de campos que espera inicio.html
     for peli in peliculas:
         if not peli.get("afiche_url"):
-            p["afiche_url"] = peli.get("poster")
+            peli["afiche_url"] = peli.get("poster")
         if not peli.get("duracion_minutos"):
             peli["duracion_minutos"] = peli.get("duracion")
 
