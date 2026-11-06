@@ -31,6 +31,12 @@
             <h1 id="cambiar-contrasena-titulo">Cambiar contraseña</h1>
             <p class="cambiar-contrasena-descripcion">Ingresá tu contraseña actual y elegí una nueva para tu cuenta.</p>
 
+            {% if error %}
+                <p role="alert" class="mensaje-error">
+                    {{ error }}
+                </p>
+            {% endif %}
+
             <form class="cambiar-contrasena-form" method="POST" action="{{ url_for('auth_views.cambiar_contrasena') }}">
                 {% if csrf_token is defined %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
