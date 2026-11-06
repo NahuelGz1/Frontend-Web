@@ -1,5 +1,87 @@
 # Frontend-Web
 
+## Autenticacion integrada — Subtask 3.1.1
+
+Issue: [NahuelGz1/Backend_Api#67](https://github.com/NahuelGz1/Backend_Api/issues/67).
+Rama en ambos repositorios: `feature/subtask_3.1.1`.
+Se conservan los repositorios separados: este repositorio es el frontend.
+No se crean carpetas `frontend/` anidadas ni se agrega SQL aqui.
+
+Las vistas en [routes/auth_views.py](routes/auth_views.py) envian los formularios
+POST a [services/auth_service.py](services/auth_service.py), que usa el cliente
+sincrono [services/api_client.py](services/api_client.py) basado en `requests`,
+con timeout, sin seguir redirecciones y validando el formato JSON.
+
+| Vista | API consumida | Resultado |
+| --- | --- | --- |
+| `/auth/registrarse` | POST `/api/auth/register` | 201: redirige al login |
+| `/auth/iniciar-sesion` | POST `/api/auth/login` | 200: sesion y redireccion por rol |
+| `/auth/recuperar-contrasena` | POST `/api/auth/forgot-password` | Mensaje generico y envio por correo desde backend |
+| `/auth/restablecer-contrasena` | POST `/api/auth/reset-password` | Nueva clave mediante enlace temporal |
+| `/auth/cerrar-sesion` | POST `/api/auth/logout` | Borra sesion local; GET solo muestra confirmacion |
+
+Las respuestas de formularios exitosos usan HTTP 303 (POST/Redirect/GET).
+Errores de validacion se muestran sin conservar contraseñas en el HTML.
+`nombre` y `apellido` se combinan para el campo `nombre` de la API (100 caracteres
+en total). El registro nunca envia un rol elegido por el navegador.
+Las claves nuevas deben tener de 8 a 128 caracteres.
+
+### Configuracion local
+
+1. Ejecutar `./init.sh`.
+2. Copiar `.env.example` a `.env` y configurar `SECRET_KEY` con una clave aleatoria
+   de al menos 32 caracteres; no se usa un secreto por defecto. Se puede generar
+   con `.venv/bin/python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+3. Configurar `API_BASE_URL` para el backend, incluyendo `/api`.
+4. Iniciar con `.venv/bin/python app.py` o `.venv/bin/flask --app app:create_app run --port 3000`.
+
+El backend requiere su propia clave JWT y configuracion SMTP, detalladas en su
+README. Para completar la recuperacion es necesario aplicar tambien su rama.
+
+Las sesiones se guardan en el servidor mediante Flask-Session/CacheLib en
+`instance/sessions/`, con permisos privados; la cookie contiene solo un
+identificador aleatorio, es HttpOnly y SameSite=Lax. El identificador cambia
+al iniciar sesion. El JWT nunca aparece en el HTML ni en la cookie. La duracion
+de sesion es de ocho horas. Para multiples servidores, se debe configurar
+un almacen compartido mediante `SESSION_CACHELIB` en `create_app`.
+
+En produccion usar HTTPS y `SESSION_COOKIE_SECURE=true`, proteger el directorio
+de sesiones y configurar limites de solicitudes en el proxy para login y
+recuperacion. No registrar cuerpos de formularios ni query strings con tokens.
+El enlace de recuperacion se traslada a la sesion del servidor y redirige a una
+URL limpia; las respuestas de autenticacion usan `Cache-Control: no-store` y
+`Referrer-Policy: no-referrer`.
+
+Las rutas administrativas consultan `/api/auth/usuarios/me` antes de admitir al
+usuario y exigen el rol `administrador`; el perfil exige sesion. Esto no reemplaza
+los permisos en la API. Login de cliente redirige al inicio existente; login de
+administrador al panel existente. No se implementan dashboards nuevos.
+El cambio de clave desde perfil pertenece a otra subtask y no se integra aqui.
+
+### Pruebas de autenticacion
+
+Pruebas enfocadas, sin API:
+
+```sh
+.venv/bin/python -m unittest discover -s tests -p test_auth.py -v
+```
+
+Prueba completa con backend conectado a MySQL aislado y Mailpit local:
+
+```sh
+TEST_API_URL=http://127.0.0.1:5000/api TEST_MAIL_URL=http://127.0.0.1:8025 \
+  .venv/bin/python -m unittest discover -s tests -p test_auth_integration.py -v
+```
+
+La prueba crea un usuario unico de prueba en la base usada por ese backend y
+verifica registro, login, SMTP real, enlace, cambio de hash, rechazo de la clave
+anterior, invalidacion de sesiones y rechazo de reutilizacion del enlace.
+Ejecutarla solo contra infraestructura de pruebas. No modifica cuentas existentes.
+
+La suite de maquetas anterior conserva helpers con endpoints `cliente.*`/`auth.*`,
+mientras el layout actual usa `cliente_views.*`/`auth_views.*`; presenta errores
+preexistentes `BuildError`. Esta tarea no modifica los helpers ni el flujo de compra.
+
 ## Preparacion y pruebas
 
 Con Python 3 instalado, ejecutar exclusivamente:
@@ -8,9 +90,9 @@ Con Python 3 instalado, ejecutar exclusivamente:
 ./init.sh
 ```
 
-El script crea `.venv` e instala la version de Flask declarada en
-[requirements.txt](requirements.txt), incluyendo Jinja2. No requiere claves
-ni una API para las pruebas de la maqueta.
+El script crea `.venv` e instala las dependencias declaradas en
+[requirements.txt](requirements.txt), incluyendo Flask, Jinja2, requests y sesiones.
+Las pruebas unitarias no requieren claves reales ni una API.
 
 ```sh
 .venv/bin/python -m unittest discover -s tests -v
@@ -55,10 +137,9 @@ Los enlaces usan `cliente.cartelera` y
 no crea reservas ni modifica disponibilidad. Los pasos posteriores se muestran
 como indicadores, sin enlaces que permitan saltar la seleccion.
 
-Este repositorio solo registra actualmente las rutas de administracion.
-La integracion requiere implementar los Blueprints publicos y de autenticacion
-que ya referencia el layout, ademas de la vista que obtenga las funciones desde
-la API interna y renderice esta plantilla. La ruta de butacas debe validar el
+Los Blueprints publicos, de administracion y de autenticacion ya estan registrados.
+La integracion de compra aun requiere obtener las funciones desde
+la API interna y renderizar esta plantilla. La ruta de butacas debe validar el
 identificador y consultar la disponibilidad en el servidor; ocultar un enlace
 no es una validacion. La API confirma la disponibilidad al crear la reserva.
 Esta maqueta no implementa reservas, pagos ni llamadas de red desde JavaScript.

@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash
 from services.api_client import consumir_api
+from routes.auth_security import requiere_sesion
 
 
 cliente_views_bp = Blueprint("cliente_views", __name__)
@@ -134,5 +135,6 @@ def cancelar_compra():
     return render_template("cliente/cancelar-compra.html")
 
 @cliente_views_bp.route("/mi-perfil")
+@requiere_sesion
 def mi_perfil():
     return render_template("cliente/mi-perfil.html")
