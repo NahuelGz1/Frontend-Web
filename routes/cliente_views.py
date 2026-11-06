@@ -120,6 +120,12 @@ def servicios():
     return render_template("cliente/servicios.html", servicios=lista_servicios)
 
 
+@cliente_views_bp.route("/mi-perfil")
+def mi_perfil():
+    status_code, respuesta = consumir_api("GET", "/auth/usuarios/me/perfil-completo")
+    datos_perfil = respuesta.get("data", {}) if status_code == 200 else {}
+    return render_template("cliente/mi-perfil.html", **datos_perfil)
+
 
 @cliente_views_bp.route("/pagar")
 def pagar():
@@ -132,7 +138,3 @@ def compra_exitosa():
 @cliente_views_bp.route("/cancelar-compra")
 def cancelar_compra():
     return render_template("cliente/cancelar-compra.html")
-
-@cliente_views_bp.route("/mi-perfil")
-def mi_perfil():
-    return render_template("cliente/mi-perfil.html")
