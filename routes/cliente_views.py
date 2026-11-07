@@ -133,7 +133,20 @@ def pagar():
 
 @cliente_views_bp.route("/compra-exitosa")
 def compra_exitosa():
-    return render_template("cliente/compra-exitosa.html")
+        
+    status_code, respuesta = consumir_api("GET", f"/compras/{compra_id}")
+    
+    if status_code != 200:
+        mensaje_error = respuesta.get("error", {}).get("message", "Compra no encontrada.")
+        flash(mensaje_error, "danger")
+        return redirect(url_for("cliente_views.cartelera"))
+    
+    datos = respuesta.get("data") or {}
+
+    return render_template("cliente/compra-exitosa.html", 
+                            funcion = datos.get("funcion", {}), 
+                            resumen = datos.get("resumen", {}), 
+                            entradas = datos.get("entradas", {}))       
 
 @cliente_views_bp.route("/cancelar-compra")
 def cancelar_compra():
