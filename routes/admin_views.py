@@ -26,17 +26,17 @@ def salas():
 
         consumir_api(
             "PATCH",
-            f"/funciones/salas/{sala_id}",
+            f"/salas/{sala_id}",
             datos=datos,
         )
 
     status_code, respuesta = consumir_api(
         "GET",
-        "/funciones/salas",
+        "/salas",
     )
     status_locales, respuesta_locales = consumir_api(
         "GET",
-        "/funciones/locales",
+        "/locales",
     )
 
     salas = []
@@ -78,7 +78,6 @@ def funciones():
                 "id_pelicula": int(request.form["pelicula_id"]),
                 "id_sala": int(request.form["sala_id"]),
                 "fecha_hora_proyeccion": request.form["fecha_hora"].replace("T", " ") + ":00",
-                #ajusta el formato del datetime para que sea compatible con el back
             }
 
             if funcion_id:
@@ -107,12 +106,12 @@ def funciones():
 
     status_salas, respuesta_salas = consumir_api(
         "GET",
-        "/funciones/salas",
+        "/salas",
     )
 
     status_locales, respuesta_locales = consumir_api(
         "GET",
-        "/funciones/locales",
+        "/locales",
     )
 
     status_peliculas, respuesta_peliculas = consumir_api(
