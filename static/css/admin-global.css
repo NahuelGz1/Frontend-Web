@@ -257,3 +257,17 @@ textarea.form-control { min-height: 150px; resize: vertical; }
     .stats-ring { width: 70px; }
     .stats-ring::before { width: 54px; }
 }
+
+.service-image {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.service-image-preview {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 12px;
+}

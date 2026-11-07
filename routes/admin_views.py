@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, url_for
 from services.api_client import consumir_api
 
 admin_views = Blueprint("admin_views", __name__, url_prefix="/admin")
