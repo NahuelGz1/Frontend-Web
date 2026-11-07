@@ -4636,3 +4636,28 @@ button.btn-secondary:disabled {
         grid-template-columns: 1fr;
     }
 }
+
+/* Tamaño fijo para las imágenes/íconos vectoriales */
+.icon-svg {
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Caja contenedora redondeada (como las del mockup) */
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background-color: rgba(229, 9, 20, 0.15); /* Fondo oscuro / rojizo suave */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-icon img,
+.card-icon svg {
+    width: 24px;
+    height: 24px;
+}
