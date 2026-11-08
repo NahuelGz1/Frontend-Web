@@ -87,3 +87,116 @@ def _mensaje_de_error(status_code, respuesta, por_defecto):
         return por_defecto
     return (respuesta.get("error") or {}).get("message") or por_defecto
 
+def _obtener_funcion(funcion_id):
+    status_code, respuesta = consumir_api("GET", f"/funciones/{funcion_id}", headers=_cabecera_autorizacion())
+    if status_code == 200:
+        return respuesta.get("data") or {}, None
+    if status_code == 401:
+        return None, "Tu sesión venció. Volvé a iniciar sesión para seguir con la compra."
+    if status_code == 404:
+        return None, "La función que elegiste no existe."
+    return None, _mensaje_de_error(status_code, respuesta, ERROR_GENERICO)
+
+
+def _obtener_poster(pelicula_id):
+    status_code, respuesta = consumir_api("GET", f"/peliculas/{pelicula_id}")
+    if status_code != 200:
+        return ""
+    pelicula = respuesta.get("data") or {}
+    return pelicula.get("poster_url") or pelicula.get("poster") or ""
+
+
+def _servicios_con_precio(elegidos):
+    # El precio sale del catalogo del back, no de lo que manda el navegador
+    if not elegidos:
+        return [], None, None
+    status_code, respuesta = consumir_api("GET", "/servicios")
+    if status_code != 200:
+        return None, None, "No pudimos cargar los servicios adicionales. Intentá de nuevo."
+    catalogo = {servicio["id"]: servicio for servicio in respuesta.get("data") or []}
+    servicios = []
+    for elegido in elegidos:
+        servicio = catalogo.get(elegido.get("id_servicio"))
+        cantidad = elegido.get("cantidad")
+        if servicio and isinstance(cantidad, int) and cantidad > 0:
+            servicios.append({"id_servicio": servicio["id"], "nombre": servicio["nombre"],
+                              "cantidad": cantidad, "precio": float(servicio["precio"])})
+    aviso = None
+    if len(servicios) < len(elegidos):
+        aviso = "Algún servicio que elegiste ya no está disponible y lo quitamos del resumen."
+    return servicios, aviso, None
+
+def armar_filas(butacas):
+    filas = []
+    for butaca in sorted(butacas, key=lambda b: b["numero_butaca"]):
+        numero_butaca = butaca["numero_butaca"]
+        indice_fila = (numero_butaca - 1) // BUTACAS_POR_FILA
+        while len(filas) <= indice_fila:
+            filas.append({"nombre": _nombre_fila(len(filas)), "butacas": []})
+        filas[indice_fila]["butacas"].append({
+            "id": numero_butaca,
+            "numero": _ubicacion(numero_butaca)[1],
+            "ocupada": butaca.get("estado") != "disponible",
+        })
+    return filas
+
+
+def datos_del_mapa(funcion_id):
+    vacio = {"funcion": {"id": funcion_id, "pelicula": {"titulo": ""}, "sala": {"nombre": ""},
+                         "fecha": "", "horario": ""}, "filas": []}
+    funcion, error = _obtener_funcion(funcion_id)
+    if error:
+        return {**vacio, "error_mapa": error}
+
+    fecha = _fecha_de_funcion(funcion)
+    if fecha is None or fecha <= _ahora():
+        return {**vacio, "error_mapa": "Esta función ya comenzó. Elegí otra en la cartelera."}
+
+    status_code, respuesta = consumir_api("GET", f"/funciones/{funcion_id}/butacas")
+    if status_code != 200:
+        return {**vacio, "error_mapa": _mensaje_de_error(status_code, respuesta, ERROR_GENERICO)}
+
+    dia = f"{DIAS[fecha.weekday()]} {fecha:%d/%m/%Y}"
+    return {
+        "funcion": {
+            "id": funcion_id,
+            "precio": funcion.get("precio_entrada") or 0,
+            "fecha": dia,
+            "horario": fecha.strftime("%H:%M"),
+            "pelicula": funcion.get("pelicula") or {},
+            "sala": funcion.get("sala") or {},
+        },
+        "filas": armar_filas(respuesta.get("data") or []),
+        "error_mapa": None,
+    }
+
+
+def validar_seleccion(valores, filas):
+    existentes = {butaca["id"] for fila in filas for butaca in fila["butacas"]}
+    libres = {butaca["id"] for fila in filas for butaca in fila["butacas"] if not butaca["ocupada"]}
+    elegidas = {int(valor) for valor in valores if valor.isdigit()}
+    siguen_libres = sorted(elegidas & libres)
+
+    if not valores:
+        return [], "Elegí al menos una butaca para continuar."
+    if any(not valor.isdigit() for valor in valores) or not elegidas <= existentes:
+        return siguen_libres, "Alguna de las butacas elegidas no existe en esta sala."
+    if len(elegidas) > MAXIMO_BUTACAS_POR_COMPRA:
+        return siguen_libres, f"Podés elegir hasta {MAXIMO_BUTACAS_POR_COMPRA} butacas por compra."
+    ocupadas = sorted(elegidas - libres)
+    if ocupadas:
+        etiquetas = ", ".join(etiqueta_butaca(n) for n in ocupadas)
+        return siguen_libres, f"Estas butacas ya están ocupadas: {etiquetas}. Elegí otras."
+    return sorted(elegidas), None
+
+
+def guardar_seleccion(funcion_id, butacas):
+    anterior = session.get(CLAVE_COMPRA) or {}
+    session[CLAVE_COMPRA] = {"id_funcion": funcion_id, "butacas": butacas,
+                             "servicios": anterior.get("servicios", [])}
+
+
+def seleccion_previa(funcion_id):
+    compra = session.get(CLAVE_COMPRA) or {}
+    return compra.get("butacas", []) if compra.get("id_funcion") == funcion_id else []
+
