@@ -258,3 +258,47 @@ def armar_resumen():
     }
     return {"id_funcion": compra["id_funcion"], "butacas": butacas, "servicios": servicios,
             "aviso": aviso, "vista": vista}, None
+
+def _datos_compra_exitosa(vista, compra_api):
+    entradas = []
+    for entrada in compra_api.get("entradas") or []:
+        fila, numero = _ubicacion(entrada["numero_butaca"])
+        entradas.append({
+            "fila": fila,
+            "numero": numero,
+            "codigo": entrada.get("codigo_qr_texto", ""),
+            "qr_url": f"data:image/png;base64,{entrada['qr_imagen_base64']}" if entrada.get("qr_imagen_base64") else "",
+        })
+    return {
+        "funcion": vista["funcion"],
+        "resumen": {
+            "subtotal_entradas": vista["subtotal_entradas"],
+            "servicios": vista["servicios_seleccionados"],
+            "subtotal_servicios": vista["subtotal_servicios"],
+            "total": f"${vista['total_compra']} ARS",
+        },
+        "reserva": {"id_compra": compra_api.get("id_compra"),
+                    "codigo": f"CP-{compra_api.get('id_compra')}", "entradas": entradas},
+    }
+
+
+def confirmar_compra(resumen):
+    cuerpo = {
+        "id_funcion": resumen["id_funcion"],
+        "butacas": resumen["butacas"],
+        "servicios": [{"id_servicio": s["id_servicio"], "cantidad": s["cantidad"], "precio": s["precio"]}
+                      for s in resumen["servicios"]],
+    }
+    status_code, respuesta = consumir_api("POST", "/compras", datos=cuerpo, headers=_cabecera_autorizacion())
+    if not 200 <= status_code < 300:
+        # Si el back rechaza los datos (por ejemplo una butaca ya vendida) hay que volver al mapa
+        mensaje = _mensaje_de_error(status_code, respuesta, "No pudimos confirmar la compra. Intentá de nuevo en unos minutos.")
+        return False, mensaje, 400 <= status_code < 500 and status_code != 401
+    session[CLAVE_COMPRA_CONFIRMADA] = _datos_compra_exitosa(resumen["vista"], respuesta.get("data") or {})
+    session.pop(CLAVE_COMPRA, None)
+    return True, None, False
+
+
+def id_compra_confirmada():
+    return ((session.get(CLAVE_COMPRA_CONFIRMADA) or {}).get("reserva") or {}).get("id_compra")
+
