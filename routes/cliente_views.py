@@ -160,9 +160,39 @@ def mi_perfil():
     return render_template("cliente/mi-perfil.html", **datos_perfil)
 
 
-@cliente_views_bp.route("/pagar")
+@cliente_views_bp.route("/pagar", methods=["GET", "POST"])
 def pagar():
-    return render_template("cliente/pagar.html")
+    if not compra_service.hay_sesion_iniciada():
+        return _pedir_inicio_de_sesion()
+
+    resumen, error = compra_service.armar_resumen()
+    if error:
+        flash(error, "warning")
+        funcion_id = compra_service.funcion_en_curso()
+        if funcion_id:
+            return redirect(url_for("cliente_views.elegir_butacas", funcion_id=funcion_id))
+        return redirect(url_for("cliente_views.cartelera"))
+    if resumen["aviso"]:
+        flash(resumen["aviso"], "warning")
+
+    if request.method == "POST":
+        if not compra_service.csrf_valido(request.form.get("csrf_token")):
+            flash("El formulario venció. Revisá el resumen y confirmá de nuevo.", "warning")
+            return redirect(url_for("cliente_views.pagar"))
+        exito, mensaje, elegir_de_nuevo = compra_service.confirmar_compra(resumen)
+        if exito:
+            return redirect(url_for("cliente_views.compra_exitosa", compra_id=compra_service.id_compra_confirmada()))
+        flash(mensaje, "danger")
+        if elegir_de_nuevo:
+            return redirect(url_for("cliente_views.elegir_butacas", funcion_id=resumen["id_funcion"]))
+        return redirect(url_for("cliente_views.pagar"))
+
+    return render_template(
+        "cliente/pagar.html",
+        **resumen["vista"],
+        email_usuario=compra_service.email_del_usuario(),
+        csrf_token=compra_service.token_csrf(),
+    )
 
 @cliente_views_bp.route("/compra-exitosa")
 def compra_exitosa():
