@@ -200,3 +200,61 @@ def seleccion_previa(funcion_id):
     compra = session.get(CLAVE_COMPRA) or {}
     return compra.get("butacas", []) if compra.get("id_funcion") == funcion_id else []
 
+def funcion_en_curso():
+    return (session.get(CLAVE_COMPRA) or {}).get("id_funcion")
+
+
+def email_del_usuario():
+    usuario = session.get("usuario") or {}
+    if usuario.get("email"):
+        return usuario["email"]
+    status_code, respuesta = consumir_api("GET", "/auth/usuarios/me", headers=_cabecera_autorizacion())
+    return (respuesta.get("data") or {}).get("email", "") if status_code == 200 else ""
+
+
+def armar_resumen():
+    compra = session.get(CLAVE_COMPRA) or {}
+    if not compra.get("id_funcion") or not compra.get("butacas"):
+        return None, "Primero elegí una función y tus butacas."
+
+    funcion, error = _obtener_funcion(compra["id_funcion"])
+    if error:
+        return None, error
+    fecha = _fecha_de_funcion(funcion)
+    if fecha is None or fecha <= _ahora():
+        return None, "Esta función ya comenzó. Elegí otra en la cartelera."
+
+    servicios, aviso, error = _servicios_con_precio(compra.get("servicios") or [])
+    if error:
+        return None, error
+    compra["servicios"] = [{"id_servicio": s["id_servicio"], "cantidad": s["cantidad"]} for s in servicios]
+    session[CLAVE_COMPRA] = compra
+
+    butacas = compra["butacas"]
+    precio_entrada = float(funcion.get("precio_entrada") or 0)
+    subtotal_entradas = precio_entrada * len(butacas)
+    subtotal_servicios = sum(s["precio"] * s["cantidad"] for s in servicios)
+    pelicula = funcion.get("pelicula") or {}
+    sala = funcion.get("sala") or {}
+
+    vista = {
+        "funcion": {
+            "pelicula": {"titulo": pelicula.get("titulo", ""), "poster_url": _obtener_poster(pelicula.get("id"))},
+            "fecha": f"{DIAS[fecha.weekday()]}, {fecha.day} de {MESES[fecha.month - 1]} de {fecha.year}",
+            "horario": fecha.strftime("%H:%M"),
+            "complejo": sala.get("local", ""),
+            "sala": sala.get("nombre", ""),
+            "butacas": _texto_butacas(butacas),
+        },
+        "cantidad_entradas": len(butacas),
+        "precio_entrada": formatear_precio(precio_entrada),
+        "subtotal_entradas": formatear_precio(subtotal_entradas),
+        "servicios_seleccionados": [
+            {"nombre": f"{s['nombre']} x{s['cantidad']}", "subtotal": formatear_precio(s["precio"] * s["cantidad"])}
+            for s in servicios
+        ],
+        "subtotal_servicios": formatear_precio(subtotal_servicios),
+        "total_compra": _numero_con_puntos(subtotal_entradas + subtotal_servicios),
+    }
+    return {"id_funcion": compra["id_funcion"], "butacas": butacas, "servicios": servicios,
+            "aviso": aviso, "vista": vista}, None
