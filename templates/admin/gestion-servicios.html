@@ -39,7 +39,7 @@
                 <p class="service-price">{{ servicio.precio_formateado }}</p>
                 <span class="badge {% if servicio.activo is sameas true %}badge-success{% elif servicio.activo is sameas false %}badge-danger{% endif %}">{{ 'Activo' if servicio.activo is sameas true else 'Inactivo' if servicio.activo is sameas false else 'Estado no informado' }}</span>
                 <div class="list-actions">
-                    <a class="btn" href="{{ url_for('admin_views.servicios', editar=servicio.id) }}">Editar</a>
+                    <a class="btn" href="{{ url_for('admin_views.servicios', editar=servicio.id) }}#formulario-servicio">Editar</a>
                     <form method="post" action="{{ url_for('admin_views.servicios') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="cambiar_estado">
@@ -61,7 +61,7 @@
     </section>
     <div class="flash-alert movie-notice" role="status" aria-live="polite" {% if not mensaje %}hidden{% endif %}>{{ mensaje|default('') }}</div>
 
-    <div class="workspace-grid" {% if not servicio_actual and not request.args.get('crear') %}hidden{% endif %}>
+    <div id="formulario-servicio" class="workspace-grid" {% if not servicio_actual and not request.args.get('crear') and not mensaje %}hidden{% endif %}>
     <section class="panel" aria-labelledby="service-edit-title">
         <h2 id="service-edit-title">{{ 'Editar servicio' if servicio_actual else 'Agregar servicio' }}</h2>
         <form method="post" action="{{ url_for('admin_views.servicios') }}" enctype="multipart/form-data">

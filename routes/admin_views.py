@@ -1,6 +1,10 @@
-from flask import Blueprint, render_template, request, url_for
+import secrets
+from flask import Blueprint, render_template, request, url_for, redirect, session
 from services.api_client import consumir_api
 from services.gestion_servicios_service import obtener_servicios
+from services.gestion_servicios_service import crear_servicio
+from services.gestion_servicios_service import actualizar_servicio
+from services.gestion_servicios_service import desactivar_servicio
 
 admin_views = Blueprint("admin_views", __name__, url_prefix="/admin")
 
@@ -147,12 +151,108 @@ def funciones():
         ),
     )
 
-@admin_views.route("/servicios")
+
+@admin_views.route("/servicios", methods=["GET", "POST"])
 def servicios():
-    """
-    Obtiene los servicios del backend y los muestra
-    en la pantalla de administración.
-    """
+    mensaje = None
+
+    csrf_actual = session.get("csrf_servicios")
+
+    if not csrf_actual:
+        csrf_actual = secrets.token_urlsafe(32)
+        session["csrf_servicios"] = csrf_actual
+
+    if request.method == "POST":
+
+        csrf_recibido = request.form.get("csrf_token", "")
+
+        if not secrets.compare_digest(csrf_recibido, csrf_actual):
+            mensaje = "Formulario inválido. Recargá la página."
+
+        else:
+            accion = request.form.get("accion")
+            servicio_id = request.form.get("servicio_id", "").strip()
+            token = session.get("token")
+
+            if accion == "guardar":
+
+                nombre = request.form.get("nombre", "").strip()
+                descripcion = request.form.get("descripcion", "").strip()
+
+                try:
+                    precio = float(request.form.get("precio", ""))
+                except (ValueError, TypeError):
+                    precio = 0
+
+                imagen = request.files.get("imagen")
+
+                if servicio_id and not servicio_id.isdigit():
+                    mensaje = "El ID del servicio no es válido."
+
+                elif not nombre or not descripcion or precio <= 0:
+                    mensaje = "Completá correctamente todos los campos."
+
+                elif precio >= 100000000:
+                    mensaje = "El precio ingresado es demasiado grande."
+
+                elif request.form.get("activo") == "0":
+                    mensaje = "Para desactivar un servicio, usá el botón Dar de baja."
+
+                elif imagen and imagen.filename:
+                    mensaje = "La API todavía no admite imágenes de servicios."
+
+                elif not token:
+                    mensaje = "Debés iniciar sesión como administrador."
+
+                else:
+                    if servicio_id:
+                        estado, respuesta = actualizar_servicio(
+                            token,
+                            servicio_id,
+                            nombre,
+                            descripcion,
+                            precio
+                        )
+                    else:
+                        estado, respuesta = crear_servicio(
+                            token,
+                            nombre,
+                            descripcion,
+                            precio
+                        )
+
+                    if estado in (200, 201) and respuesta.get("ok"):
+                        return redirect(url_for("admin_views.servicios"))
+
+                    mensaje = respuesta.get("error", {}).get(
+                        "message",
+                        "No se pudo guardar el servicio."
+                    )
+
+            elif accion in ("cambiar_estado", "eliminar"):
+
+                if not servicio_id.isdigit():
+                    mensaje = "El ID del servicio no es válido."
+
+                elif not token:
+                    mensaje = "Debés iniciar sesión como administrador."
+
+                else:
+                    estado, respuesta = desactivar_servicio(
+                        token,
+                        servicio_id
+                    )
+
+                    if estado == 200 and respuesta.get("ok"):
+                        return redirect(url_for("admin_views.servicios"))
+
+                    mensaje = respuesta.get("error", {}).get(
+                        "message",
+                        "No se pudo desactivar el servicio."
+                    )
+
+            else:
+                mensaje = "Acción no reconocida."
 
     estado, respuesta = obtener_servicios()
 
@@ -160,15 +260,20 @@ def servicios():
         return render_template(
             "admin/gestion-servicios.html",
             servicios=[],
-            mensaje="No se pudieron cargar los servicios."
+            servicio_editar=None,
+            mensaje=mensaje or "No se pudieron cargar los servicios.",
+            csrf_token=csrf_actual
         ), 502
 
     lista_servicios = respuesta.get("data") or []
 
     for servicio in lista_servicios:
-        servicio["precio_formateado"] = f"$ {servicio['precio']:.2f}"
+        precio = float(servicio["precio"])
+
+        servicio["precio_formateado"] = f"$ {precio:.2f}"
+
         servicio["activo"] = True
-        
+
     servicio_editar = None
     id_editar = request.args.get("editar", type=int)
 
@@ -185,8 +290,11 @@ def servicios():
     return render_template(
         "admin/gestion-servicios.html",
         servicios=lista_servicios,
-        servicio_editar=servicio_editar
+        servicio_editar=servicio_editar,
+        mensaje=mensaje,
+        csrf_token=csrf_actual
     )
+
 
 @admin_views.route("/validar-qr")
 def validar_qr():
