@@ -168,10 +168,24 @@ def servicios():
     for servicio in lista_servicios:
         servicio["precio_formateado"] = f"$ {servicio['precio']:.2f}"
         servicio["activo"] = True
+        
+    servicio_editar = None
+    id_editar = request.args.get("editar", type=int)
+
+    if id_editar is not None:
+        servicio_editar = next(
+            (
+                servicio
+                for servicio in lista_servicios
+                if servicio.get("id") == id_editar
+            ),
+            None
+        )
 
     return render_template(
         "admin/gestion-servicios.html",
-        servicios=lista_servicios
+        servicios=lista_servicios,
+        servicio_editar=servicio_editar
     )
 
 @admin_views.route("/validar-qr")
