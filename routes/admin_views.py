@@ -5,6 +5,9 @@ from services.gestion_servicios_service import obtener_servicios
 from services.gestion_servicios_service import crear_servicio
 from services.gestion_servicios_service import actualizar_servicio
 from services.gestion_servicios_service import desactivar_servicio
+from services.gestion_peliculas_service import obtener_peliculas
+from services.gestion_peliculas_service import buscar_peliculas_tmdb
+from services.gestion_peliculas_service import crear_pelicula
 
 admin_views = Blueprint("admin_views", __name__, url_prefix="/admin")
 
@@ -12,9 +15,183 @@ admin_views = Blueprint("admin_views", __name__, url_prefix="/admin")
 def estadisticas():
     return render_template("admin/estadisticas.html")
 
-@admin_views.route("/peliculas")
+
+
+
+@admin_views.route("/peliculas", methods=["GET", "POST"])
 def peliculas():
-    return render_template("admin/gestion-peliculas.html")
+    mensaje = session.pop("mensaje_peliculas", None)
+
+    buscar = request.args.get("buscar", "").strip()
+    titulo_tmdb = request.args.get("tmdb_buscar", "").strip()
+
+    tmdb_abierto = (
+        request.args.get("tmdb") == "1"
+        or "tmdb_buscar" in request.args
+    )
+
+    resultados_tmdb = []
+    error_tmdb = None
+
+    # Token CSRF para proteger los formularios
+    csrf_actual = session.get("csrf_peliculas")
+
+    if not csrf_actual:
+        csrf_actual = secrets.token_urlsafe(32)
+        session["csrf_peliculas"] = csrf_actual
+
+    # 1. Procesar la creación de una película
+    if request.method == "POST":
+        tmdb_abierto = True
+
+        csrf_recibido = request.form.get("csrf_token", "")
+        accion = request.form.get("accion")
+
+        if not secrets.compare_digest(csrf_recibido, csrf_actual):
+            mensaje = "Formulario inválido. Recargá la página."
+
+        elif accion == "crear_tmdb":
+            token = session.get("token")
+
+            titulo = request.form.get("titulo", "").strip()
+            sinopsis = request.form.get("sinopsis", "").strip()
+            poster = request.form.get("poster", "").strip()
+            genero = request.form.get("genero", "").strip()
+            clasificacion = request.form.get("clasificacion", "")
+
+            try:
+                duracion = int(request.form.get("duracion", ""))
+            except (ValueError, TypeError):
+                duracion = 0
+
+            if not token:
+                mensaje = "Debés iniciar sesión como administrador."
+
+            elif not titulo or len(titulo) > 150:
+                mensaje = "Ingresá un título válido."
+
+            elif not genero or len(genero) > 50:
+                mensaje = "Ingresá un género válido."
+
+            elif duracion < 1 or duracion > 999:
+                mensaje = "La duración debe estar entre 1 y 999 minutos."
+
+            elif clasificacion not in ("ATP", "+13", "+16", "+18"):
+                mensaje = "Seleccioná una clasificación válida."
+
+            elif len(poster) > 255:
+                mensaje = "La URL del póster es demasiado larga."
+
+            else:
+                estado_creacion, respuesta_creacion = crear_pelicula(
+                    token=token,
+                    titulo=titulo,
+                    sinopsis=sinopsis or None,
+                    poster=poster or None,
+                    duracion=duracion,
+                    clasificacion=clasificacion,
+                    genero=genero
+                )
+
+                if estado_creacion == 201 and respuesta_creacion.get("ok"):
+                    session["mensaje_peliculas"] = (
+                        "Película creada correctamente. "
+                        "Aparecerá en cartelera cuando tenga "
+                        "una función programada."
+                    )
+
+                    return redirect(url_for("admin_views.peliculas"))
+
+                mensaje = (
+                    respuesta_creacion.get("error") or {}
+                ).get(
+                    "message",
+                    "No se pudo crear la película."
+                )
+
+        else:
+            mensaje = "Esta operación todavía no está disponible."
+
+    # 2. Buscar películas en TMDB
+    if "tmdb_buscar" in request.args:
+
+        if not titulo_tmdb:
+            error_tmdb = "Ingresá un título para buscar."
+
+        else:
+            token = session.get("token")
+
+            estado_tmdb, respuesta_tmdb = buscar_peliculas_tmdb(
+                token,
+                titulo_tmdb
+            )
+
+            if estado_tmdb == 200 and respuesta_tmdb.get("ok"):
+                resultados_tmdb = respuesta_tmdb.get("data") or []
+
+            else:
+                error_tmdb = (
+                    respuesta_tmdb.get("error") or {}
+                ).get(
+                    "message",
+                    "No se pudo realizar la búsqueda en TMDB."
+                )
+
+    # 3. Obtener las películas desde el backend
+    estado, respuesta = obtener_peliculas()
+
+    if estado != 200 or not respuesta.get("ok"):
+        return render_template(
+            "admin/gestion-peliculas.html",
+            peliculas=[],
+            pelicula_editar=None,
+            filtros={"buscar": buscar},
+            tmdb_abierto=tmdb_abierto,
+            tmdb_titulo=titulo_tmdb,
+            resultados_tmdb=resultados_tmdb,
+            error_tmdb=error_tmdb,
+            mensaje=mensaje or "No se pudieron cargar las películas.",
+            csrf_token=csrf_actual
+        ), 502
+
+    # 4. Adaptar los datos al HTML
+    peliculas_preparadas = []
+
+    for pelicula in respuesta.get("data") or []:
+        datos = pelicula.copy()
+
+        datos["duracion_minutos"] = pelicula.get("duracion")
+        datos["afiche_url"] = pelicula.get("poster")
+
+        datos["anio"] = "—"
+        datos["disponible_desde"] = "—"
+        datos["disponible_hasta"] = "—"
+        datos["activa"] = True
+
+        peliculas_preparadas.append(datos)
+
+    # 5. Filtrar películas por título
+    if buscar:
+        peliculas_preparadas = [
+            pelicula
+            for pelicula in peliculas_preparadas
+            if buscar.casefold() in pelicula["titulo"].casefold()
+        ]
+
+    # 6. Renderizar la página
+    return render_template(
+        "admin/gestion-peliculas.html",
+        peliculas=peliculas_preparadas,
+        pelicula_editar=None,
+        filtros={"buscar": buscar},
+        tmdb_abierto=tmdb_abierto,
+        tmdb_titulo=titulo_tmdb,
+        resultados_tmdb=resultados_tmdb,
+        error_tmdb=error_tmdb,
+        mensaje=mensaje,
+        csrf_token=csrf_actual
+    )
+
 
 @admin_views.route("/salas", methods=["GET", "POST"])
 def salas():
