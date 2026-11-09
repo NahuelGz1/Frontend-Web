@@ -18,12 +18,14 @@ def estadisticas():
 
 
 
+
 @admin_views.route("/peliculas", methods=["GET", "POST"])
 def peliculas():
     mensaje = session.pop("mensaje_peliculas", None)
 
     buscar = request.args.get("buscar", "").strip()
     titulo_tmdb = request.args.get("tmdb_buscar", "").strip()
+    id_editar = request.args.get("editar", type=int)
 
     tmdb_abierto = (
         request.args.get("tmdb") == "1"
@@ -32,25 +34,24 @@ def peliculas():
 
     resultados_tmdb = []
     error_tmdb = None
+    pelicula_editar = None
 
-    # Token CSRF para proteger los formularios
     csrf_actual = session.get("csrf_peliculas")
 
     if not csrf_actual:
         csrf_actual = secrets.token_urlsafe(32)
         session["csrf_peliculas"] = csrf_actual
 
-    # 1. Procesar la creación de una película
     if request.method == "POST":
-        tmdb_abierto = True
-
-        csrf_recibido = request.form.get("csrf_token", "")
         accion = request.form.get("accion")
+        csrf_recibido = request.form.get("csrf_token", "")
 
         if not secrets.compare_digest(csrf_recibido, csrf_actual):
             mensaje = "Formulario inválido. Recargá la página."
 
         elif accion == "crear_tmdb":
+            tmdb_abierto = True
+
             token = session.get("token")
 
             titulo = request.form.get("titulo", "").strip()
@@ -109,10 +110,15 @@ def peliculas():
                     "No se pudo crear la película."
                 )
 
-        else:
-            mensaje = "Esta operación todavía no está disponible."
+        elif accion in ("guardar", "cambiar_estado", "eliminar"):
+            mensaje = (
+                "Esta operación todavía no está disponible "
+                "en el backend de películas."
+            )
 
-    # 2. Buscar películas en TMDB
+        else:
+            mensaje = "Acción no reconocida."
+
     if "tmdb_buscar" in request.args:
 
         if not titulo_tmdb:
@@ -128,7 +134,6 @@ def peliculas():
 
             if estado_tmdb == 200 and respuesta_tmdb.get("ok"):
                 resultados_tmdb = respuesta_tmdb.get("data") or []
-
             else:
                 error_tmdb = (
                     respuesta_tmdb.get("error") or {}
@@ -137,7 +142,6 @@ def peliculas():
                     "No se pudo realizar la búsqueda en TMDB."
                 )
 
-    # 3. Obtener las películas desde el backend
     estado, respuesta = obtener_peliculas()
 
     if estado != 200 or not respuesta.get("ok"):
@@ -154,7 +158,6 @@ def peliculas():
             csrf_token=csrf_actual
         ), 502
 
-    # 4. Adaptar los datos al HTML
     peliculas_preparadas = []
 
     for pelicula in respuesta.get("data") or []:
@@ -162,7 +165,6 @@ def peliculas():
 
         datos["duracion_minutos"] = pelicula.get("duracion")
         datos["afiche_url"] = pelicula.get("poster")
-
         datos["anio"] = "—"
         datos["disponible_desde"] = "—"
         datos["disponible_hasta"] = "—"
@@ -170,7 +172,19 @@ def peliculas():
 
         peliculas_preparadas.append(datos)
 
-    # 5. Filtrar películas por título
+    if id_editar is not None:
+        pelicula_editar = next(
+            (
+                pelicula.copy()
+                for pelicula in peliculas_preparadas
+                if pelicula.get("id") == id_editar
+            ),
+            None
+        )
+
+        if pelicula_editar is None:
+            mensaje = "No se encontró la película seleccionada."
+
     if buscar:
         peliculas_preparadas = [
             pelicula
@@ -178,11 +192,10 @@ def peliculas():
             if buscar.casefold() in pelicula["titulo"].casefold()
         ]
 
-    # 6. Renderizar la página
     return render_template(
         "admin/gestion-peliculas.html",
         peliculas=peliculas_preparadas,
-        pelicula_editar=None,
+        pelicula_editar=pelicula_editar,
         filtros={"buscar": buscar},
         tmdb_abierto=tmdb_abierto,
         tmdb_titulo=titulo_tmdb,

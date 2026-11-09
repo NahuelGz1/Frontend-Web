@@ -38,7 +38,7 @@
                 <p class="text-muted">Disponible: {{ pelicula.disponible_desde }} → {{ pelicula.disponible_hasta }}</p>
                 <span class="badge {{ 'badge-success' if pelicula.activa else 'badge-danger' }}">{{ 'Activa' if pelicula.activa else 'Inactiva' }}</span>
                 <div class="list-actions">
-                    <a class="btn" href="{{ url_for('admin_views.peliculas', editar=pelicula.id) }}">Editar</a>
+                    <a class="btn" href="{{ url_for('admin_views.peliculas', editar=pelicula.id) }}#edit-panel">Editar</a>
                     <form method="post" action="{{ url_for('admin_views.peliculas') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="cambiar_estado">
