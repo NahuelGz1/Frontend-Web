@@ -150,6 +150,48 @@ def funciones():
 def servicios():
     return render_template("admin/gestion-servicios.html")
 
-@admin_views.route("/validar-qr")
+@admin_views.route("/validar-qr", methods=["GET", "POST"])
 def validar_qr():
-    return render_template("admin/validar-qr.html")
+    resultado = None
+    mensaje_error = None
+
+    if request.method == "POST":
+        accion = request.form.get("accion")
+
+
+        if accion == "validar_qr":
+            codigo_qr = request.form.get("codigo_qr", "").strip()
+
+            if not codigo_qr:
+                mensaje_error = "Por favor, ingresá un código QR válido."
+            else:
+
+                status, respuesta = consumir_api(
+                    "POST",
+                    "/qr/validar",
+                    datos={"codigo_qr": codigo_qr}
+                )
+
+                if status == 200:
+                    resultado = respuesta.get("data")
+                    flash("¡Acceso validado con éxito!", "success")
+                else:
+                    mensaje_error = respuesta.get("mensaje", "El código QR presentado no es válido o ya fue utilizado.")
+
+
+        elif accion == "validar_servicio":
+            id_detalle = request.form.get("id_detalle")
+            status, respuesta = consumir_api(
+                "POST",
+                f"/qr/validar-servicio/{id_detalle}"
+            )
+            if status == 200:
+                flash("Servicio entregado/validado con éxito.", "success")
+            else:
+                mensaje_error = respuesta.get("mensaje", "No se pudo validar el servicio.")
+
+    return render_template(
+        "admin/validar-qr.html",
+        resultado=resultado,
+        error=mensaje_error
+    )
