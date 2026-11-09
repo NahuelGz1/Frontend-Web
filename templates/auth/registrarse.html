@@ -39,6 +39,16 @@
             <p class="login-description">Completá tus datos y empezá a disfrutar del cine.</p>
             <p class="register-required">Todos los campos con * son obligatorios.</p>
 
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="color: #ff4d4d; margin-bottom: 1rem; font-weight: bold;">
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
             <form class="login-form register-form" method="POST" action="{{ url_for('auth_views.registrarse') }}">
                 {% include "auth/_error.html" %}
                 {% if csrf_token is defined %}
