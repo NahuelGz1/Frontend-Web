@@ -146,14 +146,14 @@ def compra_exitosa(compra_id):
         return redirect(url_for("cliente_views.cartelera"))
     
     datos = respuesta.get("data") or {}
-    reserva = datos.get("reserva")
+    reserva = datos.get("reserva") or {}
     entradas = reserva.get("entradas") or datos.get("entradas") or []
 
     for entrada in entradas:
         if entrada.get("qr_imagen_base64"):
             entrada["qr_url"] = f"data:image/png;base64,{entrada['qr_imagen_base64']}"
 
-    reserva["entrada"] = entradas
+    reserva["entradas"] = entradas
 
     return render_template("cliente/compra-exitosa.html", 
                             funcion = datos.get("funcion", {}), 
@@ -180,9 +180,9 @@ def cancelar_compra(compra_id):
                             funcion = datos.get("funcion", {}), 
                             reserva = datos.get("reserva", {}))
 
-@cliente_views_bp.route("/reservas/<int:reserva_id>/reserva", methods = ["POST"])
+@cliente_views_bp.route("/reservas/<int:reserva_id>/cancelar", methods = ["POST"])
 def cancelar_reserva(reserva_id):
-    status_code, respuesta = consumir_api("PUT", f"/reservas/{reserva_id}/cancelar")
+    status_code, respuesta = consumir_api("PUT", f"/compras/{reserva_id}/cancelar")
     
     if status_code == 200:
         flash(respuesta.get("message", "Reserva cancelada exitosamente"), "success")
