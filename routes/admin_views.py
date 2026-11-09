@@ -1,7 +1,12 @@
 from flask import Blueprint, render_template, request, url_for
 from services.api_client import consumir_api
+from routes.auth_security import verificar_sesion
 
 admin_views = Blueprint("admin_views", __name__, url_prefix="/admin")
+
+@admin_views.before_request
+def proteger_admin():
+    return verificar_sesion("administrador")
 
 @admin_views.route("/estadisticas")
 def estadisticas():
