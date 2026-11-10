@@ -44,9 +44,9 @@
         <div class="room-grid" id="room-list">
             {% for sala in lista_salas %}
             <article class="room-card">
-                <h3>{{ sala.complejo_nombre }} · {{ sala.nombre }}</h3>
-                <p class="text-muted">{{ sala.filas }} filas · {{ sala.butacas_por_fila }} butacas por fila · {{ sala.capacidad }} butacas</p>
-                <a class="btn" href="{{ url_for('admin_views.funciones', editar_sala=sala.id) }}">Configurar sala</a>
+                <h3>{{ sala.local }} · {{ sala.nombre }}</h3>
+                <p class="text-muted">{{ sala.capacidad }} butacas</p>
+                <a class="btn" href="{{ url_for('admin_views.salas', editar_sala=sala.id) }}">Configurar sala</a>
             </article>
             {% else %}
             <p class="text-muted">No hay salas para mostrar.</p>
@@ -68,8 +68,7 @@
                 <p class="text-muted">{{ funcion.complejo_nombre }} · {{ funcion.sala_nombre }}</p>
                 <p class="help-text">Disponible para venta: {{ funcion.venta_desde.strftime('%d/%m/%Y · %H:%M') }} → {{ funcion.venta_hasta.strftime('%d/%m/%Y · %H:%M') }}</p>
             </div>
-            <div>
-                <p class="text-muted">{{ funcion.entradas_vendidas }} vendidas / {{ funcion.capacidad }} butacas</p>
+            <div>                
                 <p class="text-muted">{{ funcion.precio_formateado }} por entrada</p>
                 <div class="function-actions">
                     <span class="badge {{ 'badge-success' if funcion.activa else 'badge-danger' }}">{{ 'Activa' if funcion.activa else 'Inactiva' }}</span>
@@ -160,7 +159,7 @@
 
 <section class="panel" id="room-config-panel" aria-labelledby="room-config-title" {% if not sala_actual %}hidden{% endif %}>
     <h2 id="room-config-title">Configuración de sala</h2>
-    <form method="post" action="{{ url_for('admin_views.funciones') }}">
+    <form method="post" action="{{ url_for('admin_views.salas') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
         <input name="accion" type="hidden" value="guardar_sala">
         {% if sala_actual %}<input name="sala_id" type="hidden" value="{{ sala_actual.id }}">{% endif %}
@@ -169,7 +168,7 @@
             <select class="form-control" id="room-complex" name="complejo_id" required>
                 <option value="">Seleccioná un complejo</option>
                 {% for complejo in lista_complejos %}
-                <option value="{{ complejo.id }}" {% if sala_actual and sala_actual.complejo_id|string == complejo.id|string %}selected{% endif %}>{{ complejo.nombre }}</option>
+                <option value="{{ complejo.id }}" {% if sala_actual and sala_actual.local == complejo.id %}selected{% endif %}>{{ complejo.nombre }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -187,14 +186,14 @@
                 <input class="form-control" id="room-seats" name="butacas_por_fila" type="number" min="1" required value="{{ sala_actual.butacas_por_fila|default('') if sala_actual else '' }}">
             </div>
         </div>
-        <p class="help-text">La capacidad se calculará en el servidor a partir de filas y butacas por fila.</p>
+        <p class="help-text">La capacidad se calculará a partir de filas y butacas por fila.</p>
         <div class="screen-label">PANTALLA</div>
         <div class="seat-map" aria-label="Distribución de butacas"></div>
         <p class="help-text">La identificación de butacas se mostrará según la configuración de la sala.</p>
         <p class="help-text">Los cambios de distribución deben revisarse si hay funciones con entradas vendidas.</p>
         <div class="form-actions">
             <button class="btn btn-primary" type="submit">Guardar configuración</button>
-            {% if sala_actual %}<a class="btn" href="{{ url_for('admin_views.funciones') }}">Cancelar cambios de sala</a>{% endif %}
+            {% if sala_actual %}<a class="btn" href="{{ url_for('admin_views.salas') }}">Cancelar cambios de sala</a>{% endif %}
         </div>
     </form>
 </section>

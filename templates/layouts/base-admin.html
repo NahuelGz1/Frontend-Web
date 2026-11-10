@@ -25,7 +25,7 @@
                 <a href="{{ url_for('cliente_views.inicio') }}" target="_blank">Ver sitio público ↗</a>
             </nav>
 
-            <a href="{{ url_for('auth_views.iniciar_sesion') }}" class="user-avatar" aria-label="Iniciar sesión" title="Iniciar sesión">
+            <a href="{{ url_for('cliente_views.mi_perfil') }}" class="user-avatar" aria-label="Mi perfil" title="Mi perfil">
                 {{ current_user.nombre[:2]|upper if current_user is defined and current_user and current_user.nombre else "AD" }}
             </a>
         </div>
