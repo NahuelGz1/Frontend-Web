@@ -75,7 +75,11 @@
     </section>
     {% else %}
     <section class="panel qr-result" id="qr-result" aria-labelledby="qr-result-title" aria-live="polite">
-        <h2 id="qr-result-title">Esperando una validación</h2>
+        <h2 id="qr-result-title">Esperand{% extends "layouts/base-admin.html" %}
+
+{% block title %}Validar QR · Cine Paradiso{% endblock %}
+{% block breadcrumb %}Validar QR{% endblock %}
+o una validación</h2>
         <h3>Listo para validar</h3>
         <p class="help-text">Escaneá un código o ingresá el identificador para ver el resultado.</p>
     </section>
