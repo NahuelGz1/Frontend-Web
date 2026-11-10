@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, current_app, request
 from services.api_client import consumir_api
 from services import compra_service
+from routes.auth_security import requiere_sesion
 
 cliente_views_bp = Blueprint("cliente_views", __name__)
 
@@ -154,9 +155,13 @@ def servicios():
 
 
 @cliente_views_bp.route("/mi-perfil")
+@requiere_sesion
 def mi_perfil():
     status_code, respuesta = consumir_api("GET", "/auth/usuarios/me/perfil-completo")
-    datos_perfil = respuesta.get("data", {}) if status_code == 200 else {}
+    datos_perfil = respuesta.get("data")
+    if status_code != 200 or not isinstance(datos_perfil, dict):
+        current_app.logger.error("No se pudo obtener el perfil completo de la API")
+        abort(503, description="No se pudo cargar tu perfil. Intentá más tarde.")
     return render_template("cliente/mi-perfil.html", **datos_perfil)
 
 

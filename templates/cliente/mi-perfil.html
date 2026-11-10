@@ -4,13 +4,13 @@
 
 {% block content %}
 {% set usuario = current_user if current_user is defined and current_user and current_user.is_authenticated else none %}
-{% set usr_nombre = usuario.nombre|default('Lucía', true) if usuario else 'Lucía' %}
-{% set usr_apellido = usuario.apellido|default('Fernández', true) if usuario else 'Fernández' %}
-{% set usr_email = usuario.email|default('lucia@example.com', true) if usuario else 'lucia@example.com' %}
-{% set usr_telefono = usuario.telefono|default('+54 11 4433-2211', true) if usuario else '+54 11 4433-2211' %}
-{% set usr_fecha_nac = usuario.fecha_nacimiento|default('15/08/1995', true) if usuario else '15/08/1995' %}
-{% set usr_complejo = usuario.complejo_favorito|default('Paradiso Centro', true) if usuario else 'Paradiso Centro' %}
-{% set usr_registro = usuario.fecha_registro|default('Octubre 2026', true) if usuario else 'Octubre 2026' %}
+{% set usr_nombre = usuario.nombre if usuario else '' %}
+{% set usr_apellido = usuario.apellido|default('', true) if usuario else '' %}
+{% set usr_email = usuario.email if usuario else '' %}
+{% set usr_telefono = usuario.telefono|default('No informado', true) if usuario else 'No informado' %}
+{% set usr_fecha_nac = usuario.fecha_nacimiento|default('No informada', true) if usuario else 'No informada' %}
+{% set usr_complejo = usuario.complejo_favorito|default('No informado', true) if usuario else 'No informado' %}
+{% set usr_registro = usuario.fecha_registro|default('', true) if usuario else '' %}
 
 {% set proximas = entradas_proximas|default([]) %}
 {% set vistas = peliculas_vistas|default([]) %}
@@ -35,7 +35,7 @@
                     </div>
                     <div>
                         <h2>{{ usr_nombre }} {{ usr_apellido }}</h2>
-                        <p>Miembro desde {{ usr_registro }}</p>
+                        {% if usr_registro %}<p>Miembro desde {{ usr_registro }}</p>{% endif %}
                     </div>
                 </div>
 
