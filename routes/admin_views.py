@@ -52,7 +52,7 @@ def peliculas():
         elif accion == "crear_tmdb":
             tmdb_abierto = True
 
-            token = session.get("token")
+            token = session.get("access_token") or session.get("token")
 
             titulo = request.form.get("titulo", "").strip()
             sinopsis = request.form.get("sinopsis", "").strip()
@@ -125,7 +125,7 @@ def peliculas():
             error_tmdb = "Ingresá un título para buscar."
 
         else:
-            token = session.get("token")
+            token = session.get("access_token") or session.get("token")
 
             estado_tmdb, respuesta_tmdb = buscar_peliculas_tmdb(
                 token,
@@ -362,7 +362,7 @@ def servicios():
         else:
             accion = request.form.get("accion")
             servicio_id = request.form.get("servicio_id", "").strip()
-            token = session.get("token")
+            token = session.get("access_token") or session.get("token")
 
             if accion == "guardar":
 
