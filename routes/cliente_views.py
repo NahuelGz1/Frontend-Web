@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, abort, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, current_app, request
 from services.api_client import consumir_api
+from services import compra_service
 from routes.auth_security import requiere_sesion
-
 
 cliente_views_bp = Blueprint("cliente_views", __name__)
 
@@ -85,9 +85,42 @@ def seleccion_funcion():
 def mapa_asientos():
     return render_template("cliente/mapa_asientos.html")
 
+def _pedir_inicio_de_sesion():
+    flash("Iniciá sesión para comprar entradas.", "warning")
+    return redirect(url_for("auth_views.iniciar_sesion"))
+
+
 @cliente_views_bp.route("/elegir-butacas")
-def elegir_butacas():
-    return render_template("cliente/elegir-butacas.html")
+@cliente_views_bp.route("/elegir-butacas/<int:funcion_id>", methods=["GET", "POST"])
+def elegir_butacas(funcion_id=None):
+    if funcion_id is None:
+        flash("Elegí una función para ver sus butacas.", "warning")
+        return redirect(url_for("cliente_views.cartelera"))
+    if not compra_service.hay_sesion_iniciada():
+        return _pedir_inicio_de_sesion()
+
+    datos = compra_service.datos_del_mapa(funcion_id)
+    seleccionadas = compra_service.seleccion_previa(funcion_id)
+    error_seleccion = None
+
+    if request.method == "POST" and not datos["error_mapa"]:
+        if not compra_service.csrf_valido(request.form.get("csrf_token")):
+            error_seleccion = "El formulario venció. Volvé a elegir tus butacas."
+        else:
+            seleccionadas, error_seleccion = compra_service.validar_seleccion(
+                request.form.getlist("butacas"), datos["filas"]
+            )
+            if not error_seleccion:
+                compra_service.guardar_seleccion(funcion_id, seleccionadas)
+                return redirect(url_for("cliente_views.servicios"))
+
+    return render_template(
+        "cliente/elegir-butacas.html",
+        **datos,
+        seleccionadas=seleccionadas,
+        error_seleccion=error_seleccion,
+        csrf_token=compra_service.token_csrf(),
+    ), 400 if error_seleccion else 200
 
 
 
@@ -132,9 +165,39 @@ def mi_perfil():
     return render_template("cliente/mi-perfil.html", **datos_perfil)
 
 
-@cliente_views_bp.route("/pagar")
+@cliente_views_bp.route("/pagar", methods=["GET", "POST"])
 def pagar():
-    return render_template("cliente/pagar.html")
+    if not compra_service.hay_sesion_iniciada():
+        return _pedir_inicio_de_sesion()
+
+    resumen, error = compra_service.armar_resumen()
+    if error:
+        flash(error, "warning")
+        funcion_id = compra_service.funcion_en_curso()
+        if funcion_id:
+            return redirect(url_for("cliente_views.elegir_butacas", funcion_id=funcion_id))
+        return redirect(url_for("cliente_views.cartelera"))
+    if resumen["aviso"]:
+        flash(resumen["aviso"], "warning")
+
+    if request.method == "POST":
+        if not compra_service.csrf_valido(request.form.get("csrf_token")):
+            flash("El formulario venció. Revisá el resumen y confirmá de nuevo.", "warning")
+            return redirect(url_for("cliente_views.pagar"))
+        exito, mensaje, elegir_de_nuevo = compra_service.confirmar_compra(resumen)
+        if exito:
+            return redirect(url_for("cliente_views.compra_exitosa", compra_id=compra_service.id_compra_confirmada()))
+        flash(mensaje, "danger")
+        if elegir_de_nuevo:
+            return redirect(url_for("cliente_views.elegir_butacas", funcion_id=resumen["id_funcion"]))
+        return redirect(url_for("cliente_views.pagar"))
+
+    return render_template(
+        "cliente/pagar.html",
+        **resumen["vista"],
+        email_usuario=compra_service.email_del_usuario(),
+        csrf_token=compra_service.token_csrf(),
+    )
 
 @cliente_views_bp.route("/compra-exitosa")
 def compra_exitosa():
