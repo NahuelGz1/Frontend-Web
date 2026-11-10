@@ -25,12 +25,13 @@
             </p>
 
             <form class="recuperar-form" method="POST" action="{{ url_for('auth_views.recuperar_contrasena') }}">
+                {% include "auth/_error.html" %}
                 {% if csrf_token is defined %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% endif %}
                 <label for="recuperar-email">Correo electrónico</label>
                 <div class="form-input-icon">
-                    <input id="recuperar-email" name="email" type="email" placeholder="lucia@example.com" autocomplete="email" required>
+                    <input id="recuperar-email" name="email" type="email" placeholder="tu@email.com" autocomplete="email" maxlength="100" value="{{ valores.email }}" required>
                     <span aria-hidden="true">✉</span>
                 </div>
                 <button class="recuperar-submit" type="submit">Enviar enlace <span aria-hidden="true">→</span></button>

@@ -27,37 +27,19 @@
             <section class="payment-card" aria-labelledby="contact-title">
                 <h2 id="contact-title">Datos de contacto</h2>
                 <label for="payment-email">Email</label>
-                <input id="payment-email" type="email" name="email" placeholder="tu@email.com" autocomplete="email" required>
-                <p class="payment-help">Enviaremos tus entradas con QR y la factura a este email.</p>
+                <input id="payment-email" type="email" name="email" value="{{ email_usuario|default('') }}" autocomplete="email" readonly>
+                <p class="payment-help">Enviaremos tus entradas con QR y la factura al email de tu cuenta.</p>
             </section>
 
-            <section class="payment-card" aria-labelledby="card-title">
-                <h2 id="card-title">Pago con tarjeta</h2>
-                <div class="payment-fields">
-                    <div>
-                        <label for="card-holder">Titular de la tarjeta</label>
-                        <input id="card-holder" type="text" name="titular" placeholder="Nombre y apellidos" autocomplete="cc-name" required>
-                    </div>
-                    <div>
-                        <label for="card-number">Número de tarjeta</label>
-                        <input id="card-number" type="text" name="numero_tarjeta" placeholder="0000 0000 0000 0000" inputmode="numeric" autocomplete="cc-number" required>
-                    </div>
-                    <div>
-                        <label for="card-expiration">Caducidad</label>
-                        <input id="card-expiration" type="text" name="caducidad" placeholder="MM / AA" inputmode="numeric" autocomplete="cc-exp" required>
-                    </div>
-                    <div>
-                        <label for="card-cvc">CVC</label>
-                        <input id="card-cvc" type="text" name="cvc" placeholder="123" inputmode="numeric" autocomplete="cc-csc" required>
-                    </div>
-                </div>
+            <section class="payment-card" aria-labelledby="confirm-title">
+                <h2 id="confirm-title">Confirmar compra</h2>
                 <p class="payment-legal">
                     Al confirmar la compra, aceptás nuestros
                     <a href="#">Términos y condiciones</a> y la
                     <a href="#">Política de privacidad</a>.
                 </p>
                 <button class="payment-submit" type="submit">
-                    Pagar ${{ total }} ARS
+                    Confirmar compra · ${{ total }} ARS
                 </button>
             </section>
         </form>
