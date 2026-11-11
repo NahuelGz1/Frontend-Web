@@ -49,16 +49,8 @@
         <div class="services-promo-image" role="img" aria-label="Espacio reservado para la imagen promocional"></div>
     </div>
 
-    {% if error_servicios|default(none) %}
-    <p role="alert">{{ error_servicios }}</p>
-    {% endif %}
-    {% if entrada %}
-    <a class="service-context-back" href="{{ url_for('cliente_views.elegir_butacas', funcion_id=contexto.funcion_id) }}">Cambiar o quitar butacas</a>
-    {% else %}
-    <p>Elegí una función y sus butacas para agregar servicios a tu compra.</p>
-    {% endif %}
-    <form class="services-layout" id="servicios-contenedor" method="POST" action="{{ url_for('cliente_views.guardar_servicios') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" id="servicios-csrf-token" value="{{ csrf_token }}">
+    <div class="services-layout" id="servicios-contenedor">
         <div class="services-catalog">
             {% for categoria in categorias %}
             <section class="service-category" aria-labelledby="category-{{ loop.index }}">
