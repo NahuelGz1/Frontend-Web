@@ -20,8 +20,8 @@ def restablecer(token, password):
 
 
 def perfil(token):
-    return consumir_api("GET", "/auth/usuarios/me", headers={"Authorization": f"Bearer {token}"})
+    return consumir_api("GET", "/auth/usuarios/me", headers={"Authorization": "Bearer " + token})
 
 
 def cerrar_sesion(token):
-    return consumir_api("POST", "/auth/logout", headers={"Authorization": f"Bearer {token}"})
+    return consumir_api("POST", "/auth/logout", headers={"Authorization": "Bearer " + token})

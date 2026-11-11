@@ -19,6 +19,7 @@ def create_app(config=None):
     app.config.from_mapping(
         SECRET_KEY=os.getenv("SECRET_KEY"),
         API_BASE_URL=os.getenv("API_BASE_URL", "http://127.0.0.1:5000/api"),
+        SUPER_ADMIN_EMAIL=os.getenv("SUPER_ADMIN_EMAIL", "cine_paradiso@admin.com").strip().lower(),
         SESSION_TYPE="cachelib",
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
