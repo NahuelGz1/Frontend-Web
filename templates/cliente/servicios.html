@@ -85,7 +85,7 @@
                     {% set precio = servicio.precio|default(0, true)|int %}
                     {% set nombre_normalizado = servicio.nombre|lower %}
                     {% set requiere_entrada = servicio.requiere_entrada|default(('estacionamiento' in nombre_normalizado or 'vip' in nombre_normalizado), true) %}
-                    {% set limite_cantidad = entradas_asociadas if 'estacionamiento' in nombre_normalizado else 9999 %}
+                    {% set limite_cantidad = entradas_asociadas if ('estacionamiento' in nombre_normalizado or 'vip' in nombre_normalizado) else 9999 %}
                     {% set imagen_servicio = servicio.imagen_url|default('', true) %}
                     {% if not imagen_servicio and 'agua' in nombre_normalizado %}
                     {% set imagen_servicio = url_for('static', filename='images/servicios/agua-mineral.png') %}
@@ -120,7 +120,11 @@
                                 <output class="input-cantidad" data-quantity>0</output>
                                 <button type="button" class="btn-sumar" data-increase aria-label="Agregar una unidad de {{ servicio.nombre }}">+</button>
                             </div>
-                            {% if requiere_entrada and not entrada %}<small class="service-requirement">Requiere entrada</small>{% elif 'estacionamiento' in nombre_normalizado or 'vip' in nombre_normalizado %}<small class="service-requirement">Máx. {{ entradas_asociadas }} (1 por entrada)</small>{% endif %}
+                            {% if requiere_entrada and not entrada %}
+                            <small class="service-requirement">Requiere entrada</small>
+                            {% elif ('estacionamiento' in nombre_normalizado or 'vip' in nombre_normalizado) %}
+                            <small class="service-requirement">Máx. {{ entradas_asociadas }} (1 por entrada)</small>
+                            {% endif %}
                         </div>
                     </article>
                     {% endif %}
