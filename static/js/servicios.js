@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 linea.innerHTML = `
                     <span>${item.nombre} × ${item.cantidad}</span>
                     <strong>${formatPesos(item.precio * item.cantidad)}</strong>
+                    <button type="button" class="service-cart-remove" data-remove-id="${id}" aria-label="Quitar ${item.nombre}">✕</button>
                 `;
                 cartItemsElem.appendChild(linea);
             });
@@ -184,6 +185,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 actualizarCard(card);
                 actualizarUI();
             }
+            return;
+        }
+
+        // botón "✕" del carrito lateral - saca el producto entero
+        const removeBtn = e.target.closest('[data-remove-id]');
+        if (removeBtn) {
+            const id = removeBtn.dataset.removeId;
+            if (carrito[id]) {
+                carrito[id].cantidad = 0;
+            }
+            // volvemos la card a su estado original
+            const card = contenedorServicios.querySelector(`[data-service-id="${id}"]`);
+            if (card) actualizarCard(card);
+            actualizarUI();
             return;
         }
     });
