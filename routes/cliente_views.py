@@ -223,6 +223,9 @@ def pagar():
         if not compra_service.csrf_valido(request.form.get("csrf_token")):
             flash("El formulario venció. Revisá el resumen y confirmá de nuevo.", "warning")
             return redirect(url_for("cliente_views.pagar"))
+        if not compra_service.guardar_email_contacto(request.form.get("email")):
+            flash("Ingresá un email de contacto válido.", "warning")
+            return redirect(url_for("cliente_views.pagar"))
         exito, mensaje, elegir_de_nuevo = compra_service.confirmar_compra(resumen)
         if exito:
             return redirect(url_for("cliente_views.compra_exitosa", compra_id=compra_service.id_compra_confirmada()))
@@ -234,7 +237,7 @@ def pagar():
     return render_template(
         "cliente/pagar.html",
         **resumen["vista"],
-        email_usuario=compra_service.email_del_usuario(),
+        email_usuario=compra_service.email_de_contacto(),
         csrf_token=compra_service.token_csrf(),
     )
 
