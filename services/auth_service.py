@@ -36,3 +36,12 @@ def cambiar_contrasena(token, contrasena_actual, contrasena_nueva):
         },
         headers={"Authorization": f"Bearer {token}"},
     )
+
+
+def actualizar_perfil(token, nombre, email):
+    return consumir_api(
+        "PATCH",
+        "/auth/usuarios/me",
+        datos={"nombre": nombre, "email": email},
+        headers={"Authorization": f"Bearer {token}"},
+    )

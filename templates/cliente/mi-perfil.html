@@ -59,7 +59,7 @@
                         <dd>{{ usr_complejo }}</dd>
                     </div>
                 </dl>
-                <a class="profile-secondary-button" href="#">✎ Editar datos</a>
+                <button class="profile-secondary-button" type="button" data-open-profile-modal>✎ Editar datos</button>
             </section>
 
             <section class="profile-security-card">
@@ -97,6 +97,13 @@
                     </div>
                     <div class="ticket-summary">
                         <p>{{ entrada.cantidad_entradas }} entradas · {{ entrada.subtotal_entradas }} ARS</p>
+                        {% if entrada.servicios %}
+                        <div class="ticket-services">
+                            {% for servicio in entrada.servicios %}
+                            <p>{{ servicio.cantidad }} × {{ servicio.nombre }} · {{ '%.2f'|format(servicio.precio|float) }} ARS</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                         <p>Comida y servicios · {{ entrada.subtotal_servicios }} ARS</p>
                         <p class="ticket-total">Total {{ entrada.total }} ARS</p>
                         <p>Operación {{ entrada.codigo_operacion }}</p>
@@ -178,6 +185,27 @@
             </section>
         </div>
     </div>
+</div>
+
+<div class="profile-modal" id="editar-perfil" data-profile-modal hidden>
+    <div class="profile-modal-backdrop" data-close-profile-modal></div>
+    <section class="profile-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="editar-perfil-titulo">
+        <button class="profile-modal-close" type="button" aria-label="Cerrar" data-close-profile-modal>×</button>
+        <h2 id="editar-perfil-titulo">Editar datos</h2>
+        <form method="post" action="{{ url_for('cliente_views.mi_perfil') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <label for="perfil-nombre">Nombre</label>
+            <input id="perfil-nombre" name="nombre" type="text" value="{{ nombre_form }}" required maxlength="50">
+            <label for="perfil-apellido">Apellido</label>
+            <input id="perfil-apellido" name="apellido" type="text" value="{{ apellido_form }}" required maxlength="50">
+            <label for="perfil-email">Correo electrónico</label>
+            <input id="perfil-email" name="email" type="email" value="{{ usr_email }}" required maxlength="100">
+            <div class="profile-modal-actions">
+                <button class="profile-secondary-button" type="button" data-close-profile-modal>Cancelar</button>
+                <button class="profile-primary-button" type="submit">Guardar cambios</button>
+            </div>
+        </form>
+    </section>
 </div>
 {% endblock %}
 
