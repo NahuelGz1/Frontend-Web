@@ -16,13 +16,13 @@
         <div>
             <p class="compra-exitosa-kicker">PAGO APROBADO</p>
             <h1 id="compra-exitosa-titulo">¡Tu compra fue exitosa!</h1>
-            <p>Ya tenés tu lugar para la próxima función.</p>
+            <p>Lucía, ya tenés tu lugar para la próxima función y el combo reservado para retirar en el candy bar.</p>
         </div>
     </header>
 
     <div class="compra-exitosa-email" role="status">
         <span aria-hidden="true">✉</span>
-        <p>Descargá tus entradas y el comprobante desde esta página. También podés consultarlos en Mis compras.</p>
+        <p>Enviamos la factura y las entradas con QR al email <strong>lucia@example.com</strong>.</p>
     </div>
 
     <div class="compra-exitosa-layout">
@@ -45,7 +45,7 @@
 
                 <dl class="compra-exitosa-importes">
                     <div>
-                        <dt>{{ datos_resumen.cantidad_entradas }} entradas</dt>
+                        <dt>2 entradas ($10.000 por entrada)</dt>
                         <dd>{{ datos_resumen.subtotal_entradas|default('$20.000', true) }}</dd>
                     </div>
                 </dl>
@@ -62,7 +62,10 @@
                         {% endfor %}
                     </dl>
                     {% else %}
-                    <p>No agregaste servicios adicionales.</p>
+                    <dl class="compra-exitosa-importes">
+                        <div><dt>Combo dúo</dt><dd>$8.500</dd></div>
+                        <div><dt>Nachos con cheddar</dt><dd>$4.000</dd></div>
+                    </dl>
                     {% endif %}
                     <dl class="compra-exitosa-importes compra-exitosa-subtotal">
                         <div>
@@ -76,12 +79,12 @@
                     <strong>Total pagado</strong>
                     <strong>{{ datos_resumen.total|default('$32.500 ARS', true) }}</strong>
                 </div>
-                <p class="compra-exitosa-operacion">Operación {{ codigo_compra }}</p>
+                <p class="compra-exitosa-operacion">Pago approved · Operación {{ codigo_compra }}</p>
             </article>
 
             <nav class="compra-exitosa-acciones" aria-label="Acciones de la compra">
                 {% if entradas %}
-                <a class="compra-exitosa-btn compra-exitosa-btn--primary" href="{{ url_for('cliente_views.descargar_entradas', compra_id=datos_reserva.id) }}">
+                <a class="compra-exitosa-btn compra-exitosa-btn--primary" href="{{ entradas[0].qr_url|default(url_for('cliente_views.mi_perfil'), true) }}" download>
                     <span aria-hidden="true">⇩</span> Descargar entradas
                 </a>
                 {% else %}
@@ -89,18 +92,18 @@
                     <span aria-hidden="true">⇩</span> Descargar entradas
                 </a>
                 {% endif %}
-                <a class="compra-exitosa-btn compra-exitosa-btn--primary" href="{{ url_for('cliente_views.descargar_factura', compra_id=datos_reserva.id) }}">
+                <a class="compra-exitosa-btn compra-exitosa-btn--primary" href="{{ url_for('cliente_views.mi_perfil') }}">
                     <span aria-hidden="true">⇩</span> Descargar factura
                 </a>
                 <a class="compra-exitosa-btn compra-exitosa-btn--outline" href="{{ url_for('cliente_views.mi_perfil') }}">Ver mis compras</a>
-                <a class="compra-exitosa-btn compra-exitosa-btn--outline" href="{{ url_for('cliente_views.cancelar_compra', compra_id=datos_reserva.id) }}">Cancelar compra</a>
+                <a class="compra-exitosa-btn compra-exitosa-btn--outline" href="{{ url_for('cliente_views.cancelar_compra') }}">Cancelar compra</a>
             </nav>
         </div>
 
         <aside class="compra-exitosa-lateral">
             <section class="compra-exitosa-card compra-exitosa-entradas" aria-labelledby="entradas-titulo">
                 <h2 id="entradas-titulo">Tu entrada digital</h2>
-                <p class="compra-exitosa-ayuda">{{ datos_resumen.cantidad_entradas }} entradas · {{ datos_funcion.butacas }}</p>
+                <p class="compra-exitosa-ayuda">2 entradas · Fila D · Butacas 5 y 6</p>
                 <ol class="compra-exitosa-tickets">
                     {% for entrada in entradas %}
                     <li>
@@ -117,7 +120,7 @@
                                 <img src="{{ entrada.qr_url }}" alt="Código QR de la entrada para la butaca {{ entrada.fila }}{{ entrada.numero }}" width="160" height="160">
                                 <figcaption>{{ entrada.codigo|default('CP-261030-0842-D' ~ (loop.index + 4), true) }}</figcaption>
                             </figure>
-                            <p class="compra-exitosa-qr-nota">Presentá este QR en el acceso al cine.</p>
+                            <p class="compra-exitosa-qr-nota">QR ilustrativo de mockup. No válido como entrada real.</p>
                             {% else %}
                             <p class="compra-exitosa-qr-faltante">El código QR todavía no está disponible.</p>
                             {% endif %}
@@ -130,10 +133,9 @@
                 <p class="compra-exitosa-ayuda">Llegá 20 minutos antes. Mostrá tus entradas descargadas en el acceso a la sala, desde el celular o impresas.</p>
             </section>
 
-            {% if datos_resumen.servicios %}
             <section class="compra-exitosa-card compra-exitosa-candy" aria-labelledby="candy-titulo">
                 <h3 id="candy-titulo">Retiro candy bar</h3>
-                <p>Consultá los servicios incluidos en tu comprobante y las indicaciones de retiro en {{ datos_funcion.complejo }}.</p>
+                <p>Combo dúo y Nachos con cheddar listos para retirar en Paradiso Centro.</p>
                 <div class="compra-exitosa-comprobante">
                     <span aria-hidden="true">▣</span>
                     <div>
@@ -142,11 +144,10 @@
                     </div>
                 </div>
             </section>
-            {% endif %}
 
             <section class="compra-exitosa-card compra-exitosa-cancelacion" aria-labelledby="cancelacion-titulo">
                 <h3 id="cancelacion-titulo">Cancelación</h3>
-                <p>Podés solicitar la cancelación hasta dos horas antes de la función.</p>
+                <p>El plazo y las condiciones de cancelación están pendientes de definición del equipo. No se muestra un reintegro aprobado en este mockup.</p>
             </section>
         </aside>
     </div>
