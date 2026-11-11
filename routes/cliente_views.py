@@ -259,3 +259,19 @@ def cancelar_reserva(reserva_id):
         flash(mensaje_error, "danger")
 
     return redirect(url_for("cliente_views.mi_perfil"))
+
+
+
+@cliente_views_bp.route("/estrenos")
+def estrenos():
+    status_code, respuesta = consumir_api("GET", "/peliculas/estrenos")
+
+    estrenos_lista = []
+    if status_code == 200:
+        estrenos_lista = respuesta.get("data") or []
+
+    for pelicula in estrenos_lista:
+        if not pelicula.get("poster_url"):
+            pelicula["poster_url"] = pelicula.get("poster")
+
+    return render_template("cliente/estrenos.html", peliculas=estrenos_lista)
