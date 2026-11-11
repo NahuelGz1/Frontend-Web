@@ -1,6 +1,7 @@
 # Lo que el cliente va eligiendo queda en session["compra"]: id_funcion, butacas y servicios
 # Despues de comprar, session["compra_confirmada"] tiene lo que muestra compra-exitosa.html
 import hmac
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -210,6 +211,21 @@ def email_del_usuario():
         return usuario["email"]
     status_code, respuesta = consumir_api("GET", "/auth/usuarios/me", headers=_cabecera_autorizacion())
     return (respuesta.get("data") or {}).get("email", "") if status_code == 200 else ""
+
+
+def email_de_contacto():
+    compra = session.get(CLAVE_COMPRA) or {}
+    return compra.get("email_contacto") or email_del_usuario()
+
+
+def guardar_email_contacto(email):
+    email = (email or "").strip().lower()
+    if len(email) > 100 or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        return False
+    compra = session.get(CLAVE_COMPRA) or {}
+    compra["email_contacto"] = email
+    session[CLAVE_COMPRA] = compra
+    return True
 
 
 def armar_resumen():

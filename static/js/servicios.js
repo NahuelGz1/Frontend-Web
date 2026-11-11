@@ -77,9 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // el botón de continuar solo se habilita si hay algo en el carrito
-        if (checkoutBtn)    checkoutBtn.disabled    = totalItems === 0;
-        if (checkoutBtnSec) checkoutBtnSec.disabled = totalItems === 0;
+        // Los servicios son opcionales: también se puede continuar solo con entradas.
+        if (checkoutBtn)    checkoutBtn.disabled    = false;
+        if (checkoutBtnSec) checkoutBtnSec.disabled = false;
 
         // -- resumen de compra (sección de abajo) --
 
