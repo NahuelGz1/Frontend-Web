@@ -5,12 +5,7 @@
 {% block content %}
 {% set usuario = current_user if current_user is defined and current_user and current_user.is_authenticated else none %}
 {% set usr_nombre = usuario.nombre if usuario else '' %}
-{% set usr_apellido = usuario.apellido|default('', true) if usuario else '' %}
 {% set usr_email = usuario.email if usuario else '' %}
-{% set usr_telefono = usuario.telefono|default('No informado', true) if usuario else 'No informado' %}
-{% set usr_fecha_nac = usuario.fecha_nacimiento|default('No informada', true) if usuario else 'No informada' %}
-{% set usr_complejo = usuario.complejo_favorito|default('No informado', true) if usuario else 'No informado' %}
-{% set usr_registro = usuario.fecha_registro|default('', true) if usuario else '' %}
 
 {% set proximas = entradas_proximas|default([]) %}
 {% set vistas = peliculas_vistas|default([]) %}
@@ -21,9 +16,7 @@
     <header class="profile-heading">
         <p class="profile-kicker">TU CUENTA PARADISO</p>
         <h1>Mi perfil</h1>
-        <p>
-            Hola, {{ usr_nombre }}. Tus entradas, películas y consumos, en un solo lugar.
-        </p>
+        <p>Hola, {{ usr_nombre }}. Tus entradas, películas y consumos, en un solo lugar.</p>
     </header>
 
     <div class="profile-layout">
@@ -31,11 +24,14 @@
             <section class="profile-user-card">
                 <div class="profile-user-heading">
                     <div class="profile-avatar" aria-hidden="true">
-                        {{ usr_nombre[:1]|upper }}{{ usr_apellido[:1]|upper }}
+                        {{ usr_nombre[:1]|upper }}
                     </div>
                     <div>
-                        <h2>{{ usr_nombre }} {{ usr_apellido }}</h2>
-                        {% if usr_registro %}<p>Miembro desde {{ usr_registro }}</p>{% endif %}
+                        <h2>{{ usr_nombre }}</h2>
+                        <!-- Botón ubicado ARRIBA en el encabezado -->
+                        <button type="button" class="btn-primary" id="btn-abrir-modal-editar" style="margin-top: 0.5rem; font-size: 0.75rem; padding: 0.35rem 0.65rem;">
+                            ✎ Editar datos
+                        </button>
                     </div>
                 </div>
 
@@ -46,20 +42,7 @@
                         <dt>Correo electrónico</dt>
                         <dd>{{ usr_email }}</dd>
                     </div>
-                    <div>
-                        <dt>Teléfono</dt>
-                        <dd>{{ usr_telefono }}</dd>
-                    </div>
-                    <div>
-                        <dt>Fecha de nacimiento</dt>
-                        <dd>{{ usr_fecha_nac }}</dd>
-                    </div>
-                    <div>
-                        <dt>Complejo favorito</dt>
-                        <dd>{{ usr_complejo }}</dd>
-                    </div>
                 </dl>
-                <a class="profile-secondary-button" href="#">✎ Editar datos</a>
             </section>
 
             <section class="profile-security-card">
@@ -111,9 +94,7 @@
                 {% else %}
                 <div class="empty-state">
                     <p>No tenés entradas activas para próximas funciones.</p>
-                    <a class="profile-primary-button" href="{{ url_for('cliente_views.cartelera') }}">
-                        Ver cartelera
-                    </a>
+                    <a class="profile-primary-button" href="{{ url_for('cliente_views.cartelera') }}">Ver cartelera</a>
                 </div>
                 {% endif %}
             </section>
@@ -177,6 +158,34 @@
                 {% endif %}
             </section>
         </div>
+    </div>
+</div>
+
+<!-- Modal emergente centrado con clases nativas del proyecto -->
+<div id="modal-editar-perfil" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; align-items: center; justify-content: center;">
+    <div class="card login-card" style="width: 100%; max-width: 440px; margin: 1rem;">
+        <h2 style="font-size: 1.4rem; margin-bottom: 0.5rem; color: var(--text-light);">Editar datos personales</h2>
+        <p class="login-description" style="margin-bottom: 1.2rem;">Completá únicamente los datos que quieras modificar.</p>
+
+        <form method="POST" action="{{ url_for('cliente_views.editar_perfil') }}" class="login-form">
+            {% if csrf_token is defined %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% endif %}
+
+            <label for="edit_nombre">Nuevo Nombre</label>
+            <input type="text" id="edit_nombre" name="nombre" placeholder="Ingresá tu nombre">
+
+            <label for="edit_apellido">Nuevo Apellido</label>
+            <input type="text" id="edit_apellido" name="apellido" placeholder="Ingresá tu apellido">
+
+            <label for="edit_email">Nuevo Correo electrónico</label>
+            <input type="email" id="edit_email" name="email" placeholder="ejemplo@correo.com">
+
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+                <button type="button" class="btn-secondary" id="btn-cerrar-modal-editar" style="min-height: 2.5rem;">Cancelar</button>
+                <button type="submit" class="btn-primary" style="min-height: 2.5rem;">Guardar cambios</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
