@@ -8,18 +8,13 @@
 {% set entrada = contexto.entrada|default(none) if contexto else none %}
 {% set entradas_asociadas = contexto.cantidad_entradas|default(entrada.cantidad|default(1, true), true)|int if entrada else 0 %}
 
-{% if not lista_servicios %}
-{% set lista_servicios = [
-{'id': 'gaseosa-grande', 'categoria': 'Bebidas', 'nombre': 'Gaseosa grande', 'descripcion': 'Vaso de 750 ml · Cola o lima limón', 'precio': 2500, 'precio_formateado': '$2.500'},
-{'id': 'agua-mineral', 'categoria': 'Bebidas', 'nombre': 'Agua mineral', 'descripcion': 'Botella de 500 ml · Sin gas', 'precio': 1800, 'precio_formateado': '$1.800'},
-{'id': 'pochoclos-medianos', 'categoria': 'Pochoclos', 'nombre': 'Pochoclos medianos', 'descripcion': 'Balde de 1,5 l · Dulce o salado', 'precio': 3600, 'precio_formateado': '$3.600'},
-{'id': 'combo-duo', 'categoria': 'Pochoclos', 'nombre': 'Combo dúo', 'descripcion': 'Pochoclos grandes + 2 gaseosas', 'precio': 8500, 'precio_formateado': '$8.500'},
-{'id': 'nachos-cheddar', 'categoria': 'Snacks', 'nombre': 'Nachos con cheddar', 'descripcion': 'Porción de 150 g · Salsa', 'precio': 4000, 'precio_formateado': '$4.000'},
-{'id': 'pancho-clasico', 'categoria': 'Snacks', 'nombre': 'Pancho clásico', 'descripcion': 'Pan suave · Aderezos a elección', 'precio': 3000, 'precio_formateado': '$3.000'},
-{'id': 'estacionamiento', 'categoria': 'Mejoras de experiencia', 'nombre': 'Estacionamiento', 'descripcion': 'Zona de estacionamiento', 'precio': 0, 'precio_formateado': 'Consultar'},
-{'id': 'acceso-vip', 'categoria': 'Mejoras de experiencia', 'nombre': 'Acceso VIP', 'descripcion': 'Zona de espera previa con souvenir temático', 'precio': 0, 'precio_formateado': 'Consultar'}
-] %}
-{% endif %}
+{% set cantidades = cantidades_servicios|default({}) %}
+{% set resumen_servicios = namespace(cantidad=0, total=0) %}
+{% for servicio in lista_servicios %}
+{% set cantidad = cantidades.get(servicio.id, 0) %}
+{% set resumen_servicios.cantidad = resumen_servicios.cantidad + cantidad %}
+{% set resumen_servicios.total = resumen_servicios.total + cantidad * servicio.precio|float %}
+{% endfor %}
 
 {% set categorias = [
 {'nombre': 'Bebidas', 'slug': 'bebidas', 'detalle': 'Bebidas frías, para acompañar tu función.'},
@@ -115,12 +110,11 @@
                             <strong>{{ servicio.precio_formateado|default('$ ' ~ precio|string, true) }}</strong>
                         </div>
                         <div class="service-product-controls controles-cantidad">
-                            <button class="service-add-button btn-sumar" type="button" data-add aria-label="Agregar {{ servicio.nombre }}" {% if requiere_entrada and not entrada %}disabled title="Disponible solo con una entrada"{% endif %}>Agregar <span aria-hidden="true">+</span></button>
-                            <div class="service-quantity" data-quantity-controls hidden>
-                                <button type="button" class="btn-restar" data-decrease aria-label="Quitar una unidad de {{ servicio.nombre }}">−</button>
-                                <output class="input-cantidad" data-quantity>0</output>
-                                <button type="button" class="btn-sumar" data-increase aria-label="Agregar una unidad de {{ servicio.nombre }}">+</button>
-                            </div>
+                            <label for="cantidad-{{ servicio.id }}">Cantidad</label>
+                            <input id="cantidad-{{ servicio.id }}" name="cantidad_{{ servicio.id }}"
+                                   type="number" min="0" max="{{ limite_cantidad }}" step="1"
+                                   value="{{ cantidades.get(servicio.id, 0) }}" data-quantity
+                                   aria-label="Cantidad de {{ servicio.nombre }}" {% if not entrada %}disabled{% endif %}>
                             {% if requiere_entrada and not entrada %}
                             <small class="service-requirement">Requiere entrada</small>
                             {% elif ('estacionamiento' in nombre_normalizado or 'vip' in nombre_normalizado) %}
@@ -141,22 +135,23 @@
         <aside class="service-order" aria-labelledby="selection-title">
             <div class="service-order-heading">
                 <h2 id="selection-title">Tu selección</h2>
-                <span data-cart-count>0 artículos</span>
+                <span data-cart-count>{{ resumen_servicios.cantidad }} artículos</span>
             </div>
             <div class="service-order-items" data-cart-items aria-live="polite">
-                <p class="service-cart-empty" data-cart-empty>Todavía no agregaste servicios.</p>
+                <p class="service-cart-empty" data-cart-empty>Revisá las cantidades elegidas. El resumen actualizado se muestra al continuar.</p>
             </div>
             <div class="service-order-total">
                 <strong>Total de servicios</strong>
-                <strong id="total-servicios" data-service-total>$0</strong>
+                <strong id="total-servicios" data-service-total>${{ resumen_servicios.total|int }}</strong>
             </div>
             <p class="service-order-note">Precios en pesos argentinos. Retirá el pedido en el complejo de tu función.</p>
-            <button class="service-checkout-button" type="button" data-checkout disabled>Continuar al pago</button>
+            <button class="service-checkout-button" type="submit" data-checkout {% if not entrada %}disabled{% endif %}>Continuar al pago</button>
+            <p>Los servicios son opcionales. Usá cantidad 0 para quitarlos; revisarás los importes actualizados en el pago.</p>
             <p class="service-checkout-message" data-checkout-message role="status" aria-live="polite"></p>
             <div class="service-pickup-note">
                 <h3><span aria-hidden="true">⌖</span> Retiro en el complejo</h3>
                 <p>Presentá tu comprobante en el candy bar del complejo. Te recomendamos llegar 20 minutos antes para retirar sin apuro.</p>
-            </div>
+            </form>
         </aside>
     </div>
 
@@ -179,8 +174,8 @@
         <div class="service-context-ticket service-context-independent">
             <div>
                 <span>MODALIDAD</span>
-                <strong>Compra de servicios sin entrada</strong>
-                <small>No hace falta asociar una película ni una función.</small>
+                <strong>Catálogo de servicios</strong>
+                <small>Seleccioná tus entradas para continuar con esta compra.</small>
             </div>
             <div class="service-context-venue">
                 <span>RETIRO</span>
@@ -192,14 +187,14 @@
         <div class="service-purchase-summary">
             <h3>Resumen de compra</h3>
             <div class="service-summary-lines" data-purchase-lines>
-                <p class="service-summary-empty" data-purchase-empty>No hay servicios seleccionados.</p>
+                <p class="service-summary-empty" data-purchase-empty>{{ resumen_servicios.cantidad }} unidades guardadas. Podés modificarlas arriba.</p>
             </div>
             <div><span>Entradas</span><strong data-ticket-total-display>{{ '$ ' ~ (contexto.total_entradas|default(0, true)|int) }}</strong></div>
-            <div><span>Servicios</span><strong data-service-total-summary>$0</strong></div>
-            <div class="service-purchase-grand-total"><span>Total de compra</span><strong data-purchase-total>$0</strong></div>
+            <div><span>Servicios</span><strong data-service-total-summary>${{ resumen_servicios.total|int }}</strong></div>
+            <div class="service-purchase-grand-total"><span>Total de compra</span><strong data-purchase-total>${{ ((contexto.total_entradas if contexto else 0) + resumen_servicios.total)|int }}</strong></div>
             <p>El importe final se confirma antes de completar el pago.</p>
         </div>
-        <button class="service-context-checkout" type="button" data-checkout-secondary disabled>Continuar al pago</button>
+        <button class="service-context-checkout" type="submit" form="servicios-contenedor" data-checkout-secondary {% if not entrada %}disabled{% endif %}>Continuar al pago</button>
         <a class="service-context-back" href="{{ url_for('cliente_views.cartelera') }}">Seguir explorando películas</a>
     </section>
 </section>
