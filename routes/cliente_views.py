@@ -323,6 +323,7 @@ def cancelar_compra(compra_id):
                             funcion=datos.get("funcion", {}),
                             reserva=datos.get("reserva", {}),
                             resumen=datos.get("resumen", {}),
+                            estado=request.args.get("estado", "pendiente"),
                             csrf_token=compra_service.token_csrf())
 
 @cliente_views_bp.route("/reservas/<int:reserva_id>/cancelar", methods = ["POST"])
@@ -335,9 +336,12 @@ def cancelar_reserva(reserva_id):
     
     if status_code == 200:
         flash(respuesta.get("message", "Reserva cancelada exitosamente"), "success")
+        return redirect(url_for("cliente_views.cancelar_compra", compra_id=reserva_id, estado="cancelada"))
     else:
         mensaje_error = respuesta.get("error", {}).get("message", "Compra no encontrada.")
         flash(mensaje_error, "danger")
+        if "2 horas" in mensaje_error:
+            return redirect(url_for("cliente_views.cancelar_compra", compra_id=reserva_id, estado="vencida"))
 
     return redirect(url_for("cliente_views.mi_perfil"))
 
