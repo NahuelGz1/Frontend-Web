@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, abort, current_app, request
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, current_app, request, make_response
 from services.api_client import consumir_api
 from services import compra_service
 from routes.auth_security import requiere_sesion
@@ -271,12 +271,44 @@ def compra_exitosa(compra_id):
         abort(503, description="La compra se registró, pero no pudimos mostrar su detalle. Consultá Mis compras; no vuelvas a pagar.")
     return render_template("cliente/compra-exitosa.html", **datos)
 
+
+def _obtener_compra_para_documento(compra_id):
+    status_code, respuesta = consumir_api("GET", f"/compras/{compra_id}")
+    if status_code != 200:
+        mensaje = respuesta.get("error", {}).get("message", "Compra no encontrada.")
+        flash(mensaje, "danger")
+        return None
+    return respuesta.get("data") or {}
+
+
+@cliente_views_bp.route("/compras/<int:compra_id>/entradas")
+@requiere_sesion
+def descargar_entradas(compra_id):
+    datos = _obtener_compra_para_documento(compra_id)
+    if datos is None:
+        return redirect(url_for("cliente_views.mi_perfil"))
+    respuesta = make_response(render_template("cliente/entradas.html", **datos))
+    respuesta.headers["Content-Disposition"] = f"attachment; filename=entradas-CP-{compra_id}.html"
+    return respuesta
+
+
+@cliente_views_bp.route("/compras/<int:compra_id>/factura")
+@requiere_sesion
+def descargar_factura(compra_id):
+    datos = _obtener_compra_para_documento(compra_id)
+    if datos is None:
+        return redirect(url_for("cliente_views.mi_perfil"))
+    respuesta = make_response(render_template("cliente/factura.html", **datos))
+    respuesta.headers["Content-Disposition"] = f"attachment; filename=factura-CP-{compra_id}.html"
+    return respuesta
+
 @cliente_views_bp.route("/cancelar-compra")
 @cliente_views_bp.route("/cancelar-compra/")
 def cancelar_compra_vacia():
     return redirect(url_for("cliente_views.cartelera"))
 
 @cliente_views_bp.route("/cancelar-compra/<int:compra_id>")
+@requiere_sesion
 def cancelar_compra(compra_id):
     status_code, respuesta = consumir_api("GET", f"/compras/{compra_id}")
 
@@ -287,12 +319,18 @@ def cancelar_compra(compra_id):
 
     datos = respuesta.get("data") or {}
 
-    return render_template("cliente/cancelar-compra.html", 
-                            funcion = datos.get("funcion", {}), 
-                            reserva = datos.get("reserva", {}))
+    return render_template("cliente/cancelar-compra.html",
+                            funcion=datos.get("funcion", {}),
+                            reserva=datos.get("reserva", {}),
+                            resumen=datos.get("resumen", {}),
+                            csrf_token=compra_service.token_csrf())
 
 @cliente_views_bp.route("/reservas/<int:reserva_id>/cancelar", methods = ["POST"])
+@requiere_sesion
 def cancelar_reserva(reserva_id):
+    if not compra_service.csrf_valido(request.form.get("csrf_token")):
+        flash("El formulario venció. Volvé a intentar la cancelación.", "warning")
+        return redirect(url_for("cliente_views.mi_perfil"))
     status_code, respuesta = consumir_api("PUT", f"/compras/{reserva_id}/cancelar")
     
     if status_code == 200:

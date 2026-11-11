@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Entradas {{ reserva.codigo }}</title>
+    <style>
+        body { font-family: Georgia, serif; color: #20232a; max-width: 760px; margin: 40px auto; padding: 0 24px; }
+        header { border-bottom: 3px solid #20232a; margin-bottom: 28px; }
+        h1 { margin-bottom: 6px; }
+        .meta { color: #5d6470; }
+        .ticket { border: 1px solid #c9cdd3; padding: 20px; margin: 18px 0; page-break-inside: avoid; }
+        .ticket h2 { margin-top: 0; }
+        .ticket dl { display: grid; grid-template-columns: 140px 1fr; gap: 7px 14px; }
+        dt { font-weight: bold; }
+        dd { margin: 0; }
+        .code { font-family: monospace; letter-spacing: .04em; }
+        @media print { body { margin: 0 auto; } }
+    </style>
+</head>
+<body>
+    <header>
+        <p>CINE PARADISO</p>
+        <h1>Entradas digitales</h1>
+        <p class="meta">Operación {{ reserva.codigo }} · {{ funcion.pelicula.titulo }}</p>
+    </header>
+    {% for entrada in reserva.entradas %}
+    <article class="ticket">
+        <h2>Entrada {{ loop.index }} de {{ reserva.entradas|length }}</h2>
+        <dl>
+            <dt>Película</dt><dd>{{ funcion.pelicula.titulo }}</dd>
+            <dt>Función</dt><dd>{{ funcion.fecha_hora_proyeccion }}</dd>
+            <dt>Sala</dt><dd>{{ funcion.sala.local }} · {{ funcion.sala.nombre }}</dd>
+            <dt>Butaca</dt><dd>{{ entrada.numero_butaca }}</dd>
+            <dt>Estado</dt><dd>{{ entrada.estado }}</dd>
+            <dt>Código</dt><dd class="code">{{ entrada.codigo_qr }}</dd>
+        </dl>
+    </article>
+    {% endfor %}
+</body>
+</html>

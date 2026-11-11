@@ -5,6 +5,12 @@
 {% block content %}
 {% set funcion_mostrada = funcion|default(reserva, true) %}
 {% set poster = funcion_mostrada.pelicula.poster_url|default('', true) %}
+{% set entradas = reserva.entradas|default([], true) %}
+{% set codigo = reserva.codigo|default('CP-' ~ reserva.id, true) %}
+{% set titulo = funcion_mostrada.pelicula.titulo|default('Tu función', true) %}
+{% set butacas = entradas|map(attribute='numero_butaca')|join(', ') %}
+{% set subtotal_entradas = resumen.subtotal_entradas|default(0, true)|float %}
+{% set subtotal_servicios = resumen.subtotal_servicios|default(0, true)|float %}
 <section class="cancelacion-page" aria-labelledby="cancelacion-titulo">
     <header class="cancelacion-heading">
         <nav class="cancelacion-breadcrumb" aria-label="Migas de pan">
@@ -13,11 +19,11 @@
             <span>Cancelar compra</span>
         </nav>
         <h1 id="cancelacion-titulo">Cancelar compra</h1>
-        <p>Revisá tu operación antes de confirmar. La cancelación alcanza las dos entradas y los servicios de esta compra.</p>
+        <p>Revisá tu operación antes de confirmar. La cancelación alcanza las entradas y los servicios de esta compra.</p>
     </header>
 
     <article class="cancelacion-resumen" aria-labelledby="compra-titulo">
-        <h2 id="compra-titulo">Compra CP-261030-0842</h2>
+        <h2 id="compra-titulo">Compra {{ codigo }}</h2>
         <div class="cancelacion-funcion">
             {% if poster %}
             <img class="cancelacion-poster" src="{{ poster }}" alt="Afiche de Volver al Futuro" width="72" height="96">
@@ -25,25 +31,26 @@
             <div class="cancelacion-poster cancelacion-poster--placeholder" aria-label="Afiche no disponible">▧</div>
             {% endif %}
             <div class="cancelacion-funcion-datos">
-                <h3>Volver al Futuro</h3>
-                <p>Viernes 30/10/2026 · 19:30</p>
-                <p>Paradiso Centro · Sala 1</p>
-                <p>Fila D · Butacas D5 y D6</p>
+                <h3>{{ titulo }}</h3>
+                <p>{{ funcion_mostrada.fecha_hora_proyeccion|default('Fecha no disponible', true) }}</p>
+                <p>{{ funcion_mostrada.sala.local|default('', true) }} · {{ funcion_mostrada.sala.nombre|default('', true) }}</p>
+                <p>Butacas: {{ butacas }}</p>
             </div>
         </div>
 
         <p class="cancelacion-comprador">Lucía Fernández · lucia@example.com</p>
         <dl class="cancelacion-importes">
-            <div><dt>2 entradas × $10.000</dt><dd>$20.000</dd></div>
-            <div><dt>1 Combo dúo</dt><dd>$8.500</dd></div>
-            <div><dt>1 Nachos con cheddar</dt><dd>$4.000</dd></div>
-            <div><dt>Subtotal servicios</dt><dd>$12.500</dd></div>
+            <div><dt>{{ entradas|length }} entrada(s)</dt><dd>${{ '%.2f'|format(subtotal_entradas) }}</dd></div>
+            {% for servicio in resumen.servicios|default([], true) %}
+            <div><dt>{{ servicio.cantidad }} × {{ servicio.nombre }}</dt><dd>${{ '%.2f'|format((servicio.precio|float) * (servicio.cantidad|int)) }}</dd></div>
+            {% endfor %}
+            <div><dt>Subtotal servicios</dt><dd>${{ '%.2f'|format(subtotal_servicios) }}</dd></div>
         </dl>
         <div class="cancelacion-total">
             <strong>Total</strong>
-            <strong>Total: $32.500 ARS</strong>
+            <strong>Total: ${{ '%.2f'|format(subtotal_entradas + subtotal_servicios) }} ARS</strong>
         </div>
-        <p class="cancelacion-operacion">Operación CP-261030-0842</p>
+        <p class="cancelacion-operacion">Operación {{ codigo }}</p>
     </article>
 
     <section class="cancelacion-estados" aria-labelledby="estados-titulo">
@@ -57,10 +64,10 @@
             <span class="cancelacion-badge">Pendiente de tu confirmación</span>
             <h3 id="pendiente-titulo">¿Querés cancelar esta compra?</h3>
             <div class="cancelacion-estado-detalle">
-                <p>CP-261030-0842 · Volver al Futuro</p>
-                <p>30/10/2026 19:30 · Paradiso Centro · Sala 1</p>
-                <p>Se cancelarían las entradas D5 y D6, el Combo dúo y los Nachos con cheddar. Los dos QR quedarían invalidados y las butacas se liberarían.</p>
-                <p>Total de la operación: $32.500 ARS.</p>
+                <p>{{ codigo }} · {{ titulo }}</p>
+                <p>{{ funcion_mostrada.fecha_hora_proyeccion|default('Fecha no disponible', true) }} · {{ funcion_mostrada.sala.local|default('', true) }} · {{ funcion_mostrada.sala.nombre|default('', true) }}</p>
+                <p>Se cancelarían las entradas {{ butacas }} y los servicios de esta compra. Los QR quedarían invalidados y las butacas se liberarían.</p>
+                <p>Total de la operación: ${{ '%.2f'|format(subtotal_entradas + subtotal_servicios) }} ARS.</p>
                 <p>No podrás usar estas entradas después de cancelar.</p>
             </div>
             <div class="cancelacion-acciones">
@@ -78,12 +85,11 @@
                 <span class="cancelacion-badge">Compra cancelada</span>
                 <h3 id="realizada-titulo">Tu compra fue cancelada</h3>
                 <div class="cancelacion-estado-detalle">
-                    <p>Operación CP-261030-0842</p>
-                    <p>Volver al Futuro · 30/10/2026 19:30</p>
-                    <p>Paradiso Centro · Sala 1</p>
-                    <p>Butacas D5 y D6 liberadas.</p>
-                    <p>QR CP-261030-0842-D5 y CP-261030-0842-D6 invalidados. Ya no permiten el ingreso.</p>
-                    <p>Combo dúo y Nachos con cheddar cancelados.</p>
+                    <p>Operación {{ codigo }}</p>
+                    <p>{{ titulo }} · {{ funcion_mostrada.fecha_hora_proyeccion|default('Fecha no disponible', true) }}</p>
+                    <p>{{ funcion_mostrada.sala.local|default('', true) }} · {{ funcion_mostrada.sala.nombre|default('', true) }}</p>
+                    <p>Butacas {{ butacas }} liberadas.</p>
+                    <p>Los códigos QR de la compra fueron invalidados y ya no permiten el ingreso.</p>
                     <p>La cancelación no implica una confirmación de reintegro.</p>
                 </div>
                 <a class="cancelacion-btn cancelacion-btn--secondary" href="{{ url_for('cliente_views.mi_perfil') }}">Volver a mis compras</a>
@@ -94,9 +100,9 @@
                 <span class="cancelacion-badge">Cancelación no disponible</span>
                 <h3 id="vencida-titulo">Ya no podés cancelar esta compra</h3>
                 <div class="cancelacion-estado-detalle">
-                    <p>CP-261030-0842 · Volver al Futuro</p>
-                    <p>30/10/2026 19:30 · Paradiso Centro · Sala 1</p>
-                    <p>Se superó el límite de cancelación previo a la función. La operación no se modificó: tus entradas D5 y D6 y tus servicios siguen confirmados.</p>
+                    <p>{{ codigo }} · {{ titulo }}</p>
+                    <p>{{ funcion_mostrada.fecha_hora_proyeccion|default('Fecha no disponible', true) }} · {{ funcion_mostrada.sala.local|default('', true) }} · {{ funcion_mostrada.sala.nombre|default('', true) }}</p>
+                    <p>Se superó el límite de cancelación previo a la función. La operación no se modificó: tus entradas {{ butacas }} y tus servicios siguen confirmados.</p>
                 </div>
                 <div class="cancelacion-acciones cancelacion-acciones--vencida">
                     <button class="cancelacion-btn cancelacion-btn--disabled" type="button" disabled>Cancelar compra - Bloqueada</button>
