@@ -27,8 +27,8 @@
             <section class="payment-card" aria-labelledby="contact-title">
                 <h2 id="contact-title">Datos de contacto</h2>
                 <label for="payment-email">Email</label>
-                <input id="payment-email" type="email" name="email" value="{{ email_usuario|default('') }}" autocomplete="email" readonly>
-                <p class="payment-help">Enviaremos tus entradas con QR y la factura al email de tu cuenta.</p>
+                <input id="payment-email" type="email" name="email" value="{{ email_usuario|default('') }}" autocomplete="email" required>
+                <p class="payment-help">Usaremos este email para los datos de contacto de la compra.</p>
             </section>
 
             <section class="payment-card" aria-labelledby="confirm-title">

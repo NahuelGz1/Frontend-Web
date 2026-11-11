@@ -1,6 +1,7 @@
 # Lo que el cliente va eligiendo queda en session["compra"]: id_funcion, butacas y servicios
 # Despues de comprar, session["compra_confirmada"] tiene lo que muestra compra-exitosa.html
 import hmac
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -106,8 +107,7 @@ def _obtener_poster(pelicula_id):
     return pelicula.get("poster_url") or pelicula.get("poster") or ""
 
 
-def _servicios_con_precio(elegidos):
-    # El precio sale del catalogo del back, no de lo que manda el navegador
+def _servicios_con_precio(elegidos, cantidad_entradas=0):
     if not elegidos:
         return [], None, None
     status_code, respuesta = consumir_api("GET", "/servicios")
@@ -119,8 +119,20 @@ def _servicios_con_precio(elegidos):
         servicio = catalogo.get(elegido.get("id_servicio"))
         cantidad = elegido.get("cantidad")
         if servicio and isinstance(cantidad, int) and cantidad > 0:
-            servicios.append({"id_servicio": servicio["id"], "nombre": servicio["nombre"],
-                              "cantidad": cantidad, "precio": float(servicio["precio"])})
+            nombre_normalizado = servicio.get("nombre", "").lower()
+
+            # Si es Estacionamiento o Acceso VIP, limitamos la cantidad al total de entradas
+            if ("estacionamiento" in nombre_normalizado or "vip" in nombre_normalizado) and cantidad_entradas > 0:
+                if cantidad > cantidad_entradas:
+                    cantidad = cantidad_entradas
+
+            if cantidad > 0:
+                servicios.append({
+                    "id_servicio": servicio["id"],
+                    "nombre": servicio["nombre"],
+                    "cantidad": cantidad,
+                    "precio": float(servicio["precio"])
+                })
     aviso = None
     if len(servicios) < len(elegidos):
         aviso = "Algún servicio que elegiste ya no está disponible y lo quitamos del resumen."
@@ -212,6 +224,21 @@ def email_del_usuario():
     return (respuesta.get("data") or {}).get("email", "") if status_code == 200 else ""
 
 
+def email_de_contacto():
+    compra = session.get(CLAVE_COMPRA) or {}
+    return compra.get("email_contacto") or email_del_usuario()
+
+
+def guardar_email_contacto(email):
+    email = (email or "").strip().lower()
+    if len(email) > 100 or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        return False
+    compra = session.get(CLAVE_COMPRA) or {}
+    compra["email_contacto"] = email
+    session[CLAVE_COMPRA] = compra
+    return True
+
+
 def armar_resumen():
     compra = session.get(CLAVE_COMPRA) or {}
     if not compra.get("id_funcion") or not compra.get("butacas"):
@@ -224,13 +251,16 @@ def armar_resumen():
     if fecha is None or fecha <= _ahora():
         return None, "Esta función ya comenzó. Elegí otra en la cartelera."
 
-    servicios, aviso, error = _servicios_con_precio(compra.get("servicios") or [])
+    butacas = compra["butacas"]
+
+    # Pasamos len(butacas) como la cantidad de entradas asociadas
+    servicios, aviso, error = _servicios_con_precio(compra.get("servicios") or [], cantidad_entradas=len(butacas))
     if error:
         return None, error
+
     compra["servicios"] = [{"id_servicio": s["id_servicio"], "cantidad": s["cantidad"]} for s in servicios]
     session[CLAVE_COMPRA] = compra
 
-    butacas = compra["butacas"]
     precio_entrada = float(funcion.get("precio_entrada") or 0)
     subtotal_entradas = precio_entrada * len(butacas)
     subtotal_servicios = sum(s["precio"] * s["cantidad"] for s in servicios)

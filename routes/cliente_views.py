@@ -151,7 +151,46 @@ def servicios():
         if not servicio.get("precio_formateado") and "precio" in servicio:
             servicio["precio_formateado"] = f"${int(servicio['precio']):,}".replace(",", ".")
 
-    return render_template("cliente/servicios.html", servicios=lista_servicios)
+    contexto_compra = None
+    resumen, error = compra_service.armar_resumen()
+    if not error and resumen:
+        vista_funcion = resumen["vista"]["funcion"]
+        cant_entradas = resumen["vista"]["cantidad_entradas"]
+        precio_ent = resumen["vista"].get("subtotal_entradas", "0")
+        total_ent_int = int(''.join(filter(str.isdigit, str(precio_ent))) or 0)
+        contexto_compra = {
+            "cantidad_entradas": cant_entradas,
+            "total_entradas": total_ent_int,
+            "entrada": {
+                "cantidad": cant_entradas,
+                "pelicula": vista_funcion["pelicula"].get("titulo", ""),
+                "fecha": vista_funcion.get("fecha", ""),
+                "sala": f"{vista_funcion.get('complejo', '')} - {vista_funcion.get('sala', '')}",
+                "asientos": vista_funcion.get("butacas", ""),
+            }
+        }
+
+    return render_template(
+        "cliente/servicios.html",
+        servicios=lista_servicios,
+        contexto_compra=contexto_compra,
+    )
+
+
+@cliente_views_bp.route("/servicios/guardar", methods=["POST"])
+def guardar_servicios():
+    if not compra_service.hay_sesion_iniciada():
+        return {"error": "No autorizado"}, 401
+
+    datos = request.get_json(silent=True) or {}
+    servicios_lista = datos.get("servicios", [])
+
+    from flask import session
+    compra = session.get(compra_service.CLAVE_COMPRA) or {}
+    compra["servicios"] = servicios_lista
+    session[compra_service.CLAVE_COMPRA] = compra
+
+    return {"status": "ok", "redirect": url_for("cliente_views.pagar")}
 
 
 @cliente_views_bp.route("/mi-perfil")
@@ -184,6 +223,9 @@ def pagar():
         if not compra_service.csrf_valido(request.form.get("csrf_token")):
             flash("El formulario venció. Revisá el resumen y confirmá de nuevo.", "warning")
             return redirect(url_for("cliente_views.pagar"))
+        if not compra_service.guardar_email_contacto(request.form.get("email")):
+            flash("Ingresá un email de contacto válido.", "warning")
+            return redirect(url_for("cliente_views.pagar"))
         exito, mensaje, elegir_de_nuevo = compra_service.confirmar_compra(resumen)
         if exito:
             return redirect(url_for("cliente_views.compra_exitosa", compra_id=compra_service.id_compra_confirmada()))
@@ -195,7 +237,7 @@ def pagar():
     return render_template(
         "cliente/pagar.html",
         **resumen["vista"],
-        email_usuario=compra_service.email_del_usuario(),
+        email_usuario=compra_service.email_de_contacto(),
         csrf_token=compra_service.token_csrf(),
     )
 

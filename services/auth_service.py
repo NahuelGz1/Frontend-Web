@@ -25,3 +25,14 @@ def perfil(token):
 
 def cerrar_sesion(token):
     return consumir_api("POST", "/auth/logout", headers={"Authorization": "Bearer " + token})
+
+def cambiar_contrasena(token, contrasena_actual, contrasena_nueva):
+    return consumir_api(
+        "PATCH",
+        "/auth/usuarios/me/password",
+        datos={
+            "contrasena_actual": contrasena_actual,
+            "contrasena_nueva": contrasena_nueva,
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
