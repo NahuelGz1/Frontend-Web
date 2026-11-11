@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, abort, current_app, request, make_response
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, current_app, request, make_response, session
 from services.api_client import consumir_api
-from services import compra_service
-from routes.auth_security import requiere_sesion
+from services import compra_service, auth_service
+from routes.auth_security import requiere_sesion, csrf_token
 
 cliente_views_bp = Blueprint("cliente_views", __name__)
 
@@ -212,14 +212,41 @@ def guardar_servicios():
     return redirect(url_for("cliente_views.pagar"), code=303)
 
 
-@cliente_views_bp.route("/mi-perfil")
+@cliente_views_bp.route("/mi-perfil", methods=["GET", "POST"])
 @requiere_sesion
 def mi_perfil():
+    if request.method == "POST":
+        if not compra_service.csrf_valido(request.form.get("csrf_token")):
+            abort(400, description="El formulario venció. Recargá la página e intentá nuevamente.")
+        nombre = request.form.get("nombre", "").strip()
+        apellido = request.form.get("apellido", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        if not nombre or not apellido or not email:
+            flash("Completá nombre, apellido y correo electrónico.", "warning")
+            return redirect(url_for("cliente_views.mi_perfil") + "#editar-perfil")
+        codigo, respuesta = auth_service.actualizar_perfil(
+            session.get("access_token"), f"{nombre} {apellido}", email
+        )
+        if codigo != 200:
+            mensaje = respuesta.get("error", {}).get("message", "No se pudo actualizar el perfil.")
+            flash(mensaje, "danger")
+            return redirect(url_for("cliente_views.mi_perfil") + "#editar-perfil")
+        actualizado = respuesta.get("data")
+        if isinstance(actualizado, dict):
+            session["usuario"] = actualizado
+        flash("Perfil actualizado correctamente.", "success")
+        return redirect(url_for("cliente_views.mi_perfil"), code=303)
+
     status_code, respuesta = consumir_api("GET", "/auth/usuarios/me/perfil-completo")
     datos_perfil = respuesta.get("data")
     if status_code != 200 or not isinstance(datos_perfil, dict):
         current_app.logger.error("No se pudo obtener el perfil completo de la API")
         abort(503, description="No se pudo cargar tu perfil. Intentá más tarde.")
+    usuario = session.get("usuario") or {}
+    partes_nombre = str(usuario.get("nombre", "")).split(maxsplit=1)
+    datos_perfil["nombre_form"] = partes_nombre[0] if partes_nombre else ""
+    datos_perfil["apellido_form"] = partes_nombre[1] if len(partes_nombre) > 1 else ""
+    datos_perfil["csrf_token"] = csrf_token()
     return render_template("cliente/mi-perfil.html", **datos_perfil)
 
 

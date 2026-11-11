@@ -4708,3 +4708,66 @@ button.btn-secondary:disabled {
     width: 24px;
     height: 24px;
 }
+
+body.modal-open {
+    overflow: hidden;
+}
+
+.profile-modal[hidden] {
+    display: none;
+}
+
+.profile-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+}
+
+.profile-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / 72%);
+}
+
+.profile-modal-dialog {
+    position: relative;
+    width: min(100%,  thirtyrem);
+    max-width: 32rem;
+    padding: 2rem;
+    border: 1px solid var(--border-color, #333);
+    border-radius: 0.75rem;
+    background: var(--surface-color, #1d1d1d);
+    box-shadow: 0 1rem 3rem rgb(0 0 0 / 45%);
+}
+
+.profile-modal-dialog label {
+    display: block;
+    margin-top: 1rem;
+}
+
+.profile-modal-dialog input {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 0.35rem;
+}
+
+.profile-modal-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.75rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 1.75rem;
+    cursor: pointer;
+}
+
+.profile-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}

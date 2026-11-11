@@ -43,6 +43,7 @@
                         <dd>{{ usr_email }}</dd>
                     </div>
                 </dl>
+                <button class="profile-secondary-button" type="button" data-open-profile-modal>✎ Editar datos</button>
             </section>
 
             <section class="profile-security-card">
@@ -80,6 +81,13 @@
                     </div>
                     <div class="ticket-summary">
                         <p>{{ entrada.cantidad_entradas }} entradas · {{ entrada.subtotal_entradas }} ARS</p>
+                        {% if entrada.servicios %}
+                        <div class="ticket-services">
+                            {% for servicio in entrada.servicios %}
+                            <p>{{ servicio.cantidad }} × {{ servicio.nombre }} · {{ '%.2f'|format(servicio.precio|float) }} ARS</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                         <p>Comida y servicios · {{ entrada.subtotal_servicios }} ARS</p>
                         <p class="ticket-total">Total {{ entrada.total }} ARS</p>
                         <p>Operación {{ entrada.codigo_operacion }}</p>
@@ -161,32 +169,25 @@
     </div>
 </div>
 
-<!-- Modal emergente centrado con clases nativas del proyecto -->
-<div id="modal-editar-perfil" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; align-items: center; justify-content: center;">
-    <div class="card login-card" style="width: 100%; max-width: 440px; margin: 1rem;">
-        <h2 style="font-size: 1.4rem; margin-bottom: 0.5rem; color: var(--text-light);">Editar datos personales</h2>
-        <p class="login-description" style="margin-bottom: 1.2rem;">Completá únicamente los datos que quieras modificar.</p>
-
-        <form method="POST" action="{{ url_for('cliente_views.editar_perfil') }}" class="login-form">
-            {% if csrf_token is defined %}
+<div class="profile-modal" id="editar-perfil" data-profile-modal hidden>
+    <div class="profile-modal-backdrop" data-close-profile-modal></div>
+    <section class="profile-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="editar-perfil-titulo">
+        <button class="profile-modal-close" type="button" aria-label="Cerrar" data-close-profile-modal>×</button>
+        <h2 id="editar-perfil-titulo">Editar datos</h2>
+        <form method="post" action="{{ url_for('cliente_views.mi_perfil') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            {% endif %}
-
-            <label for="edit_nombre">Nuevo Nombre</label>
-            <input type="text" id="edit_nombre" name="nombre" placeholder="Ingresá tu nombre">
-
-            <label for="edit_apellido">Nuevo Apellido</label>
-            <input type="text" id="edit_apellido" name="apellido" placeholder="Ingresá tu apellido">
-
-            <label for="edit_email">Nuevo Correo electrónico</label>
-            <input type="email" id="edit_email" name="email" placeholder="ejemplo@correo.com">
-
-            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
-                <button type="button" class="btn-secondary" id="btn-cerrar-modal-editar" style="min-height: 2.5rem;">Cancelar</button>
-                <button type="submit" class="btn-primary" style="min-height: 2.5rem;">Guardar cambios</button>
+            <label for="perfil-nombre">Nombre</label>
+            <input id="perfil-nombre" name="nombre" type="text" value="{{ nombre_form }}" required maxlength="50">
+            <label for="perfil-apellido">Apellido</label>
+            <input id="perfil-apellido" name="apellido" type="text" value="{{ apellido_form }}" required maxlength="50">
+            <label for="perfil-email">Correo electrónico</label>
+            <input id="perfil-email" name="email" type="email" value="{{ usr_email }}" required maxlength="100">
+            <div class="profile-modal-actions">
+                <button class="profile-secondary-button" type="button" data-close-profile-modal>Cancelar</button>
+                <button class="profile-primary-button" type="submit">Guardar cambios</button>
             </div>
         </form>
-    </div>
+    </section>
 </div>
 {% endblock %}
 
