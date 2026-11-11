@@ -107,8 +107,7 @@ def _obtener_poster(pelicula_id):
     return pelicula.get("poster_url") or pelicula.get("poster") or ""
 
 
-def _servicios_con_precio(elegidos):
-    # El precio sale del catalogo del back, no de lo que manda el navegador
+def _servicios_con_precio(elegidos, cantidad_entradas=0):
     if not elegidos:
         return [], None, None
     status_code, respuesta = consumir_api("GET", "/servicios")
@@ -120,8 +119,20 @@ def _servicios_con_precio(elegidos):
         servicio = catalogo.get(elegido.get("id_servicio"))
         cantidad = elegido.get("cantidad")
         if servicio and isinstance(cantidad, int) and cantidad > 0:
-            servicios.append({"id_servicio": servicio["id"], "nombre": servicio["nombre"],
-                              "cantidad": cantidad, "precio": float(servicio["precio"])})
+            nombre_normalizado = servicio.get("nombre", "").lower()
+
+            # Si es Estacionamiento o Acceso VIP, limitamos la cantidad al total de entradas
+            if ("estacionamiento" in nombre_normalizado or "vip" in nombre_normalizado) and cantidad_entradas > 0:
+                if cantidad > cantidad_entradas:
+                    cantidad = cantidad_entradas
+
+            if cantidad > 0:
+                servicios.append({
+                    "id_servicio": servicio["id"],
+                    "nombre": servicio["nombre"],
+                    "cantidad": cantidad,
+                    "precio": float(servicio["precio"])
+                })
     aviso = None
     if len(servicios) < len(elegidos):
         aviso = "Algún servicio que elegiste ya no está disponible y lo quitamos del resumen."
@@ -240,13 +251,16 @@ def armar_resumen():
     if fecha is None or fecha <= _ahora():
         return None, "Esta función ya comenzó. Elegí otra en la cartelera."
 
-    servicios, aviso, error = _servicios_con_precio(compra.get("servicios") or [])
+    butacas = compra["butacas"]
+
+    # Pasamos len(butacas) como la cantidad de entradas asociadas
+    servicios, aviso, error = _servicios_con_precio(compra.get("servicios") or [], cantidad_entradas=len(butacas))
     if error:
         return None, error
+
     compra["servicios"] = [{"id_servicio": s["id_servicio"], "cantidad": s["cantidad"]} for s in servicios]
     session[CLAVE_COMPRA] = compra
 
-    butacas = compra["butacas"]
     precio_entrada = float(funcion.get("precio_entrada") or 0)
     subtotal_entradas = precio_entrada * len(butacas)
     subtotal_servicios = sum(s["precio"] * s["cantidad"] for s in servicios)
