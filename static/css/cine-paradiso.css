@@ -4243,6 +4243,28 @@ button.btn-secondary:disabled {
     font-size: 0.52rem;
 }
 
+.service-cart-remove {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-left: auto;
+    padding: 0;
+    border: 1px solid #555;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.45rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.service-cart-remove:hover {
+    border-color: var(--cinema-red-light);
+    color: var(--cinema-red-light);
+}
+
 .service-order-total {
     padding: 0.55rem 0;
     border-top: 1px solid #414141;

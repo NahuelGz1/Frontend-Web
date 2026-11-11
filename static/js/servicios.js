@@ -1,73 +1,222 @@
-// servicios.js - logica del carrito de candy bar / servicios
+// servicios.js - carrito del candy bar
 
 document.addEventListener('DOMContentLoaded', () => {
     const contenedorServicios = document.getElementById('servicios-contenedor');
     if (!contenedorServicios) return;
 
-    const totalGeneralElem = document.getElementById('total-servicios');
-    const inputTotalOculto = document.getElementById('total_servicios_input');
+    // panel de "Tu selección" (el aside de la derecha)
+    const cartCountElem      = contenedorServicios.querySelector('[data-cart-count]');
+    const cartItemsElem      = contenedorServicios.querySelector('[data-cart-items]');
+    const cartEmptyElem      = contenedorServicios.querySelector('[data-cart-empty]');
+    const serviceTotalElem   = contenedorServicios.querySelector('[data-service-total]');
+    const checkoutBtn        = contenedorServicios.querySelector('[data-checkout]');
+    const checkoutMsg        = contenedorServicios.querySelector('[data-checkout-message]');
 
-    function actualizarTotales() {
-        let totalGeneral = 0;
-        const filasProductos = contenedorServicios.querySelectorAll('.servicio-card, .item-servicio');
+    // resumen de compra de abajo (el de entradas + servicios)
+    const purchaseLinesElem  = document.querySelector('[data-purchase-lines]');
+    const purchaseEmptyElem  = document.querySelector('[data-purchase-empty]');
+    const serviceTotalSum    = document.querySelector('[data-service-total-summary]');
+    const purchaseTotalElem  = document.querySelector('[data-purchase-total]');
+    const checkoutBtnSec     = document.querySelector('[data-checkout-secondary]');
 
-        filasProductos.forEach(fila => {
-            const btnRestar = fila.querySelector('.btn-restar');
-            const inputCant = fila.querySelector('input[type="number"], .input-cantidad');
-            const subtotalElem = fila.querySelector('.subtotal-item');
-            const precioUnitario = parseFloat(fila.dataset.precio || 0);
+    // el total de entradas ya viene renderizado desde el servidor, lo levantamos
+    const ticketTotalElem    = document.querySelector('[data-ticket-total-display]');
+    const ticketTotal        = ticketTotalElem
+        ? parseInt(ticketTotalElem.textContent.replace(/\D/g, ''), 10) || 0
+        : 0;
 
-            if (!inputCant) return;
+    // acá guardamos lo que el usuario va agregando: { id: { nombre, precio, cantidad } }
+    const carrito = {};
 
-            let cantidad = parseInt(inputCant.value || 0, 10);
-            if (cantidad < 0) cantidad = 0;
+    // formatea un número como precio en pesos argentinos
+    function formatPesos(valor) {
+        return `$${valor.toLocaleString('es-AR')}`;
+    }
 
-            // deshabilita restar cuando la cantidad es cero
-            if (btnRestar) btnRestar.disabled = cantidad === 0;
+    // re-dibuja el carrito lateral y el resumen de abajo con lo que hay en `carrito`
+    function actualizarUI() {
+        let totalServicios = 0;
+        let totalItems     = 0;
 
-            const subtotal = cantidad * precioUnitario;
-            totalGeneral += subtotal;
-
-            if (subtotalElem) {
-                subtotalElem.textContent = `$${subtotal.toLocaleString('es-AR')}`;
-            }
+        Object.values(carrito).forEach(item => {
+            totalServicios += item.precio * item.cantidad;
+            totalItems     += item.cantidad;
         });
 
-        if (totalGeneralElem) {
-            totalGeneralElem.textContent = `$${totalGeneral.toLocaleString('es-AR')}`;
+        // -- carrito lateral --
+
+        if (cartCountElem) {
+            cartCountElem.textContent =
+                totalItems === 1 ? '1 artículo' : `${totalItems} artículos`;
         }
-        if (inputTotalOculto) {
-            inputTotalOculto.value = totalGeneral;
+
+        if (serviceTotalElem) {
+            serviceTotalElem.textContent = formatPesos(totalServicios);
+        }
+
+        // si no hay nada, mostramos el mensaje de "todavía no agregaste nada"
+        if (cartEmptyElem) {
+            cartEmptyElem.hidden = totalItems > 0;
+        }
+
+        // limpiamos las líneas anteriores y las volvemos a armar
+        if (cartItemsElem) {
+            cartItemsElem.querySelectorAll('[data-cart-line]').forEach(el => el.remove());
+
+            Object.entries(carrito).forEach(([id, item]) => {
+                if (item.cantidad <= 0) return;
+                const linea = document.createElement('div');
+                linea.setAttribute('data-cart-line', id);
+                linea.className = 'service-cart-line';
+                linea.innerHTML = `
+                    <span>${item.nombre} × ${item.cantidad}</span>
+                    <strong>${formatPesos(item.precio * item.cantidad)}</strong>
+                    <button type="button" class="service-cart-remove" data-remove-id="${id}" aria-label="Quitar ${item.nombre}">✕</button>
+                `;
+                cartItemsElem.appendChild(linea);
+            });
+        }
+
+        // el botón de continuar solo se habilita si hay algo en el carrito
+        if (checkoutBtn)    checkoutBtn.disabled    = totalItems === 0;
+        if (checkoutBtnSec) checkoutBtnSec.disabled = totalItems === 0;
+
+        // -- resumen de compra (sección de abajo) --
+
+        if (purchaseLinesElem) {
+            purchaseLinesElem.querySelectorAll('[data-purchase-line]').forEach(el => el.remove());
+
+            Object.entries(carrito).forEach(([id, item]) => {
+                if (item.cantidad <= 0) return;
+                const linea = document.createElement('div');
+                linea.setAttribute('data-purchase-line', id);
+                linea.style.display = 'flex';
+                linea.style.justifyContent = 'space-between';
+                linea.style.gap = '1rem';
+                linea.innerHTML = `<span>${item.nombre} × ${item.cantidad}</span><strong>${formatPesos(item.precio * item.cantidad)}</strong>`;
+                purchaseLinesElem.appendChild(linea);
+            });
+
+            if (purchaseEmptyElem) {
+                purchaseEmptyElem.hidden = totalItems > 0;
+            }
+        }
+
+        if (serviceTotalSum)   serviceTotalSum.textContent   = formatPesos(totalServicios);
+        if (purchaseTotalElem) purchaseTotalElem.textContent = formatPesos(totalServicios + ticketTotal);
+    }
+
+    // actualiza los botones y el contador de una card específica
+    function actualizarCard(card) {
+        const id              = card.dataset.serviceId;
+        const cantidad        = carrito[id] ? carrito[id].cantidad : 0;
+        const addBtn          = card.querySelector('[data-add]');
+        const quantitySection = card.querySelector('[data-quantity-controls]');
+        const quantityDisplay = card.querySelector('[data-quantity]');
+        const maxQty          = parseInt(card.dataset.maxQuantity || '9999', 10);
+
+        // si ya tiene al menos uno, escondemos el botón "Agregar" y mostramos los controles
+        if (addBtn) {
+            addBtn.hidden = cantidad > 0;
+        }
+        if (quantitySection) {
+            quantitySection.hidden = cantidad === 0;
+        }
+        if (quantityDisplay) {
+            quantityDisplay.textContent = cantidad;
+        }
+
+        // bloqueamos el "+" si llegamos al máximo permitido
+        const increaseBtn = card.querySelector('[data-increase]');
+        if (increaseBtn) {
+            increaseBtn.disabled = cantidad >= maxQty;
         }
     }
 
-    // delegacion de eventos para incrementar o decrementar
-    contenedorServicios.addEventListener('click', (e) => {
-        const btn = e.target.closest('.btn-sumar, .btn-restar');
-        if (!btn) return;
+    // escuchamos todos los clics dentro del contenedor (delegación)
+    contenedorServicios.addEventListener('click', e => {
 
-        const contenedorControles = btn.closest('.controles-cantidad, .servicio-card, .item-servicio');
-        const inputCant = contenedorControles.querySelector('input[type="number"], .input-cantidad');
+        // botón "Agregar +" que aparece la primera vez
+        const addBtn = e.target.closest('[data-add]');
+        if (addBtn) {
+            const card   = addBtn.closest('[data-service-card]');
+            if (!card) return;
+            const id     = card.dataset.serviceId;
+            const nombre = card.dataset.serviceName;
+            const precio = parseFloat(card.dataset.precio || 0);
+            const maxQty = parseInt(card.dataset.maxQuantity || '9999', 10);
 
-        if (!inputCant) return;
-
-        let val = parseInt(inputCant.value || 0, 10);
-        if (btn.classList.contains('btn-sumar')) {
-            val++;
-        } else if (btn.classList.contains('btn-restar') && val > 0) {
-            val--;
+            if (!carrito[id]) {
+                carrito[id] = { nombre, precio, cantidad: 0 };
+            }
+            if (carrito[id].cantidad < maxQty) {
+                carrito[id].cantidad++;
+            }
+            actualizarCard(card);
+            actualizarUI();
+            return;
         }
 
-        inputCant.value = val;
-        actualizarTotales();
-    });
+        // botón "+" del control de cantidad
+        const incBtn = e.target.closest('[data-increase]');
+        if (incBtn) {
+            const card   = incBtn.closest('[data-service-card]');
+            if (!card) return;
+            const id     = card.dataset.serviceId;
+            const maxQty = parseInt(card.dataset.maxQuantity || '9999', 10);
 
-    // escuchar entradas manuales si el campo es editable
-    contenedorServicios.addEventListener('input', (e) => {
-        if (e.target.matches('input[type="number"], .input-cantidad')) {
-            actualizarTotales();
+            if (carrito[id] && carrito[id].cantidad < maxQty) {
+                carrito[id].cantidad++;
+                actualizarCard(card);
+                actualizarUI();
+            }
+            return;
+        }
+
+        // botón "−" del control de cantidad
+        const decBtn = e.target.closest('[data-decrease]');
+        if (decBtn) {
+            const card = decBtn.closest('[data-service-card]');
+            if (!card) return;
+            const id = card.dataset.serviceId;
+
+            if (carrito[id] && carrito[id].cantidad > 0) {
+                carrito[id].cantidad--;
+                actualizarCard(card);
+                actualizarUI();
+            }
+            return;
+        }
+
+        // botón "✕" del carrito lateral - saca el producto entero
+        const removeBtn = e.target.closest('[data-remove-id]');
+        if (removeBtn) {
+            const id = removeBtn.dataset.removeId;
+            if (carrito[id]) {
+                carrito[id].cantidad = 0;
+            }
+            // volvemos la card a su estado original
+            const card = contenedorServicios.querySelector(`[data-service-id="${id}"]`);
+            if (card) actualizarCard(card);
+            actualizarUI();
+            return;
         }
     });
 
-    actualizarTotales();
+    // si el usuario toca "Continuar" sin haber agregado nada, le avisamos
+    function manejarCheckout() {
+        if (Object.values(carrito).every(i => i.cantidad === 0)) {
+            if (checkoutMsg) {
+                checkoutMsg.textContent = 'Agregá al menos un servicio para continuar.';
+            }
+            return;
+        }
+        if (checkoutMsg) checkoutMsg.textContent = '';
+    }
+
+    if (checkoutBtn)    checkoutBtn.addEventListener('click', manejarCheckout);
+    if (checkoutBtnSec) checkoutBtnSec.addEventListener('click', manejarCheckout);
+
+    // arrancamos con todo en cero
+    actualizarUI();
 });
