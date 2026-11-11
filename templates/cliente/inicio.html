@@ -97,17 +97,20 @@
 <section class="home-section">
     <div class="section-head">
         <h2>Próximos estrenos</h2>
-        <a href="{{ url_for('cliente_views.cartelera') }}" class="section-link">Ver estrenos →</a>
+        <a href="{{ url_for('cliente_views.estrenos') }}" class="section-link">Ver estrenos →</a>
     </div>
     <div class="upcoming-grid">
         {% for estreno in proximos_estrenos|default([]) %}
         <article class="movie-item card">
-            {% if estreno.afiche_url %}
-            <img src="{{ estreno.afiche_url }}" alt="{{ estreno.titulo }}">
+            {% if estreno.afiche_url or estreno.poster %}
+            <img src="{{ estreno.afiche_url|default(estreno.poster) }}" alt="{{ estreno.titulo }}">
             {% else %}
             <div class="movie-poster-placeholder">▧</div>
             {% endif %}
-            <div><strong>{{ estreno.titulo }}</strong><span class="date">{{ estreno.disponible_desde }}</span></div>
+            <div>
+                <strong>{{ estreno.titulo }}</strong>
+                <span class="date">{{ estreno.disponible_desde|default(estreno.fecha_estreno|default('Próximamente')) }}</span>
+            </div>
         </article>
         {% else %}
         <p class="text-muted">No hay próximos estrenos cargados por el momento.</p>
