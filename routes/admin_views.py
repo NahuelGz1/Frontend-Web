@@ -518,16 +518,50 @@ def funciones():
         sala["complejo_nombre"] = sala.get("local", "")
 
     editar_sala = request.args.get("editar_sala")
+    complejo_form = request.args.get("complejo_form", "").strip()
+    salas_formulario = salas
+    funcion_editar = None
+    id_editar_funcion = request.args.get("editar", type=int)
+    if id_editar_funcion is not None:
+        funcion_editar = next(
+            (
+                funcion.copy()
+                for funcion in funciones
+                if funcion.get("id") == id_editar_funcion
+            ),
+            None,
+        )
+        if funcion_editar is None:
+            mensaje_estado = "No se encontró la función seleccionada."
+            mensaje_tipo = "error"
+        else:
+            fecha_funcion = funcion_editar.get("fecha_hora_proyeccion", "")
+            try:
+                fecha_obj = datetime.fromisoformat(
+                    str(fecha_funcion).replace("Z", "+00:00")
+                )
+                funcion_editar["fecha_hora_form"] = fecha_obj.strftime(
+                    "%Y-%m-%dT%H:%M"
+                )
+            except ValueError:
+                funcion_editar["fecha_hora_form"] = ""
+            funcion_editar["venta_desde_form"] = funcion_editar["fecha_hora_form"]
+            funcion_editar["venta_hasta_form"] = funcion_editar["fecha_hora_form"]
+            funcion_editar["precio"] = funcion_editar.get("precio_entrada", 0)
+            funcion_editar["pelicula_id"] = funcion_editar.get(
+                "pelicula", {}
+            ).get("id")
+            complejo_form = str(funcion_editar.get("sala", {}).get("local", ""))
+
     sala_actual = next(
         (sala for sala in salas if str(sala.get("id")) == editar_sala),
         None,
     ) if editar_sala else None
-    complejo_form = request.args.get("complejo_form", "").strip()
-    salas_formulario = salas
 
     return render_template(
         "admin/gestion-funciones.html",
         funciones=funciones,
+        funcion_editar=funcion_editar,
         filtros={"complejo": complejo_filtro},
         estado_filtro=estado_filtro,
         salas=salas,

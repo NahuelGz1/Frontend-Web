@@ -80,7 +80,7 @@
                 <p class="text-muted">{{ funcion.precio_formateado }} por entrada</p>
                 <div class="function-actions">
                     <span class="badge {{ 'badge-success' if funcion.activa else 'badge-danger' }}">{{ 'Activa' if funcion.activa else 'Inactiva' }}</span>
-                    <a class="btn" href="{{ url_for('admin_views.funciones', editar=funcion.id) }}">Editar</a>
+                    <a class="btn" href="{{ url_for('admin_views.funciones', editar=funcion.id) }}#workspace-grid">Editar</a>
                     <form method="post" action="{{ url_for('admin_views.funciones') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="cambiar_estado">
@@ -137,7 +137,7 @@
             <select class="form-control" id="function-room" name="sala_id" required {% if not complejo_form %}disabled{% endif %}>
                 <option value="">Seleccioná una sala</option>
                 {% for sala in lista_salas_formulario %}
-                <option value="{{ sala.id }}" data-complejo="{{ sala.local }}">{{ sala.complejo_nombre }} · {{ sala.nombre }}</option>
+                <option value="{{ sala.id }}" data-complejo="{{ sala.local }}" {% if funcion_actual and funcion_actual.sala.id|string == sala.id|string %}selected{% endif %}>{{ sala.complejo_nombre }} · {{ sala.nombre }}</option>
                 {% endfor %}
             </select>
         </div>
