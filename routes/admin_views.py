@@ -1,15 +1,26 @@
 import secrets
-from flask import Blueprint, render_template, request, url_for, redirect, session
-from services.api_client import consumir_api
 
-from services.gestion_servicios_service import obtener_servicios
-from services.gestion_servicios_service import crear_servicio
-from services.gestion_servicios_service import actualizar_servicio
-from services.gestion_servicios_service import desactivar_servicio
-from services.gestion_peliculas_service import obtener_peliculas
-from services.gestion_peliculas_service import buscar_peliculas_tmdb
-from services.gestion_peliculas_service import crear_pelicula
-from routes.auth_security import csrf_token as obtener_csrf_token, validar_csrf, verificar_sesion
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+
+from routes.auth_security import (
+    csrf_token as obtener_csrf_token,
+    validar_csrf,
+    verificar_sesion
+)
+
+from services.api_client import consumir_api
+from services.estadisticas_service import obtener_estadisticas_dashboard
+from services.gestion_peliculas_service import (
+    buscar_peliculas_tmdb,
+    crear_pelicula,
+    obtener_peliculas
+)
+from services.gestion_servicios_service import (
+    actualizar_servicio,
+    crear_servicio,
+    desactivar_servicio,
+    obtener_servicios
+)
 
 admin_views = Blueprint("admin_views", __name__, url_prefix="/admin")
 
@@ -21,7 +32,29 @@ def proteger_admin():
 
 @admin_views.route("/estadisticas")
 def estadisticas():
-    return render_template("admin/estadisticas.html")
+    token = session.get("access_token")
+
+    status_code, datos_estadisticas = obtener_estadisticas_dashboard(token)
+
+    error_api = False
+    if status_code != 200 or not datos_estadisticas:
+        error_api = True
+        flash("No se pudieron cargar las estadísticas. El servicio de reportes no está disponible.", "error")
+        datos_estadisticas = {
+            "resumen": {}, "ocupacion_funciones": [], "ocupacion_peliculas": [],
+            "ventas_genero": [], "ventas_franjas": [], "cancelaciones": []
+        }
+
+    return render_template(
+        "admin/estadisticas.html",
+        resumen=datos_estadisticas.get("resumen"),
+        ocupacion_funciones=datos_estadisticas.get("ocupacion_funciones"),
+        ocupacion_peliculas=datos_estadisticas.get("ocupacion_peliculas"),
+        ventas_genero=datos_estadisticas.get("ventas_genero"),
+        ventas_franjas=datos_estadisticas.get("ventas_franjas"),
+        cancelaciones=datos_estadisticas.get("cancelaciones"),
+        error_api=error_api
+    )
 
 
 @admin_views.route("/peliculas", methods=["GET", "POST"])
@@ -33,8 +66,8 @@ def peliculas():
     id_editar = request.args.get("editar", type=int)
 
     tmdb_abierto = (
-        request.args.get("tmdb") == "1"
-        or "tmdb_buscar" in request.args
+            request.args.get("tmdb") == "1"
+            or "tmdb_buscar" in request.args
     )
 
     resultados_tmdb = []
@@ -52,7 +85,7 @@ def peliculas():
         elif accion == "crear_tmdb":
             tmdb_abierto = True
 
-            token = session.get("access_token") or session.get("token")
+            token = session.get("access_token")
 
             titulo = request.form.get("titulo", "").strip()
             sinopsis = request.form.get("sinopsis", "").strip()
@@ -65,10 +98,7 @@ def peliculas():
             except (ValueError, TypeError):
                 duracion = 0
 
-            if not token:
-                mensaje = "Debés iniciar sesión como administrador."
-
-            elif not titulo or len(titulo) > 150:
+            if not titulo or len(titulo) > 150:
                 mensaje = "Ingresá un título válido."
 
             elif not genero or len(genero) > 50:
@@ -100,11 +130,10 @@ def peliculas():
                         "Aparecerá en cartelera cuando tenga "
                         "una función programada."
                     )
-
                     return redirect(url_for("admin_views.peliculas"))
 
                 mensaje = (
-                    respuesta_creacion.get("error") or {}
+                        respuesta_creacion.get("error") or {}
                 ).get(
                     "message",
                     "No se pudo crear la película."
@@ -120,23 +149,17 @@ def peliculas():
             mensaje = "Acción no reconocida."
 
     if "tmdb_buscar" in request.args:
-
         if not titulo_tmdb:
             error_tmdb = "Ingresá un título para buscar."
-
         else:
-            token = session.get("access_token") or session.get("token")
-
-            estado_tmdb, respuesta_tmdb = buscar_peliculas_tmdb(
-                token,
-                titulo_tmdb
-            )
+            token = session.get("access_token")
+            estado_tmdb, respuesta_tmdb = buscar_peliculas_tmdb(token, titulo_tmdb)
 
             if estado_tmdb == 200 and respuesta_tmdb.get("ok"):
                 resultados_tmdb = respuesta_tmdb.get("data") or []
             else:
                 error_tmdb = (
-                    respuesta_tmdb.get("error") or {}
+                        respuesta_tmdb.get("error") or {}
                 ).get(
                     "message",
                     "No se pudo realizar la búsqueda en TMDB."
@@ -159,17 +182,14 @@ def peliculas():
         ), 502
 
     peliculas_preparadas = []
-
     for pelicula in respuesta.get("data") or []:
         datos = pelicula.copy()
-
         datos["duracion_minutos"] = pelicula.get("duracion")
         datos["afiche_url"] = pelicula.get("poster")
         datos["anio"] = "—"
         datos["disponible_desde"] = "—"
         datos["disponible_hasta"] = "—"
         datos["activa"] = True
-
         peliculas_preparadas.append(datos)
 
     if id_editar is not None:
@@ -181,7 +201,6 @@ def peliculas():
             ),
             None
         )
-
         if pelicula_editar is None:
             mensaje = "No se encontró la película seleccionada."
 
@@ -225,14 +244,8 @@ def salas():
             datos=datos,
         )
 
-    status_code, respuesta = consumir_api(
-        "GET",
-        "/salas",
-    )
-    status_locales, respuesta_locales = consumir_api(
-        "GET",
-        "/locales",
-    )
+    status_code, respuesta = consumir_api("GET", "/salas")
+    status_locales, respuesta_locales = consumir_api("GET", "/locales")
 
     salas = []
     if status_code == 200:
@@ -261,6 +274,7 @@ def salas():
         ],
         sala_editar=sala_actual,
     )
+
 
 @admin_views.route("/funciones", methods=["GET", "POST"])
 def funciones():
@@ -294,25 +308,10 @@ def funciones():
                 f"/funciones/{funcion_id}",
             )
 
-    status_funciones, respuesta_funciones = consumir_api(
-        "GET",
-        "/funciones",
-    )
-
-    status_salas, respuesta_salas = consumir_api(
-        "GET",
-        "/salas",
-    )
-
-    status_locales, respuesta_locales = consumir_api(
-        "GET",
-        "/locales",
-    )
-
-    status_peliculas, respuesta_peliculas = consumir_api(
-        "GET",
-        "/peliculas/cartelera",
-    )
+    status_funciones, respuesta_funciones = consumir_api("GET", "/funciones")
+    status_salas, respuesta_salas = consumir_api("GET", "/salas")
+    status_locales, respuesta_locales = consumir_api("GET", "/locales")
+    status_peliculas, respuesta_peliculas = consumir_api("GET", "/peliculas/cartelera")
 
     return render_template(
         "admin/gestion-funciones.html",
@@ -345,23 +344,19 @@ def funciones():
 @admin_views.route("/servicios", methods=["GET", "POST"])
 def servicios():
     mensaje = None
-
     csrf_actual = obtener_csrf_token()
 
     if request.method == "POST":
-
         csrf_recibido = request.form.get("csrf_token", "")
 
         if not secrets.compare_digest(csrf_recibido, csrf_actual):
             mensaje = "Formulario inválido. Recargá la página."
-
         else:
             accion = request.form.get("accion")
             servicio_id = request.form.get("servicio_id", "").strip()
-            token = session.get("access_token") or session.get("token")
+            token = session.get("access_token")
 
             if accion == "guardar":
-
                 nombre = request.form.get("nombre", "").strip()
                 descripcion = request.form.get("descripcion", "").strip()
 
@@ -374,37 +369,22 @@ def servicios():
 
                 if servicio_id and not servicio_id.isdigit():
                     mensaje = "El ID del servicio no es válido."
-
                 elif not nombre or not descripcion or precio <= 0:
                     mensaje = "Completá correctamente todos los campos."
-
                 elif precio >= 100000000:
                     mensaje = "El precio ingresado es demasiado grande."
-
                 elif request.form.get("activo") == "0":
                     mensaje = "Para desactivar un servicio, usá el botón Dar de baja."
-
                 elif imagen and imagen.filename:
                     mensaje = "La API todavía no admite imágenes de servicios."
-
-                elif not token:
-                    mensaje = "Debés iniciar sesión como administrador."
-
                 else:
                     if servicio_id:
                         estado, respuesta = actualizar_servicio(
-                            token,
-                            servicio_id,
-                            nombre,
-                            descripcion,
-                            precio
+                            token, servicio_id, nombre, descripcion, precio
                         )
                     else:
                         estado, respuesta = crear_servicio(
-                            token,
-                            nombre,
-                            descripcion,
-                            precio
+                            token, nombre, descripcion, precio
                         )
 
                     if estado in (200, 201) and respuesta.get("ok"):
@@ -416,18 +396,10 @@ def servicios():
                     )
 
             elif accion in ("cambiar_estado", "eliminar"):
-
                 if not servicio_id.isdigit():
                     mensaje = "El ID del servicio no es válido."
-
-                elif not token:
-                    mensaje = "Debés iniciar sesión como administrador."
-
                 else:
-                    estado, respuesta = desactivar_servicio(
-                        token,
-                        servicio_id
-                    )
+                    estado, respuesta = desactivar_servicio(token, servicio_id)
 
                     if estado == 200 and respuesta.get("ok"):
                         return redirect(url_for("admin_views.servicios"))
@@ -436,7 +408,6 @@ def servicios():
                         "message",
                         "No se pudo desactivar el servicio."
                     )
-
             else:
                 mensaje = "Acción no reconocida."
 
@@ -455,9 +426,7 @@ def servicios():
 
     for servicio in lista_servicios:
         precio = float(servicio["precio"])
-
         servicio["precio_formateado"] = f"$ {precio:.2f}"
-
         servicio["activo"] = True
 
     servicio_editar = None
@@ -491,7 +460,7 @@ def validar_qr():
     if request.method == "POST":
         accion = request.form.get("accion")
 
-        #  Validar el código QR de una entrada
+        # Validar el código QR de una entrada
         if accion == "validar_qr":
             codigo_qr = request.form.get("codigo_qr", "").strip()
 
@@ -520,7 +489,7 @@ def validar_qr():
                 else:
                     error = respuesta.get("mensaje", "El código QR presentado no es válido o ya fue utilizado.")
 
-        #  Validar la entrega de un servicio adicional
+        # Validar la entrega de un servicio adicional
         elif accion == "validar_servicio":
             id_detalle = request.form.get("id_detalle")
             status_code, respuesta = consumir_api("POST", f"/qr/validar-servicio/{id_detalle}")
