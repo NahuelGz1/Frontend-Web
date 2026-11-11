@@ -314,3 +314,41 @@ def estrenos():
             pelicula["poster_url"] = pelicula.get("poster")
 
     return render_template("cliente/estrenos.html", peliculas=estrenos_lista)
+
+
+@cliente_views_bp.route("/mi-perfil/editar", methods=["POST"])
+@requiere_sesion
+def editar_perfil():
+    nombre_input = request.form.get("nombre", "").strip()
+    apellido_input = request.form.get("apellido", "").strip()
+    email_input = request.form.get("email", "").strip()
+
+    # Validar la regla de Nombre + Apellido
+    if (nombre_input and not apellido_input) or (apellido_input and not nombre_input):
+        flash("Si querés modificar tu nombre, tenés que ingresar tanto el nombre como el apellido.", "warning")
+        return redirect(url_for("cliente_views.mi_perfil"))
+
+    datos = {}
+
+    # Si completó Nombre y Apellido, los unificamos
+    if nombre_input and apellido_input:
+        datos["nombre"] = f"{nombre_input} {apellido_input}"
+
+    # Si completó Email, lo agregamos
+    if email_input:
+        datos["email"] = email_input
+
+    # Si envió el formulario totalmente vacío
+    if not datos:
+        flash("No ingresaste ningún dato para modificar.", "info")
+        return redirect(url_for("cliente_views.mi_perfil"))
+
+    status_code, respuesta = consumir_api("PATCH", "/auth/usuarios/me", datos=datos)
+
+    if status_code == 200:
+        flash("Perfil actualizado correctamente.", "success")
+    else:
+        mensaje_error = respuesta.get("error", {}).get("message") or "No se pudo actualizar el perfil."
+        flash(mensaje_error, "danger")
+
+    return redirect(url_for("cliente_views.mi_perfil"))
