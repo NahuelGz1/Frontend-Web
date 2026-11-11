@@ -85,9 +85,9 @@
                         <p>Operación {{ entrada.codigo_operacion }}</p>
                     </div>
                     <div class="ticket-actions">
-                        <a class="profile-primary-button" href="#">⇩ Ver y descargar entradas</a>
-                        <a class="profile-secondary-button" href="#">⇩ Descargar factura</a>
-                        <a class="profile-secondary-button profile-cancel-button" href="{{ url_for('cliente_views.cancelar_compra', compra_id=entrada.codigo_operacion) }}">⇥ Cancelar compra</a>
+                        <a class="profile-primary-button" href="{{ url_for('cliente_views.descargar_entradas', compra_id=entrada.id_compra) }}">⇩ Ver y descargar entradas</a>
+                        <a class="profile-secondary-button" href="{{ url_for('cliente_views.descargar_factura', compra_id=entrada.id_compra) }}">⇩ Descargar factura</a>
+                        <a class="profile-secondary-button profile-cancel-button" href="{{ url_for('cliente_views.cancelar_compra', compra_id=entrada.id_compra) }}">⇥ Cancelar compra</a>
                     </div>
                 </article>
                 {% endfor %}

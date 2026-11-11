@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Factura {{ reserva.codigo }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #20232a; max-width: 760px; margin: 40px auto; padding: 0 24px; }
+        header { display: flex; justify-content: space-between; border-bottom: 3px solid #20232a; padding-bottom: 18px; }
+        h1 { margin: 0 0 6px; }
+        .muted { color: #5d6470; }
+        table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+        th, td { border-bottom: 1px solid #d5d9de; padding: 12px 8px; text-align: left; }
+        th:last-child, td:last-child { text-align: right; }
+        .total td { border-top: 2px solid #20232a; font-size: 1.15rem; font-weight: bold; }
+        @media print { body { margin: 0 auto; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <p>CINE PARADISO</p>
+            <h1>Factura de compra</h1>
+            <p class="muted">Operación {{ reserva.codigo }}</p>
+        </div>
+        <div class="muted">{{ compra.fecha_hora }}</div>
+    </header>
+    <p><strong>{{ funcion.pelicula.titulo }}</strong><br>
+        {{ funcion.fecha_hora_proyeccion }} · {{ funcion.sala.local }} · {{ funcion.sala.nombre }}</p>
+    <table>
+        <thead><tr><th>Concepto</th><th>Importe</th></tr></thead>
+        <tbody>
+            <tr><td>{{ reserva.entradas|length }} entrada(s)</td><td>${{ '%.2f'|format(resumen.subtotal_entradas|float) }}</td></tr>
+            {% for servicio in resumen.servicios %}
+            <tr><td>{{ servicio.cantidad }} × {{ servicio.nombre }}</td><td>${{ '%.2f'|format((servicio.precio|float) * (servicio.cantidad|int)) }}</td></tr>
+            {% endfor %}
+            <tr><td>Servicios adicionales</td><td>${{ '%.2f'|format(resumen.subtotal_servicios|float) }}</td></tr>
+            <tr class="total"><td>Total</td><td>${{ '%.2f'|format((resumen.subtotal_entradas|float + resumen.subtotal_servicios|float)) }}</td></tr>
+        </tbody>
+    </table>
+    <p class="muted">Documento informativo de la compra {{ reserva.codigo }}.</p>
+</body>
+</html>
