@@ -19,7 +19,7 @@
         <label for="movie-filter">Buscar por título</label>
         <div class="movie-search-row">
             <input class="form-control" id="movie-filter" name="buscar" type="search" value="{{ filtros.buscar|default('') }}" placeholder="Buscar película..." autocomplete="off">
-            <a class="btn btn-primary" href="{{ url_for('admin_views.peliculas', tmdb=1) }}">Agregar desde TMDB</a>
+            <a class="btn btn-primary" href="{{ url_for('admin_views.peliculas', tmdb=1) }}#tmdb-panel">Agregar desde TMDB</a>
         </div>
     </form>
 
@@ -38,7 +38,7 @@
                 <p class="text-muted">Disponible: {{ pelicula.disponible_desde }} → {{ pelicula.disponible_hasta }}</p>
                 <span class="badge {{ 'badge-success' if pelicula.activa else 'badge-danger' }}">{{ 'Activa' if pelicula.activa else 'Inactiva' }}</span>
                 <div class="list-actions">
-                    <a class="btn" href="{{ url_for('admin_views.peliculas', editar=pelicula.id) }}">Editar</a>
+                    <a class="btn" href="{{ url_for('admin_views.peliculas', editar=pelicula.id) }}#edit-panel">Editar</a>
                     <form method="post" action="{{ url_for('admin_views.peliculas') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="cambiar_estado">
@@ -145,18 +145,72 @@
         </section>
 
         <section class="panel" id="tmdb-panel" aria-labelledby="tmdb-panel-title" {% if not tmdb_abierto %}hidden{% endif %}>
-            <h2 id="tmdb-panel-title">Agregar desde TMDB</h2>
-            <p class="help-text">La búsqueda real requiere conectar la API de TMDB.</p>
+            <h2 id="tmdb-panel-title">Buscar peliculas en TMDB</h2>
+            <p class="help-text">Busca peliculas en el catálago externo.</p>
 
-            <form class="inline-form" method="get" action="{{ url_for('admin_views.peliculas') }}">
+            <form class="inline-form" method="get" action="{{ url_for('admin_views.peliculas') }}#tmdb-panel">
                 <div class="form-field">
-                    <label for="tmdb-query">Buscar en TMDB</label>
-                    <input class="form-control" id="tmdb-query" name="tmdb_buscar" type="search" placeholder="Título de película" autocomplete="off">
+                    <label for="tmdb-query">Titulo de pelicula</label>
+                    <input class="form-control" id="tmdb-query" name="tmdb_buscar" type="search" value="{{ tmdb_titulo|default('') }}" placeholder="Ejemplo: Matrix" autocomplete="off"required>
                 </div>
-                <button class="btn" type="submit">Buscar título</button>
+                <button class="btn btn-primary" type="submit">Buscar en TMDB</button>
             </form>
+            {% if error_tmdb %}
+                <p class="text-muted" role="alert">
+                {{ error_tmdb }}
+                </p>
+            {% endif %}
 
-            <p class="help-text">La búsqueda se habilitará al integrar TMDB.</p>
+            {% if tmdb_titulo and not resultados_tmdb and not error_tmdb %}
+                <p class="text-muted">No se encontraron películas con ese título.</p>
+            {% endif %}
+            {% for resultado in resultados_tmdb %}
+                <article class="list-item">
+
+                    {% if resultado.poster %}
+                        <img class="poster poster-card" src="{{ resultado.poster }}" alt="Póster de {{ resultado.titulo }}">
+                    {% endif %}
+
+                    <div class="list-content">
+                        <h3>{{ resultado.titulo }}</h3>
+                        <p class="text-muted">Estreno:{{ resultado.fecha_estreno or 'No informado' }}</p>
+                        <p class="text-muted">Género:{{ resultado.genero or 'No informado' }}</p>
+                        <p>{{ resultado.sinopsis or 'Sin sinopsis disponible.' }}</p>
+                        <p class="help-text">ID de TMDB: {{ resultado.tmdb_id }}.</p>
+                        <form method="post" action="{{ url_for('admin_views.peliculas') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="accion" value="crear_tmdb">
+                            <input type="hidden" name="titulo" value="{{ resultado.titulo }}">
+                            <input type="hidden" name="sinopsis" value="{{ resultado.sinopsis or '' }}">
+                            <input type="hidden" name="poster" value="{{ resultado.poster or '' }}">
+
+                            <div class="form-field">
+                                <label for="genero-{{ loop.index }}">Género</label>
+                                <input class="form-control" id="genero-{{ loop.index }}" name="genero" type="text" maxlength="50" value="{{ resultado.genero or '' }}" required>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="duracion-{{ loop.index }}">Duración (minutos)</label>
+                                <input class="form-control" id="duracion-{{ loop.index }}" name="duracion" type="number" min="1" max="999" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="clasificacion-{{ loop.index }}">Clasificación</label>
+                                <select class="form-control" id="clasificacion-{{ loop.index }}" name="clasificacion" required>
+                                    <option value="">Seleccioná una clasificación</option>
+                                    <option value="ATP">ATP</option>
+                                    <option value="+13">+13</option>
+                                    <option value="+16">+16</option>
+                                    <option value="+18">+18</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" type="submit">Agregar esta película</button>
+                            </div>
+
+                        </form>
+                    </div>
+                </article>
+            {% endfor %}
         </section>
     </div>
 </section>
