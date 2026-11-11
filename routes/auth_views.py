@@ -151,7 +151,22 @@ def restablecer_contrasena():
     return mostrar("restablecer-contrasena")
 
 
-@auth_views_bp.route("/cambiar-contrasena")
+@auth_views_bp.route("/cambiar-contrasena", methods=["GET", "POST"])
 @requiere_sesion
 def cambiar_contrasena():
+    if request.method == "POST":
+        password_actual = request.form.get("password_actual", "")
+        try:
+            password_nueva = nueva_password("password_nueva")
+        except ValueError as error:
+            flash(str(error), "error")
+            return render_template("auth/cambiar-contrasena.html", error_auth=str(error)), 400
+        token = session.get("access_token")
+        codigo, respuesta = auth_service.cambiar_contrasena(token, password_actual, password_nueva)
+        if codigo != 200:
+            mensaje = error_respuesta(respuesta)
+            flash(mensaje, "error")
+            return render_template("auth/cambiar-contrasena.html", error_auth=mensaje), codigo
+        flash("¡Contraseña actualizada con éxito!", "success")
+        return redirect(url_for("cliente_views.mi_perfil"))
     return render_template("auth/cambiar-contrasena.html")
