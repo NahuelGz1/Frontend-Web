@@ -25,7 +25,7 @@ def create_app(config=None):
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true",
         PERMANENT_SESSION_LIFETIME=timedelta(hours=8),
-        MAX_CONTENT_LENGTH=16384,
+        MAX_CONTENT_LENGTH=8 * 1024 * 1024,
     )
     if config:
         app.config.update(config)
