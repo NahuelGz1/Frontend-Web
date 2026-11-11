@@ -1,14 +1,15 @@
 from types import SimpleNamespace
 from services.api_client import consumir_api
 
-def obtener_estadisticas_dashboard(token):
+def obtener_estadisticas_dashboard(token, complejo=None):
     if not token:
         return 401, None
 
     status_code, respuesta = consumir_api(
         metodo="GET",
         endpoint="/dashboard/ocupacion",
-        headers={"Authorization": f"Bearer {token}"}
+        headers={"Authorization": "Bearer " + token},
+        params={"complejo": complejo} if complejo else None,
     )
 
     if status_code != 200:

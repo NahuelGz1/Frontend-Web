@@ -2,82 +2,51 @@ from services.api_client import consumir_api
 
 
 def obtener_servicios():
-    """Obtiene el listado de servicios activos desde el backend."""
-    return consumir_api("GET", "/servicios")
+    return consumir_api("GET", "/servicios?incluir_inactivos=1")
 
 
-def crear_servicio(token, nombre, descripcion, precio):
-    """Solicita al backend la creación de un servicio. Requiere autenticación de administrador."""
+def _sin_sesion():
+    return 401, {"ok": False, "error": {"code": 401, "message": "Debés iniciar sesión para gestionar servicios."}}
 
+
+def crear_servicio(token, nombre, descripcion, precio, categoria):
     if not token:
-        return 401, {
-            "ok": False,
-            "error": {
-                "code": 401,
-                "message": "Debés iniciar sesión para gestionar servicios."
-            }
-        }
-
-    datos = {
-        "nombre": nombre,
-        "descripcion": descripcion,
-        "precio": precio
-    }
-
+        return _sin_sesion()
     return consumir_api(
-        metodo="POST",
-        endpoint="/servicios",
-        datos=datos,
-        headers={
-            "Authorization": f"Bearer {token}"
-        }
+        "POST",
+        "/servicios",
+        datos={"nombre": nombre, "descripcion": descripcion, "precio": precio, "categoria": categoria},
+        headers={"Authorization": "Bearer " + token},
     )
 
 
-def actualizar_servicio(token, servicio_id, nombre, descripcion, precio):
-    """Solicita al backend la modificación de un servicio existente."""
-
+def actualizar_servicio(token, servicio_id, nombre, descripcion, precio, categoria):
     if not token:
-        return 401, {
-            "ok": False,
-            "error": {
-                "code": 401,
-                "message": "Debés iniciar sesión para gestionar servicios."
-            }
-        }
-
-    datos = {
-        "nombre": nombre,
-        "descripcion": descripcion,
-        "precio": precio
-    }
-
+        return _sin_sesion()
     return consumir_api(
-        metodo="PUT",
-        endpoint=f"/servicios/{servicio_id}",
-        datos=datos,
-        headers={
-            "Authorization": f"Bearer {token}"
-        }
+        "PUT",
+        f"/servicios/{servicio_id}",
+        datos={"nombre": nombre, "descripcion": descripcion, "precio": precio, "categoria": categoria},
+        headers={"Authorization": "Bearer " + token},
     )
 
 
 def desactivar_servicio(token, servicio_id):
-    """Solicita al backend la baja de un servicio existente."""
-
     if not token:
-        return 401, {
-            "ok": False,
-            "error": {
-                "code": 401,
-                "message": "Debés iniciar sesión para gestionar servicios."
-            }
-        }
-
+        return _sin_sesion()
     return consumir_api(
-        metodo="DELETE",
-        endpoint=f"/servicios/{servicio_id}",
-        headers={
-            "Authorization": f"Bearer {token}"
-        }
+        "DELETE",
+        f"/servicios/{servicio_id}",
+        headers={"Authorization": "Bearer " + token},
+    )
+
+
+def cambiar_estado_servicio(token, servicio_id, activo):
+    if not token:
+        return _sin_sesion()
+    return consumir_api(
+        "PATCH",
+        f"/servicios/{servicio_id}/estado",
+        datos={"activo": activo},
+        headers={"Authorization": "Bearer " + token},
     )

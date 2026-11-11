@@ -15,20 +15,23 @@
         </div>
     </header>
 
-    <form class="form-field search-field" method="get" action="{{ url_for('admin_views.peliculas') }}">
-        <label for="movie-filter">Buscar por título</label>
-        <div class="movie-search-row">
+    <div class="movie-searches">
+        <form class="form-field search-field" method="get" action="{{ url_for('admin_views.peliculas') }}">
+            <label class="search-title" for="movie-filter">Buscar por título</label>
             <input class="form-control" id="movie-filter" name="buscar" type="search" value="{{ filtros.buscar|default('') }}" placeholder="Buscar película..." autocomplete="off">
-            <a class="btn btn-primary" href="{{ url_for('admin_views.peliculas', tmdb=1) }}#tmdb-panel">Agregar desde TMDB</a>
-        </div>
-    </form>
+        </form>
+        <form class="form-field search-field tmdb-inline-search" method="get" action="{{ url_for('admin_views.peliculas') }}#tmdb-panel">
+            <label class="search-title" for="tmdb-inline-query">Cargar películas en TMDB</label>
+            <input class="form-control" id="tmdb-inline-query" name="tmdb_buscar" type="search" value="{{ tmdb_titulo|default('') }}" placeholder="Ejemplo: Matrix" autocomplete="off">
+        </form>
+    </div>
 
     <section class="panel" aria-labelledby="catalog-title">
         <div class="panel-heading">
             <h2 id="catalog-title">Catálogo · {{ lista_peliculas|length }} películas</h2>
         </div>
         {% for pelicula in lista_peliculas %}
-        <article class="list-item">
+        <article class="list-item" id="pelicula-{{ pelicula.id }}">
             {% if pelicula.afiche_url %}
             <img class="poster poster-card" src="{{ pelicula.afiche_url }}" alt="Afiche de {{ pelicula.titulo }}">
             {% endif %}
@@ -43,24 +46,25 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="cambiar_estado">
                         <input type="hidden" name="pelicula_id" value="{{ pelicula.id }}">
+                        <input type="hidden" name="volver_a" value="pelicula-{{ pelicula.id }}">
+                        <input type="hidden" name="activo" value="{{ 0 if pelicula.activa else 1 }}">
                         <button class="btn" type="submit">{{ 'Retirar de cartelera' if pelicula.activa else 'Activar' }}</button>
                     </form>
-                    <form method="post" action="{{ url_for('admin_views.peliculas') }}" data-confirm-delete="¿Estás seguro de que deseas eliminar esta película del catálogo?">
+                    <form method="post" action="{{ url_for('admin_views.peliculas') }}" data-confirm-delete="¿Dar de baja esta película?" data-item-name="{{ pelicula.titulo }}" data-item-kind="película">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="eliminar">
                         <input type="hidden" name="pelicula_id" value="{{ pelicula.id }}">
+                        <input type="hidden" name="volver_a" value="pelicula-{{ pelicula.id }}">
                         <button class="btn btn-delete" type="submit">Eliminar</button>
                     </form>
                 </div>
+                <div class="confirmation-slot" aria-live="polite"></div>
             </div>
         </article>
         {% else %}
         <p class="text-muted">No hay películas para mostrar.</p>
         {% endfor %}
     </section>
-
-    <div class="flash-alert movie-notice" role="status" aria-live="polite" {% if not mensaje %}hidden{% endif %}>{{ mensaje|default('') }}</div>
-
     <div class="workspace-grid">
         <section class="panel" id="edit-panel" aria-labelledby="edit-panel-title" {% if not pelicula_actual %}hidden{% endif %}>
             <h2 id="edit-panel-title">{{ 'Editar película' if pelicula_actual else 'Agregar película' }}</h2>
@@ -148,13 +152,6 @@
             <h2 id="tmdb-panel-title">Buscar peliculas en TMDB</h2>
             <p class="help-text">Busca peliculas en el catálago externo.</p>
 
-            <form class="inline-form" method="get" action="{{ url_for('admin_views.peliculas') }}#tmdb-panel">
-                <div class="form-field">
-                    <label for="tmdb-query">Titulo de pelicula</label>
-                    <input class="form-control" id="tmdb-query" name="tmdb_buscar" type="search" value="{{ tmdb_titulo|default('') }}" placeholder="Ejemplo: Matrix" autocomplete="off"required>
-                </div>
-                <button class="btn btn-primary" type="submit">Buscar en TMDB</button>
-            </form>
             {% if error_tmdb %}
                 <p class="text-muted" role="alert">
                 {{ error_tmdb }}
@@ -213,6 +210,7 @@
             {% endfor %}
         </section>
     </div>
+    <div class="flash-alert movie-notice {% if mensaje and ('No se pudo' not in mensaje and 'inválida' not in mensaje) %}success{% else %}error{% endif %}" role="status" aria-live="polite" {% if not mensaje %}hidden{% endif %}>{{ mensaje|default('') }}</div>
 </section>
 {% endblock %}
 
