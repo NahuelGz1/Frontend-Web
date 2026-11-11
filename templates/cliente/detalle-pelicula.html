@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Detalle de película · Cine Paradiso{% endblock %}
+{% block title %}{{ pelicula.titulo|default('Detalle de película') }} · Cine Paradiso{% endblock %}
 
 {% block content %}
 
@@ -8,30 +8,30 @@
 <p class="breadcrumb">
     <a href="{{ url_for('cliente_views.cartelera') }}">Cartelera</a> / Detalle de película y funciones
 </p>
-<h1>Detalle de película y funciones</h1>
+<h1>{{ pelicula.titulo }}</h1>
 <p class="subtitulo">Elegí el complejo, la fecha y el horario de tu próxima función.</p>
 
 <!-- datos de la pelicula -->
 <section class="detalle-pelicula">
-    <img src="{{ url_for('static', filename='img/volver-al-futuro.jpg') }}" alt="Afiche de Volver al Futuro">
+    {% if pelicula.poster %}
+    <img src="{{ pelicula.poster }}" alt="Afiche de {{ pelicula.titulo }}">
+    {% else %}
+    <div class="poster-placeholder" role="img" aria-label="Afiche no disponible">▧</div>
+    {% endif %}
+
     <div class="detalle-info">
-        <span class="badge">Reestreno en cartelera</span>
-        <h2>Volver al Futuro</h2>
+        <span class="badge">En cartelera</span>
+        <h2>{{ pelicula.titulo }}</h2>
         <div class="tags">
-            <span class="tag">116 min</span>
-            <span class="tag">ATP</span>
-            <span class="tag">1985</span>
+            {% if pelicula.duracion %}<span class="tag">{{ pelicula.duracion }} min</span>{% endif %}
+            {% if pelicula.clasificacion %}<span class="tag">{{ pelicula.clasificacion }}</span>{% endif %}
+            {% if pelicula.genero %}<span class="tag">{{ pelicula.genero }}</span>{% endif %}
         </div>
-        <p class="detalle-genero">Ciencia ficción · Año original: 1985</p>
+        <p class="detalle-genero">{{ pelicula.genero|default('Cine') }}</p>
         <h3>Sinopsis</h3>
         <p class="detalle-sinopsis">
-            Marty McFly, un adolescente de 1985, viaja accidentalmente a 1955 en una máquina del tiempo
-            construida por el excéntrico doctor Emmett Brown a partir de un DeLorean. Allí conoce a sus
-            padres cuando eran jóvenes y altera el curso de su historia. Para no borrar su propia
-            existencia, deberá lograr que se enamoren y, con la ayuda de Doc, encontrar la forma de
-            regresar a su época antes de quedarse atrapado en el pasado.
+            {{ pelicula.sinopsis|default('Sin sinopsis disponible.') }}
         </p>
-        <p class="nota">Programación de reestreno: del 30/10 al 05/11/2026. No corresponde al estreno original.</p>
     </div>
 </section>
 
@@ -39,80 +39,23 @@
 <section class="card selector-funcion">
     <h2>Elegí tu función</h2>
 
-    <div class="form-row">
-        <div class="form-field">
-            <label for="complejo">Complejo</label>
-            <select id="complejo" name="complejo">
-                <option value="Paradiso Centro">Paradiso Centro</option>
-                <option value="Paradiso Norte">Paradiso Norte</option>
-                <option value="Paradiso Sur">Paradiso Sur</option>
-            </select>
-        </div>
-        <div class="form-field">
-            <label for="fecha">Fecha</label>
-            <select id="fecha" name="fecha">
-                <option value="30/10/2026">Viernes 30/10/2026</option>
-                <option value="31/10/2026">Sábado 31/10/2026</option>
-                <option value="01/11/2026">Domingo 01/11/2026</option>
-            </select>
-        </div>
-    </div>
-
-    <div class="chips">
-        <button type="button" class="chip active" data-complejo="Paradiso Centro">Centro</button>
-        <button type="button" class="chip" data-complejo="Paradiso Norte">Norte</button>
-        <button type="button" class="chip" data-complejo="Paradiso Sur">Sur</button>
-    </div>
-
-    <hr class="separador">
-
-    <!-- contenedor de tarjetas filtrables por JS -->
+    {% if pelicula.funciones and pelicula.funciones|length > 0 %}
+    <!-- contenedor de tarjetas de funciones dinámicas -->
     <div id="funciones-contenedor">
-        <p id="sin-funciones-msg" style="display: none;" class="nota">No hay funciones disponibles para la combinación elegida.</p>
-
-        <!-- funcion seleccionada -->
-        <article class="funcion-card seleccionada" data-complejo="Paradiso Centro" data-fecha="30/10/2026">
-            <span class="badge" data-badge>Seleccionada</span>
-            <h3>30/10/2026 · 19:30</h3>
-            <p>Paradiso Centro · Sala 1 · 80 butacas</p>
-            <p>2D · Subtitulada · 20 disponibles de 80</p>
-            <p>Entrada: $10.000 ARS</p>
-            <a href="{{ url_for('cliente_views.elegir_butacas', funcion_id=1) }}" class="btn-primary" data-btn-accion>Elegir butacas</a>
+        {% for funcion in pelicula.funciones %}
+        <article class="funcion-card {% if loop.first %}seleccionada{% endif %}" data-complejo="{{ funcion.local }}" data-fecha="{{ funcion.fecha_hora_proyeccion }}">
+            {% if loop.first %}<span class="badge" data-badge>Seleccionada</span>{% endif %}
+            <h3>{{ funcion.fecha_hora_proyeccion }}</h3>
+            <p>{{ funcion.local }} · {{ funcion.sala }} · {{ funcion.capacidad }} butacas</p>
+            <a href="{{ url_for('cliente_views.elegir_butacas', funcion_id=funcion.id) }}" class="{% if loop.first %}btn-primary{% else %}btn-secondary{% endif %}" data-btn-accion>
+                {% if loop.first %}Elegir butacas{% else %}Seleccionar función{% endif %}
+            </a>
         </article>
-
-        <!-- otra funcion disponible -->
-        <article class="funcion-card" data-complejo="Paradiso Norte" data-fecha="30/10/2026">
-            <span class="badge" data-badge style="display: none;">Seleccionada</span>
-            <h3>30/10/2026 · 21:30</h3>
-            <p>Paradiso Norte · Sala 1 · 60 butacas</p>
-            <p>2D · Subtitulada · 30 disponibles de 60 · $10.000 ARS</p>
-            <a href="{{ url_for('cliente_views.elegir_butacas', funcion_id=2) }}" class="btn-secondary" data-btn-accion>Seleccionar función</a>
-        </article>
+        {% endfor %}
     </div>
-</section>
-
-<!-- otros estados posibles -->
-<section class="home-section">
-    <h2>Otros estados de disponibilidad</h2>
-
-    <div class="estados-grid">
-        <article class="card funcion-card">
-            <h3>Variante · Función agotada</h3>
-            <span class="badge">Agotada</span>
-            <h4>31/10/2026 · 19:30</h4>
-            <p>Paradiso Centro · Sala 1 · 80 butacas</p>
-            <p>0 disponibles de 80 · $10.000 ARS</p>
-            <button type="button" class="btn-secondary btn-block" disabled>Agotada</button>
-        </article>
-
-        <article class="card funcion-card">
-            <h3>Variante · Sin funciones</h3>
-            <span class="badge">Sin funciones</span>
-            <h4>31/10/2026 · Paradiso Sur</h4>
-            <p>No hay funciones de esta película para la fecha y el complejo elegidos.</p>
-            <button type="button" class="btn-secondary btn-block">Cambiar fecha o complejo</button>
-        </article>
-    </div>
+    {% else %}
+    <p class="nota">No hay funciones disponibles cargadas para esta película por el momento.</p>
+    {% endif %}
 </section>
 
 {% endblock %}
