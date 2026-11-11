@@ -203,15 +203,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // si el usuario toca "Continuar" sin haber agregado nada, le avisamos
-    function manejarCheckout() {
-        if (Object.values(carrito).every(i => i.cantidad === 0)) {
-            if (checkoutMsg) {
-                checkoutMsg.textContent = 'Agregá al menos un servicio para continuar.';
+    // si el usuario toca "Continuar"
+    async function manejarCheckout() {
+        const serviciosSeleccionados = [];
+        Object.entries(carrito).forEach(([id, item]) => {
+            if (item.cantidad > 0) {
+                const idNum = parseInt(id, 10);
+                serviciosSeleccionados.push({
+                    id_servicio: isNaN(idNum) ? id : idNum,
+                    cantidad: item.cantidad
+                });
             }
-            return;
+        });
+
+        try {
+            const respuesta = await fetch('/servicios/guardar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ servicios: serviciosSeleccionados })
+            });
+
+            if (respuesta.ok) {
+                const datos = await respuesta.json();
+                window.location.href = datos.redirect || '/pagar';
+            } else {
+                window.location.href = '/pagar';
+            }
+        } catch (e) {
+            window.location.href = '/pagar';
         }
-        if (checkoutMsg) checkoutMsg.textContent = '';
     }
 
     if (checkoutBtn)    checkoutBtn.addEventListener('click', manejarCheckout);
