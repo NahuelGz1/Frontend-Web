@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, current_app, request
 from services.api_client import consumir_api
 from services import compra_service
+from routes.auth_security import requiere_sesion
 
 cliente_views_bp = Blueprint("cliente_views", __name__)
 
@@ -154,9 +155,13 @@ def servicios():
 
 
 @cliente_views_bp.route("/mi-perfil")
+@requiere_sesion
 def mi_perfil():
     status_code, respuesta = consumir_api("GET", "/auth/usuarios/me/perfil-completo")
-    datos_perfil = respuesta.get("data", {}) if status_code == 200 else {}
+    datos_perfil = respuesta.get("data")
+    if status_code != 200 or not isinstance(datos_perfil, dict):
+        current_app.logger.error("No se pudo obtener el perfil completo de la API")
+        abort(503, description="No se pudo cargar tu perfil. Intentá más tarde.")
     return render_template("cliente/mi-perfil.html", **datos_perfil)
 
 
@@ -195,9 +200,62 @@ def pagar():
     )
 
 @cliente_views_bp.route("/compra-exitosa")
-def compra_exitosa():
-    return render_template("cliente/compra-exitosa.html")
+@cliente_views_bp.route("/compra-exitosa/")
+def compra_exitosa_vacia():
+    return redirect(url_for("cliente_views.cartelera"))
+
+@cliente_views_bp.route("/compra-exitosa/<int:compra_id>")
+def compra_exitosa(compra_id):
+    status_code, respuesta = consumir_api("GET", f"/compras/{compra_id}")
+    
+    if status_code != 200:
+        mensaje_error = respuesta.get("error", {}).get("message", "Compra no encontrada.")
+        flash(mensaje_error, "danger")
+        return redirect(url_for("cliente_views.cartelera"))
+    
+    datos = respuesta.get("data") or {}
+    reserva = datos.get("reserva") or {}
+    entradas = reserva.get("entradas") or datos.get("entradas") or []
+
+    for entrada in entradas:
+        if entrada.get("qr_imagen_base64"):
+            entrada["qr_url"] = f"data:image/png;base64,{entrada['qr_imagen_base64']}"
+
+    reserva["entradas"] = entradas
+
+    return render_template("cliente/compra-exitosa.html", 
+                            funcion = datos.get("funcion", {}), 
+                            reserva = reserva,
+                            resumen = datos.get("resumen", {}))
 
 @cliente_views_bp.route("/cancelar-compra")
-def cancelar_compra():
-    return render_template("cliente/cancelar-compra.html")
+@cliente_views_bp.route("/cancelar-compra/")
+def cancelar_compra_vacia():
+    return redirect(url_for("cliente_views.cartelera"))
+
+@cliente_views_bp.route("/cancelar-compra/<int:compra_id>")
+def cancelar_compra(compra_id):
+    status_code, respuesta = consumir_api("GET", f"/compras/{compra_id}")
+
+    if status_code != 200:
+        mensaje_error = respuesta.get("error", {}).get("message", "Compra no encontrada.")
+        flash(mensaje_error, "danger")
+        return redirect(url_for("cliente_views.cartelera"))
+
+    datos = respuesta.get("data") or {}
+
+    return render_template("cliente/cancelar-compra.html", 
+                            funcion = datos.get("funcion", {}), 
+                            reserva = datos.get("reserva", {}))
+
+@cliente_views_bp.route("/reservas/<int:reserva_id>/cancelar", methods = ["POST"])
+def cancelar_reserva(reserva_id):
+    status_code, respuesta = consumir_api("PUT", f"/compras/{reserva_id}/cancelar")
+    
+    if status_code == 200:
+        flash(respuesta.get("message", "Reserva cancelada exitosamente"), "success")
+    else:
+        mensaje_error = respuesta.get("error", {}).get("message", "Compra no encontrada.")
+        flash(mensaje_error, "danger")
+
+    return redirect(url_for("cliente_views.mi_perfil"))

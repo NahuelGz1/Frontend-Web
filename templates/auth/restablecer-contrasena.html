@@ -23,6 +23,7 @@
             <p class="recuperar-descripcion">Elegí una nueva contraseña para volver a ingresar a tu cuenta.</p>
 
             <form class="cambiar-contrasena-form" method="POST" action="{{ url_for('auth_views.restablecer_contrasena') }}">
+                {% include "auth/_error.html" %}
                 {% if csrf_token is defined %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% endif %}
@@ -30,7 +31,7 @@
                 <div class="form-password-group">
                     <label for="restablecer-password">Contraseña nueva</label>
                     <div class="form-password-field">
-                        <input id="restablecer-password" type="password" name="password_nueva" placeholder="••••••••••" autocomplete="new-password" required>
+                        <input id="restablecer-password" type="password" name="password_nueva" placeholder="Entre 8 y 128 caracteres" autocomplete="new-password" minlength="8" maxlength="128" required>
                         <span class="form-password-eye" aria-hidden="true">◉</span>
                     </div>
                 </div>
@@ -38,7 +39,7 @@
                 <div class="form-password-group">
                     <label for="restablecer-confirm-password">Repetir contraseña</label>
                     <div class="form-password-field">
-                        <input id="restablecer-confirm-password" type="password" name="confirm_password" placeholder="••••••••••" autocomplete="new-password" required>
+                        <input id="restablecer-confirm-password" type="password" name="confirm_password" placeholder="••••••••••" autocomplete="new-password" minlength="8" maxlength="128" required>
                         <span class="form-password-eye" aria-hidden="true">◉</span>
                     </div>
                 </div>
@@ -49,6 +50,7 @@
             <a class="recuperar-login-link" href="{{ url_for('auth_views.iniciar_sesion') }}">
                 <span aria-hidden="true">←</span> Volver a iniciar sesión
             </a>
+            <a class="recuperar-login-link" href="{{ url_for('auth_views.recuperar_contrasena') }}">Solicitar un nuevo enlace</a>
         </section>
     </div>
 </div>

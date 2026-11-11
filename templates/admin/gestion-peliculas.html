@@ -19,7 +19,7 @@
         <label for="movie-filter">Buscar por título</label>
         <div class="movie-search-row">
             <input class="form-control" id="movie-filter" name="buscar" type="search" value="{{ filtros.buscar|default('') }}" placeholder="Buscar película..." autocomplete="off">
-            <a class="btn btn-primary" href="{{ url_for('admin_views.peliculas', tmdb=1) }}">Agregar desde TMDB</a>
+            <a class="btn btn-primary" href="{{ url_for('admin_views.peliculas', tmdb=1) }}#tmdb-panel">Agregar desde TMDB</a>
         </div>
     </form>
 
@@ -148,7 +148,7 @@
             <h2 id="tmdb-panel-title">Buscar peliculas en TMDB</h2>
             <p class="help-text">Busca peliculas en el catálago externo.</p>
 
-            <form class="inline-form" method="get" action="{{ url_for('admin_views.peliculas') }}">
+            <form class="inline-form" method="get" action="{{ url_for('admin_views.peliculas') }}#tmdb-panel">
                 <div class="form-field">
                     <label for="tmdb-query">Titulo de pelicula</label>
                     <input class="form-control" id="tmdb-query" name="tmdb_buscar" type="search" value="{{ tmdb_titulo|default('') }}" placeholder="Ejemplo: Matrix" autocomplete="off"required>
