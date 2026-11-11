@@ -1,6 +1,7 @@
 import secrets
 import re
 import math
+import base64
 from datetime import datetime
 
 from flask import abort, Blueprint, current_app, flash, redirect, render_template, request, session, url_for
@@ -40,6 +41,20 @@ def _admin_anchor_redirect(endpoint, anchor):
     if anchor and re.fullmatch(r"[A-Za-z0-9_-]+", anchor):
         return redirect(f"{url_for(endpoint)}#{anchor}")
     return redirect(url_for(endpoint))
+
+
+def _imagen_servicio_desde_formulario(archivo):
+    if not archivo or not archivo.filename:
+        return None, None
+    contenido = archivo.read(5 * 1024 * 1024 + 1)
+    if len(contenido) > 5 * 1024 * 1024:
+        return None, "La imagen no puede superar los 5 MB."
+    tipos_permitidos = {"image/png": "png", "image/jpeg": "jpeg"}
+    tipo = archivo.mimetype or ""
+    if tipo not in tipos_permitidos:
+        return None, "La imagen debe estar en formato JPG o PNG."
+    contenido_codificado = base64.b64encode(contenido).decode("ascii")
+    return f"data:{tipo};base64,{contenido_codificado}", None
 
 @admin_views.before_request
 def proteger_admin():
@@ -616,6 +631,7 @@ def servicios():
                     precio = 0
 
                 imagen = request.files.get("imagen")
+                imagen_url, error_imagen = _imagen_servicio_desde_formulario(imagen)
 
                 if servicio_id and not servicio_id.isdigit():
                     mensaje = "El ID del servicio no es válido."
@@ -627,16 +643,17 @@ def servicios():
                     mensaje = "El precio ingresado es demasiado grande."
                 elif request.form.get("activo") == "0":
                     mensaje = "Para desactivar un servicio, usá el botón Dar de baja."
-                elif imagen and imagen.filename:
-                    mensaje = "La API todavía no admite imágenes de servicios."
+                elif error_imagen:
+                    mensaje = error_imagen
                 else:
                     if servicio_id:
                         estado, respuesta = actualizar_servicio(
-                            token, servicio_id, nombre, descripcion, precio, categoria
+                            token, servicio_id, nombre, descripcion, precio,
+                            categoria, imagen_url
                         )
                     else:
                         estado, respuesta = crear_servicio(
-                            token, nombre, descripcion, precio, categoria
+                            token, nombre, descripcion, precio, categoria, imagen_url
                         )
 
                     if estado in (200, 201) and respuesta.get("ok"):

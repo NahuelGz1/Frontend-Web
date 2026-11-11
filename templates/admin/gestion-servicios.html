@@ -27,9 +27,26 @@
             <h2 id="service-catalog-title">Catálogo de servicios · ARS · {{ lista_servicios|length }}</h2>
         </div>
         {% for servicio in lista_servicios %}
+        {% set nombre_servicio = servicio.nombre|lower %}
+        {% set imagen_servicio = servicio.imagen_url|default('', true) %}
+        {% if not imagen_servicio and 'agua' in nombre_servicio %}
+        {% set imagen_servicio = url_for('static', filename='images/servicios/agua-mineral.png') %}
+        {% elif not imagen_servicio and 'combo' in nombre_servicio %}
+        {% set imagen_servicio = url_for('static', filename='images/servicios/combo-duo.png') %}
+        {% elif not imagen_servicio and 'nacho' in nombre_servicio %}
+        {% set imagen_servicio = url_for('static', filename='images/servicios/machos-cheddar.png') %}
+        {% elif not imagen_servicio and 'pancho' in nombre_servicio %}
+        {% set imagen_servicio = url_for('static', filename='images/servicios/pancho-clasico.png') %}
+        {% elif not imagen_servicio and 'pochoclo' in nombre_servicio %}
+        {% set imagen_servicio = url_for('static', filename='images/servicios/balde-pochoclos.png') %}
+        {% elif not imagen_servicio and 'estacionamiento' in nombre_servicio %}
+        {% set imagen_servicio = url_for('static', filename='images/servicios/estacionamiento.png') %}
+        {% elif not imagen_servicio and 'vip' in nombre_servicio %}
+        {% set imagen_servicio = url_for('static', filename='images/servicios/acceso-vip.png') %}
+        {% endif %}
         <article class="list-item" id="servicio-{{ servicio.id }}">
-            {% if servicio.imagen_url %}
-            <img class="service-image" src="{{ servicio.imagen_url }}" alt="Imagen de {{ servicio.nombre }}">
+            {% if imagen_servicio %}
+            <img class="service-image" src="{{ imagen_servicio }}" alt="Imagen de {{ servicio.nombre }}">
             {% else %}
             <div class="service-image" role="img" aria-label="Imagen no disponible">🍿</div>
             {% endif %}
@@ -76,8 +93,27 @@
                 <input class="form-control" id="service-name" name="nombre" type="text" maxlength="80" value="{{ servicio_actual.nombre|default('') if servicio_actual else '' }}" required>
             </div>
             <div class="service-image-field">
-                {% if servicio_actual and servicio_actual.imagen_url %}
-                <img class="service-image service-image-preview" id="service-preview-img" src="{{ servicio_actual.imagen_url }}" alt="Imagen de {{ servicio_actual.nombre }}">
+                {% set imagen_actual = servicio_actual.imagen_url|default('', true) if servicio_actual else '' %}
+                {% if servicio_actual and not imagen_actual %}
+                {% set nombre_actual = servicio_actual.nombre|lower %}
+                {% if 'agua' in nombre_actual %}
+                {% set imagen_actual = url_for('static', filename='images/servicios/agua-mineral.png') %}
+                {% elif 'combo' in nombre_actual %}
+                {% set imagen_actual = url_for('static', filename='images/servicios/combo-duo.png') %}
+                {% elif 'nacho' in nombre_actual %}
+                {% set imagen_actual = url_for('static', filename='images/servicios/machos-cheddar.png') %}
+                {% elif 'pancho' in nombre_actual %}
+                {% set imagen_actual = url_for('static', filename='images/servicios/pancho-clasico.png') %}
+                {% elif 'pochoclo' in nombre_actual %}
+                {% set imagen_actual = url_for('static', filename='images/servicios/balde-pochoclos.png') %}
+                {% elif 'estacionamiento' in nombre_actual %}
+                {% set imagen_actual = url_for('static', filename='images/servicios/estacionamiento.png') %}
+                {% elif 'vip' in nombre_actual %}
+                {% set imagen_actual = url_for('static', filename='images/servicios/acceso-vip.png') %}
+                {% endif %}
+                {% endif %}
+                {% if imagen_actual %}
+                <img class="service-image service-image-preview" id="service-preview-img" src="{{ imagen_actual }}" alt="Imagen de {{ servicio_actual.nombre }}">
                 {% else %}
                 <img class="service-image service-image-preview" id="service-preview-img" src="" alt="Vista previa de servicio" style="display:none;">
                 <div class="service-image service-image-preview" id="service-preview-placeholder" role="img" aria-label="Imagen no disponible">🍿</div>
