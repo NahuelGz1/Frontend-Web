@@ -20,6 +20,16 @@ def inicio():
         if not peli.get("duracion_minutos"):
             peli["duracion_minutos"] = peli.get("duracion")
 
+    # Obtenemos los próximos estrenos desde la API
+    code_estrenos, resp_estrenos = consumir_api("GET", "/peliculas/estrenos")
+    proximos_estrenos = []
+    if code_estrenos == 200:
+        estrenos_data = resp_estrenos.get("data") or []
+        for est in estrenos_data:
+            if not est.get("afiche_url"):
+                est["afiche_url"] = est.get("poster")
+        proximos_estrenos = estrenos_data[:6]
+
     # La primera pelicula como destacada, las demas para la grilla de hoy
     pelicula_destacada = peliculas[0] if peliculas else None
     peliculas_hoy = peliculas[1:] if len(peliculas) > 1 else peliculas
@@ -27,8 +37,8 @@ def inicio():
         "cliente/inicio.html",
         pelicula_destacada=pelicula_destacada,
         peliculas_hoy=peliculas_hoy,
-        proximos_estrenos=[]
-)
+        proximos_estrenos=proximos_estrenos
+    )
 
 
 
