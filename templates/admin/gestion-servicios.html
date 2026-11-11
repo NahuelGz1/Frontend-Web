@@ -27,7 +27,7 @@
             <h2 id="service-catalog-title">Catálogo de servicios · ARS · {{ lista_servicios|length }}</h2>
         </div>
         {% for servicio in lista_servicios %}
-        <article class="list-item">
+        <article class="list-item" id="servicio-{{ servicio.id }}">
             {% if servicio.imagen_url %}
             <img class="service-image" src="{{ servicio.imagen_url }}" alt="Imagen de {{ servicio.nombre }}">
             {% else %}
@@ -35,6 +35,7 @@
             {% endif %}
             <div class="list-content">
                 <h3>{{ servicio.nombre }}</h3>
+                <p class="text-muted">{{ servicio.categoria }}</p>
                 <p class="text-muted">{{ servicio.descripcion }}</p>
                 <p class="service-price">{{ servicio.precio_formateado }}</p>
                 <span class="badge {% if servicio.activo is sameas true %}badge-success{% elif servicio.activo is sameas false %}badge-danger{% endif %}">{{ 'Activo' if servicio.activo is sameas true else 'Inactivo' if servicio.activo is sameas false else 'Estado no informado' }}</span>
@@ -44,24 +45,26 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="cambiar_estado">
                         <input type="hidden" name="servicio_id" value="{{ servicio.id }}">
+                        <input type="hidden" name="volver_a" value="servicio-{{ servicio.id }}">
+                        <input type="hidden" name="activo" value="{{ 0 if servicio.activo else 1 }}">
                         <button class="btn" type="submit">{{ 'Dar de baja' if servicio.activo else 'Activar' }}</button>
                     </form>
-                    <form method="post" action="{{ url_for('admin_views.servicios') }}" data-confirm-delete="¿Estás seguro de que deseas eliminar este servicio del catálogo?">
+                    <form method="post" action="{{ url_for('admin_views.servicios') }}" data-confirm-delete="¿Dar de baja este servicio?" data-item-name="{{ servicio.nombre }}" data-item-kind="servicio">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="eliminar">
                         <input type="hidden" name="servicio_id" value="{{ servicio.id }}">
+                        <input type="hidden" name="volver_a" value="servicio-{{ servicio.id }}">
                         <button class="btn btn-delete" type="submit">Eliminar</button>
                     </form>
                 </div>
+                <div class="confirmation-slot" aria-live="polite"></div>
             </div>
         </article>
         {% else %}
         <p class="text-muted">No hay servicios en el catálogo.</p>
         {% endfor %}
     </section>
-    <div class="flash-alert movie-notice" role="status" aria-live="polite" {% if not mensaje %}hidden{% endif %}>{{ mensaje|default('') }}</div>
-
-    <div id="formulario-servicio" class="workspace-grid" {% if not servicio_actual and not request.args.get('crear') and not mensaje %}hidden{% endif %}>
+    <div id="formulario-servicio" class="workspace-grid" {% if not servicio_actual and request.args.get('crear') != '1' %}hidden{% endif %}>
     <section class="panel" aria-labelledby="service-edit-title">
         <h2 id="service-edit-title">{{ 'Editar servicio' if servicio_actual else 'Agregar servicio' }}</h2>
         <form method="post" action="{{ url_for('admin_views.servicios') }}" enctype="multipart/form-data">
@@ -91,6 +94,14 @@
                 <textarea class="form-control" id="service-description" name="descripcion" maxlength="300" required>{{ servicio_actual.descripcion|default('') if servicio_actual else '' }}</textarea>
             </div>
             <div class="form-field">
+                <label for="service-category">Categoría</label>
+                <select class="form-control" id="service-category" name="categoria" required>
+                    {% for categoria in ('Bebidas', 'Pochoclos', 'Snacks', 'Mejoras de experiencia') %}
+                    <option value="{{ categoria }}" {% if servicio_actual and servicio_actual.categoria == categoria %}selected{% endif %}>{{ categoria }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-field">
                 <label for="service-price">Precio · ARS</label>
                 <input class="form-control" id="service-price" name="precio" type="number" min="1" step="1" value="{{ servicio_actual.precio|default('') if servicio_actual else '' }}" required>
             </div>
@@ -114,6 +125,7 @@
         </form>
     </section>
     </div>
+    <div class="flash-alert movie-notice {% if mensaje and ('No se pudo' not in mensaje and 'inválido' not in mensaje) %}success{% else %}error{% endif %}" role="status" aria-live="polite" {% if not mensaje %}hidden{% endif %}>{{ mensaje|default('') }}</div>
 </section>
 {% endblock %}
 

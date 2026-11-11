@@ -34,8 +34,11 @@
 
     <!-- usuario a la derecha (avatar si inicio sesion, o boton de iniciar sesion) -->
     {% block header_user %}
-    <div>
+    <div class="header-user-actions">
         {% if current_user is defined and current_user and current_user.is_authenticated %}
+        {% if current_user.rol == "administrador" %}
+        <a href="{{ url_for('admin_views.estadisticas') }}" class="header-admin-link">Panel de Administrador</a>
+        {% endif %}
         <a href="{{ url_for('cliente_views.mi_perfil') }}" class="user-avatar" title="Mi Perfil">
             {{ current_user.nombre[:2]|upper }}
         </a>

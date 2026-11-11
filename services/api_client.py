@@ -6,7 +6,7 @@ def consumir_api(metodo, endpoint, datos=None, params=None, headers=None):
     url = current_app.config["API_BASE_URL"].rstrip("/") + "/" + endpoint.lstrip("/")
     cabeceras = {"Accept": "application/json"}
     if has_request_context() and session.get("access_token"):
-        cabeceras["Authorization"] = f"Bearer {session['access_token']}"
+        cabeceras["Authorization"] = "Bearer " + session["access_token"]
     if headers:
         cabeceras.update(headers)
     try:

@@ -43,7 +43,7 @@ def csrf_valido(recibido):
 
 
 def _cabecera_autorizacion():
-    return {"Authorization": f"Bearer {session.get(CLAVE_TOKEN, '')}"}
+    return {"Authorization": "Bearer " + session.get(CLAVE_TOKEN, "")}
 
 def _numero_con_puntos(monto):
     return f"{monto:,.0f}".replace(",", ".")
