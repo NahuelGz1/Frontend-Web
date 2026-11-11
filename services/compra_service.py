@@ -212,46 +212,6 @@ def seleccion_previa(funcion_id):
     compra = session.get(CLAVE_COMPRA) or {}
     return compra.get("butacas", []) if compra.get("id_funcion") == funcion_id else []
 
-
-def servicios_seleccionados():
-    return {
-        s["id_servicio"]: s["cantidad"]
-        for s in (session.get(CLAVE_COMPRA) or {}).get("servicios", [])
-    }
-
-
-def guardar_servicios(formulario):
-    compra = session.get(CLAVE_COMPRA) or {}
-    if not compra.get("id_funcion") or not compra.get("butacas"):
-        return "Primero elegí una función y tus butacas."
-    elegidos = []
-    for campo in formulario:
-        if not campo.startswith("cantidad_"):
-            continue
-        identificador = campo.removeprefix("cantidad_")
-        valores = formulario.getlist(campo)
-        if (not identificador.isascii() or not identificador.isdigit()
-                or len(valores) != 1 or not re.fullmatch(r"[0-9]{1,4}", valores[0])):
-            return "Ingresá cantidades enteras entre 0 y 9999."
-        cantidad = int(valores[0])
-        if cantidad:
-            elegidos.append({"id_servicio": int(identificador), "cantidad": cantidad})
-    if elegidos:
-        codigo, respuesta = consumir_api("GET", "/servicios")
-        if codigo != 200:
-            return "No pudimos validar los servicios. Intentá nuevamente."
-        catalogo = {s["id"]: s for s in respuesta.get("data") or []}
-        for elegido in elegidos:
-            servicio = catalogo.get(elegido["id_servicio"])
-            if not servicio or not servicio.get("activo", True):
-                return "Algún servicio ya no está disponible. Revisá tu selección."
-            nombre = servicio["nombre"].lower()
-            if ("estacionamiento" in nombre or "vip" in nombre) and elegido["cantidad"] > len(compra["butacas"]):
-                return "Estacionamiento y VIP admiten como máximo una unidad por entrada."
-    compra["servicios"] = elegidos
-    session[CLAVE_COMPRA] = compra
-    return None
-
 def funcion_en_curso():
     return (session.get(CLAVE_COMPRA) or {}).get("id_funcion")
 
@@ -372,37 +332,3 @@ def confirmar_compra(resumen):
 def id_compra_confirmada():
     return ((session.get(CLAVE_COMPRA_CONFIRMADA) or {}).get("reserva") or {}).get("id_compra")
 
-
-def datos_confirmacion(datos):
-    funcion = datos["funcion"]
-    fecha = datetime.fromisoformat(funcion["fecha_hora_proyeccion"])
-    reserva = datos["reserva"]
-    entradas = []
-    for entrada in reserva["entradas"]:
-        fila, numero = _ubicacion(entrada["numero_butaca"])
-        entradas.append({
-            **entrada, "fila": fila, "numero": numero, "codigo": entrada["codigo_qr"],
-            "qr_url": f"data:image/png;base64,{entrada['qr_imagen_base64']}",
-        })
-    resumen = datos["resumen"]
-    subtotal_entradas = float(resumen["subtotal_entradas"])
-    subtotal_servicios = float(resumen["subtotal_servicios"])
-    return {
-        "funcion": {
-            **funcion, "fecha": fecha.strftime("%d/%m/%Y"), "horario": fecha.strftime("%H:%M"),
-            "complejo": funcion["sala"]["local"],
-            "butacas": _texto_butacas([e["numero_butaca"] for e in reserva["entradas"]]),
-        },
-        "reserva": {**reserva, "entradas": entradas},
-        "resumen": {
-            "cantidad_entradas": len(entradas),
-            "subtotal_entradas": formatear_precio(subtotal_entradas),
-            "subtotal_servicios": formatear_precio(subtotal_servicios),
-            "total": formatear_precio(subtotal_entradas + subtotal_servicios) + " ARS",
-            "servicios": [
-                {"nombre": f"{s['nombre']} x{s['cantidad']}",
-                 "subtotal": formatear_precio(float(s["precio"]) * s["cantidad"])}
-                for s in resumen["servicios"]
-            ],
-        },
-    }

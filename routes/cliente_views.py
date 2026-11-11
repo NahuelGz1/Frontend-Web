@@ -116,16 +116,13 @@ def elegir_butacas(funcion_id=None):
     if request.method == "POST" and not datos["error_mapa"]:
         if not compra_service.csrf_valido(request.form.get("csrf_token")):
             error_seleccion = "El formulario venció. Volvé a elegir tus butacas."
-        elif request.form.get("accion") == "limpiar":
-            compra_service.guardar_seleccion(funcion_id, [])
-            return redirect(url_for("cliente_views.elegir_butacas", funcion_id=funcion_id), code=303)
         else:
             seleccionadas, error_seleccion = compra_service.validar_seleccion(
                 request.form.getlist("butacas"), datos["filas"]
             )
             if not error_seleccion:
                 compra_service.guardar_seleccion(funcion_id, seleccionadas)
-                return redirect(url_for("cliente_views.servicios"), code=303)
+                return redirect(url_for("cliente_views.servicios"))
 
     return render_template(
         "cliente/elegir-butacas.html",
@@ -142,12 +139,8 @@ def servicios():
     status_code, respuesta = consumir_api("GET", "/servicios")
     
     lista_servicios = []
-    error_servicios = None
     if status_code == 200:
         lista_servicios = respuesta.get("data") or []
-    else:
-        current_app.logger.error("No se pudo cargar el catálogo de servicios (HTTP %s)", status_code)
-        error_servicios = "No pudimos cargar los servicios. Podés reintentar o continuar solo con tus entradas."
 
     for servicio in lista_servicios:
         nombre = servicio.get("nombre", "").lower()
@@ -178,7 +171,6 @@ def servicios():
         contexto_compra = {
             "cantidad_entradas": cant_entradas,
             "total_entradas": total_ent_int,
-            "funcion_id": resumen["id_funcion"],
             "entrada": {
                 "cantidad": cant_entradas,
                 "pelicula": vista_funcion["pelicula"].get("titulo", ""),
@@ -192,24 +184,23 @@ def servicios():
         "cliente/servicios.html",
         servicios=lista_servicios,
         contexto_compra=contexto_compra,
-        error_servicios=error_servicios,
-        cantidades_servicios=compra_service.servicios_seleccionados(),
-        csrf_token=compra_service.token_csrf(),
     )
 
 
 @cliente_views_bp.route("/servicios/guardar", methods=["POST"])
 def guardar_servicios():
     if not compra_service.hay_sesion_iniciada():
-        return _pedir_inicio_de_sesion()
-    if not compra_service.csrf_valido(request.form.get("csrf_token")):
-        current_app.logger.warning("Selección de servicios rechazada por CSRF")
-        abort(400, description="El formulario venció. Volvé a elegir los servicios.")
-    error = compra_service.guardar_servicios(request.form)
-    if error:
-        flash(error, "warning")
-        return redirect(url_for("cliente_views.servicios"), code=303)
-    return redirect(url_for("cliente_views.pagar"), code=303)
+        return {"error": "No autorizado"}, 401
+
+    datos = request.get_json(silent=True) or {}
+    servicios_lista = datos.get("servicios", [])
+
+    from flask import session
+    compra = session.get(compra_service.CLAVE_COMPRA) or {}
+    compra["servicios"] = servicios_lista
+    session[compra_service.CLAVE_COMPRA] = compra
+
+    return {"status": "ok", "redirect": url_for("cliente_views.pagar")}
 
 
 @cliente_views_bp.route("/mi-perfil", methods=["GET", "POST"])
@@ -301,12 +292,20 @@ def compra_exitosa(compra_id):
         flash(mensaje_error, "danger")
         return redirect(url_for("cliente_views.cartelera"))
     
-    try:
-        datos = compra_service.datos_confirmacion(respuesta["data"])
-    except (KeyError, TypeError, ValueError):
-        current_app.logger.error("Respuesta inválida al consultar la confirmación de compra")
-        abort(503, description="La compra se registró, pero no pudimos mostrar su detalle. Consultá Mis compras; no vuelvas a pagar.")
-    return render_template("cliente/compra-exitosa.html", **datos)
+    datos = respuesta.get("data") or {}
+    reserva = datos.get("reserva") or {}
+    entradas = reserva.get("entradas") or datos.get("entradas") or []
+
+    for entrada in entradas:
+        if entrada.get("qr_imagen_base64"):
+            entrada["qr_url"] = f"data:image/png;base64,{entrada['qr_imagen_base64']}"
+
+    reserva["entradas"] = entradas
+
+    return render_template("cliente/compra-exitosa.html", 
+                            funcion = datos.get("funcion", {}), 
+                            reserva = reserva,
+                            resumen = datos.get("resumen", {}))
 
 
 def _obtener_compra_para_documento(compra_id):

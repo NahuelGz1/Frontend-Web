@@ -110,17 +110,13 @@
 
         <section class="asientos-continuacion" aria-labelledby="asientos-seleccion-titulo">
             <h2 id="asientos-seleccion-titulo">Tu selección</h2>
-            <p>Butacas elegidas: <strong id="cant-butacas">{{ selec|length }}</strong> · Total entradas: <strong id="total-precio-butacas">${{ (datos_funcion.precio|default(0) * selec|length)|int }}</strong></p>
-            <noscript><p>El resumen actualizado se muestra al continuar. Podés marcar y desmarcar las butacas sin JavaScript.</p></noscript>
+            <p>Butacas elegidas: <strong id="cant-butacas">0</strong> · Total entradas: <strong id="total-precio-butacas">$0</strong></p>
             {% if disponibles %}
             <p>En el siguiente paso vas a revisar tus entradas y elegir los servicios adicionales.</p>
             {% else %}
             <p role="status">No quedan butacas libres para esta función. Volvé a cartelera para elegir otra.</p>
             {% endif %}
-            <button type="submit" name="accion" value="limpiar" class="compra-continuar">
-                Quitar todas las butacas seleccionadas
-            </button>
-            <button type="submit" id="btn-continuar-pago" class="btn-primary compra-continuar" {% if not disponibles %}disabled{% endif %}>
+            <button type="submit" id="btn-continuar-pago" class="btn-primary compra-continuar" disabled>
                 Continuar a servicios y pago
             </button>
         </section>
