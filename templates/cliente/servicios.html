@@ -86,9 +86,25 @@
                     {% set nombre_normalizado = servicio.nombre|lower %}
                     {% set requiere_entrada = servicio.requiere_entrada|default(('estacionamiento' in nombre_normalizado or 'vip' in nombre_normalizado), true) %}
                     {% set limite_cantidad = entradas_asociadas if 'estacionamiento' in nombre_normalizado else 9999 %}
+                    {% set imagen_servicio = servicio.imagen_url|default('', true) %}
+                    {% if not imagen_servicio and 'agua' in nombre_normalizado %}
+                    {% set imagen_servicio = url_for('static', filename='images/servicios/agua-mineral.png') %}
+                    {% elif not imagen_servicio and 'combo' in nombre_normalizado %}
+                    {% set imagen_servicio = url_for('static', filename='images/servicios/combo-duo.png') %}
+                    {% elif not imagen_servicio and 'nacho' in nombre_normalizado %}
+                    {% set imagen_servicio = url_for('static', filename='images/servicios/machos-cheddar.png') %}
+                    {% elif not imagen_servicio and 'pancho' in nombre_normalizado %}
+                    {% set imagen_servicio = url_for('static', filename='images/servicios/pancho-clasico.png') %}
+                    {% elif not imagen_servicio and 'pochoclo' in nombre_normalizado %}
+                    {% set imagen_servicio = url_for('static', filename='images/servicios/balde-pochoclos.png') %}
+                    {% elif not imagen_servicio and 'estacionamiento' in nombre_normalizado %}
+                    {% set imagen_servicio = url_for('static', filename='images/servicios/estacionamiento.png') %}
+                    {% elif not imagen_servicio and 'vip' in nombre_normalizado %}
+                    {% set imagen_servicio = url_for('static', filename='images/servicios/acceso-vip.png') %}
+                    {% endif %}
                     <article class="service-product servicio-card" data-precio="{{ precio }}" data-service-card data-service-id="{{ servicio.id|default(servicio.nombre|lower|replace(' ', '-'), true) }}" data-service-name="{{ servicio.nombre }}" data-requires-ticket="{{ 'true' if requiere_entrada else 'false' }}" data-max-quantity="{{ limite_cantidad }}">
-                        {% if servicio.imagen_url|default('', true) %}
-                        <img class="service-product-image" src="{{ servicio.imagen_url }}" alt="Imagen de {{ servicio.nombre }}" loading="lazy">
+                        {% if imagen_servicio %}
+                        <img class="service-product-image" src="{{ imagen_servicio }}" alt="Imagen de {{ servicio.nombre }}" loading="lazy">
                         {% else %}
                         <div class="service-product-image service-image-placeholder" role="img" aria-label="Imagen de {{ servicio.nombre }} pendiente"></div>
                         {% endif %}
