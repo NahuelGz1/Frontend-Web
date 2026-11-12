@@ -3,21 +3,16 @@ set -e
 
 cd "$(dirname "$0")"
 
-echo "=== 1. Verificando entorno virtual ==="
-VENV_DIR=".venv"
-if [ ! -d "$VENV_DIR" ] && [ -d "venv" ]; then
-    VENV_DIR="venv"
-fi
-
-if [ ! -d "$VENV_DIR" ]; then
-    echo "No existe el entorno virtual ($VENV_DIR). Creando..."
-    python3 -m venv "$VENV_DIR"
+echo "=== 1. Verificando entorno virtual (venv) ==="
+if [ ! -d "venv" ]; then
+    echo "No existe el entorno virtual (venv). Creando..."
+    python3 -m venv venv
 else
-    echo "Ya existe el entorno virtual ($VENV_DIR)"
+    echo "Ya existe el entorno virtual (venv)"
 fi
 
 echo "=== 2. Activando entorno virtual ==="
-source "$VENV_DIR/bin/activate"
+source venv/bin/activate
 
 echo "=== 3. Actualizando pip ==="
 pip install --upgrade pip
