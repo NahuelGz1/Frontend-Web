@@ -314,6 +314,7 @@ def descargar_entradas(compra_id):
     datos = _obtener_compra_para_documento(compra_id)
     if datos is None:
         return redirect(url_for("cliente_views.mi_perfil"))
+    datos = compra_service.preparar_datos_documento(datos)
     respuesta = make_response(render_template("cliente/entradas.html", **datos))
     respuesta.headers["Content-Disposition"] = f"attachment; filename=entradas-CP-{compra_id}.html"
     return respuesta

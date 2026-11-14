@@ -406,3 +406,49 @@ def datos_confirmacion(datos):
             ],
         },
     }
+
+def preparar_datos_documento(datos):
+    if not datos:
+        return {}
+    reserva = datos.get("reserva") or {}
+    entradas_raw = reserva.get("entradas") or []
+    butacas_nums = []
+    entradas_formateadas = []
+    qr_imagen = datos.get("qr_imagen_base64") or reserva.get("qr_imagen_base64")
+
+    for e in entradas_raw:
+        num = e.get("numero_butaca") or e.get("numero")
+        if num is not None:
+            try:
+                num_int =int(num)
+                butacas_nums.append(num_int)
+                fila, col = _ubicacion(num_int)
+                codigo_butaca = f"{fila}{col}"
+            except (ValueError, TypeError):
+                fila, col, codigo_butaca = "", num, str(num)
+        else:
+            fila, col, codigo_butaca = "", "", ""
+
+        if not qr_imagen and e.get("qr_imagen_base64"):
+            qr_imagen = e.get("qr_imagen_base64")
+        entradas_formateadas.append({
+            **e,
+            "fila": fila,
+            "numero": col,
+            "codigo_butaca": codigo_butaca,
+        })
+    butacas_texto = reserva.get("butacas_texto") or _texto_butacas(butacas_nums)
+    codigo_qr = datos.get("compra", {}).get("codigo_qr") or reserva.get("codigo_qr") or (entradas_raw[0].get("codigo_qr") if entradas_raw else "")
+    return {
+        **datos,
+        "qr_imagen_base64": qr_imagen,
+        "butacas_texto": butacas_texto,
+        "codigo_qr": codigo_qr,
+        "reserva": {
+            **reserva,
+            "qr_imagen_base64": qr_imagen,
+            "butacas_texto": butacas_texto,
+            "codigo_qr": codigo_qr,
+            "entradas": entradas_formateadas,
+        },
+    }
