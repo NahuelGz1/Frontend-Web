@@ -23,12 +23,26 @@ def inicio():
     # La primera pelicula como destacada, las demas para la grilla de hoy
     pelicula_destacada = peliculas[0] if peliculas else None
     peliculas_hoy = peliculas[1:] if len(peliculas) > 1 else peliculas
+
+    # Obtenemos los próximos estrenos desde la API
+    code_estrenos, resp_estrenos = consumir_api("GET", "/peliculas/estrenos")
+    proximos_estrenos = []
+    if code_estrenos == 200:
+        estrenos_data = resp_estrenos.get("data") or []
+        for est in estrenos_data:
+            if not est.get("afiche_url"):
+                est["afiche_url"] = est.get("poster")
+            fecha = str(est.get("fecha_estreno") or "")
+            if not fecha or fecha < "2026":
+                proximos_estrenos.append(est)
+        proximos_estrenos = proximos_estrenos[:6]
+
     return render_template(
         "cliente/inicio.html",
         pelicula_destacada=pelicula_destacada,
         peliculas_hoy=peliculas_hoy,
-        proximos_estrenos=[]
-)
+        proximos_estrenos=proximos_estrenos
+    )
 
 
 
@@ -380,10 +394,12 @@ def estrenos():
 
     estrenos_lista = []
     if status_code == 200:
-        estrenos_lista = respuesta.get("data") or []
-
-    for pelicula in estrenos_lista:
-        if not pelicula.get("poster_url"):
-            pelicula["poster_url"] = pelicula.get("poster")
+        estrenos_data = respuesta.get("data") or []
+        for pelicula in estrenos_data:
+            if not pelicula.get("poster_url"):
+                pelicula["poster_url"] = pelicula.get("poster")
+            fecha = str(pelicula.get("fecha_estreno") or "")
+            if not fecha or fecha < "2026":
+                estrenos_lista.append(pelicula)
 
     return render_template("cliente/estrenos.html", peliculas=estrenos_lista)
