@@ -358,6 +358,7 @@ def confirmar_compra(resumen):
         "butacas": resumen["butacas"],
         "servicios": [{"id_servicio": s["id_servicio"], "cantidad": s["cantidad"], "precio": s["precio"]}
                       for s in resumen["servicios"]],
+        "email_contacto": email_de_contacto(),
     }
     status_code, respuesta = consumir_api("POST", "/compras", datos=cuerpo, headers=_cabecera_autorizacion())
     if not 200 <= status_code < 300:
