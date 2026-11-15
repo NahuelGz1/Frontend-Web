@@ -384,10 +384,14 @@ def datos_confirmacion(datos):
             **entrada, "fila": fila, "numero": numero, "codigo": entrada["codigo_qr"],
             "qr_url": f"data:image/png;base64,{entrada['qr_imagen_base64']}",
         })
+    qr_64 = datos.get("qr_imagen_base64") or reserva.get("qr_imagen_base64")
+    qr_url_compra = f"data:image/png;base64,{qr_64}" if qr_64 else (entradas[0]["qr_url"] if entradas else "")
     resumen = datos["resumen"]
     subtotal_entradas = float(resumen["subtotal_entradas"])
     subtotal_servicios = float(resumen["subtotal_servicios"])
     return {
+        "qr_url": qr_url_compra,
+        "codigo_qr": reserva.get("codigo_qr") or (entradas[0]["codigo"] if entradas else ""),
         "funcion": {
             **funcion, "fecha": fecha.strftime("%d/%m/%Y"), "horario": fecha.strftime("%H:%M"),
             "complejo": funcion["sala"]["local"],
