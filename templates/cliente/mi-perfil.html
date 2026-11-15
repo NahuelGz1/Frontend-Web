@@ -59,7 +59,7 @@
                         <dd>{{ usr_complejo }}</dd>
                     </div>
                 </dl>
-                <button class="profile-secondary-button" type="button" data-open-profile-modal>✎ Editar datos</button>
+                <a class="profile-secondary-button" href="#editar-perfil" data-open-profile-modal>Editar datos</a>
             </section>
 
             <section class="profile-security-card">
@@ -191,18 +191,29 @@
     <div class="profile-modal-backdrop" data-close-profile-modal></div>
     <section class="profile-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="editar-perfil-titulo">
         <button class="profile-modal-close" type="button" aria-label="Cerrar" data-close-profile-modal>×</button>
+        <p class="login-kicker">TU CUENTA PARADISO</p>
         <h2 id="editar-perfil-titulo">Editar datos</h2>
-        <form method="post" action="{{ url_for('cliente_views.mi_perfil') }}">
+        <p class="login-description">
+            Completá solo los datos que quieras actualizar. Si modificás tu nombre, ingresá nombre y apellido.
+        </p>
+
+        <form class="login-form" method="post" action="{{ url_for('cliente_views.mi_perfil') }}" novalidate>
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <p class="flash-alert error" data-profile-modal-error style="display: none;"></p>
+
             <label for="perfil-nombre">Nombre</label>
-            <input id="perfil-nombre" name="nombre" type="text" value="{{ nombre_form }}" required maxlength="50">
+            <input id="perfil-nombre" name="nombre" type="text" placeholder="Ingresá tu nuevo nombre" maxlength="50">
+
             <label for="perfil-apellido">Apellido</label>
-            <input id="perfil-apellido" name="apellido" type="text" value="{{ apellido_form }}" required maxlength="50">
+            <input id="perfil-apellido" name="apellido" type="text" placeholder="Ingresá tu nuevo apellido" maxlength="50">
+
             <label for="perfil-email">Correo electrónico</label>
-            <input id="perfil-email" name="email" type="email" value="{{ usr_email }}" required maxlength="100">
+            <input id="perfil-email" name="email" type="email" placeholder="Ingresá tu nuevo correo electrónico" maxlength="100">
+
             <div class="profile-modal-actions">
-                <button class="profile-secondary-button" type="button" data-close-profile-modal>Cancelar</button>
-                <button class="profile-primary-button" type="submit">Guardar cambios</button>
+                <a class="btn-secondary" href="#" data-close-profile-modal>Cancelar</a>
+                <button class="btn-primary" type="submit">Guardar cambios</button>
             </div>
         </form>
     </section>

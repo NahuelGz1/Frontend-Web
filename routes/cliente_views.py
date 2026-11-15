@@ -222,19 +222,30 @@ def mi_perfil():
     if request.method == "POST":
         if not compra_service.csrf_valido(request.form.get("csrf_token")):
             abort(400, description="El formulario venció. Recargá la página e intentá nuevamente.")
+
         nombre = request.form.get("nombre", "").strip()
         apellido = request.form.get("apellido", "").strip()
         email = request.form.get("email", "").strip().lower()
-        if not nombre or not apellido or not email:
-            flash("Completá nombre, apellido y correo electrónico.", "warning")
+
+        if not nombre and not apellido and not email:
+            flash("Completá al menos el correo electrónico o tu nombre y apellido.", "warning")
             return redirect(url_for("cliente_views.mi_perfil") + "#editar-perfil")
+
+        if (nombre and not apellido) or (not nombre and apellido):
+            flash("Para actualizar tu nombre, tenés que completar tanto el nombre como el apellido.", "warning")
+            return redirect(url_for("cliente_views.mi_perfil") + "#editar-perfil")
+
+        nombre_nuevo = f"{nombre} {apellido}" if (nombre and apellido) else None
+        email_nuevo = email if email else None
+
         codigo, respuesta = auth_service.actualizar_perfil(
-            session.get("access_token"), f"{nombre} {apellido}", email
+            session.get("access_token"), nombre_nuevo, email_nuevo
         )
         if codigo != 200:
             mensaje = respuesta.get("error", {}).get("message", "No se pudo actualizar el perfil.")
             flash(mensaje, "danger")
             return redirect(url_for("cliente_views.mi_perfil") + "#editar-perfil")
+
         actualizado = respuesta.get("data")
         if isinstance(actualizado, dict):
             session["usuario"] = actualizado
