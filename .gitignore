@@ -2,6 +2,7 @@
 .env
 instance/
 .venv/
+venv/
 __pycache__/
 
 # Configuración del IDE (JetBrains / VS Code)
