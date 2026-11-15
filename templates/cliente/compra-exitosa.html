@@ -101,32 +101,32 @@
             <section class="compra-exitosa-card compra-exitosa-entradas" aria-labelledby="entradas-titulo">
                 <h2 id="entradas-titulo">Tu entrada digital</h2>
                 <p class="compra-exitosa-ayuda">{{ datos_resumen.cantidad_entradas }} entradas · {{ datos_funcion.butacas }}</p>
-                <ol class="compra-exitosa-tickets">
-                    {% for entrada in entradas %}
-                    <li>
-                        <article class="compra-exitosa-ticket">
-                            <header>
-                                <h3>Entrada {{ loop.index }} de {{ loop.length }}</h3>
-                                <span>Butaca {{ entrada.fila|default('D', true) }}{{ entrada.numero|default(loop.index + 4, true) }}</span>
-                            </header>
-                            <strong>{{ pelicula.titulo|default('Volver al Futuro', true) }}</strong>
-                            <p>{{ datos_funcion.fecha|default('Viernes, 30 de octubre de 2026', true) }} · {{ datos_funcion.horario|default('19:30', true) }}</p>
-                            <p>{{ datos_funcion.complejo|default('Paradiso Centro', true) }} · {{ sala.nombre|default(sala, true)|default('Sala 1', true) }}</p>
-                            {% if entrada.qr_url|default('', true) %}
-                            <figure class="compra-exitosa-qr">
-                                <img src="{{ entrada.qr_url }}" alt="Código QR de la entrada para la butaca {{ entrada.fila }}{{ entrada.numero }}" width="160" height="160">
-                                <figcaption>{{ entrada.codigo|default('CP-261030-0842-D' ~ (loop.index + 4), true) }}</figcaption>
-                            </figure>
-                            <p class="compra-exitosa-qr-nota">Presentá este QR en el acceso al cine.</p>
-                            {% else %}
-                            <p class="compra-exitosa-qr-faltante">El código QR todavía no está disponible.</p>
-                            {% endif %}
-                        </article>
-                    </li>
+                                <div class="compra-exitosa-tickets">
+                    {% set qr_mostrar = qr_url|default(datos_reserva.qr_url, true)|default(entradas[0].qr_url if entradas else '', true) %}
+                    {% set codigo_mostrar = codigo_qr|default(datos_reserva.codigo_qr, true)|default(entradas[0].codigo if entradas else codigo_compra, true) %}
+                    {% if entradas %}
+                    <article class="compra-exitosa-ticket">
+                        <header>
+                            <h3>{{ datos_resumen.cantidad_entradas }} {{ 'entrada' if datos_resumen.cantidad_entradas == 1 else 'entradas' }}</h3>
+                            <span>{{ datos_funcion.butacas }}</span>
+                        </header>
+                        <strong>{{ pelicula.titulo|default('Volver al Futuro', true) }}</strong>
+                        <p>{{ datos_funcion.fecha|default('Viernes, 30 de octubre de 2026', true) }} · {{ datos_funcion.horario|default('19:30', true) }}</p>
+                        <p>{{ datos_funcion.complejo|default('Paradiso Centro', true) }} · {{ sala.nombre|default(sala, true)|default('Sala 1', true) }}</p>
+                        {% if qr_mostrar %}
+                        <figure class="compra-exitosa-qr">
+                            <img src="{{ qr_mostrar }}" alt="Código QR de acceso unificado" width="160" height="160">
+                            <figcaption>{{ codigo_mostrar }}</figcaption>
+                        </figure>
+                        <p class="compra-exitosa-qr-nota">Presentá este único QR en el acceso al cine para ingresar con todas las butacas.</p>
+                        {% else %}
+                        <p class="compra-exitosa-qr-faltante">El código QR todavía no está disponible.</p>
+                        {% endif %}
+                    </article>
                     {% else %}
-                    <li class="compra-exitosa-qr-faltante">No se recibieron entradas digitales.</li>
-                    {% endfor %}
-                </ol>
+                    <p class="compra-exitosa-qr-faltante">No se recibieron entradas digitales.</p>
+                    {% endif %}
+                </div>
                 <p class="compra-exitosa-ayuda">Llegá 20 minutos antes. Mostrá tus entradas descargadas en el acceso a la sala, desde el celular o impresas.</p>
             </section>
 
