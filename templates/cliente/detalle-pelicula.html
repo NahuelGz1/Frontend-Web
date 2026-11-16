@@ -41,15 +41,26 @@
 
     {% if pelicula.funciones and pelicula.funciones|length > 0 %}
     <!-- contenedor de tarjetas de funciones dinámicas -->
+    <!-- la primera funcion con lugar queda marcada, las agotadas no se pueden elegir -->
+    {% set primera = pelicula.funciones|rejectattr('agotada')|first %}
     <div id="funciones-contenedor">
         {% for funcion in pelicula.funciones %}
-        <article class="funcion-card {% if loop.first %}seleccionada{% endif %}" data-complejo="{{ funcion.local }}" data-fecha="{{ funcion.fecha_hora_proyeccion }}">
-            {% if loop.first %}<span class="badge" data-badge>Seleccionada</span>{% endif %}
+        {% set es_primera = primera and funcion.id == primera.id %}
+        <article class="funcion-card {% if es_primera %}seleccionada{% endif %}" data-complejo="{{ funcion.local }}" data-fecha="{{ funcion.fecha_hora_proyeccion }}">
+            {% if funcion.agotada %}
+            <span class="badge">Agotada</span>
+            {% elif es_primera %}
+            <span class="badge" data-badge>Seleccionada</span>
+            {% endif %}
             <h3>{{ funcion.fecha_hora_proyeccion }}</h3>
             <p>{{ funcion.local }} · {{ funcion.sala }} · {{ funcion.capacidad }} butacas</p>
-            <a href="{{ url_for('cliente_views.elegir_butacas', funcion_id=funcion.id) }}" class="{% if loop.first %}btn-primary{% else %}btn-secondary{% endif %}" data-btn-accion>
-                {% if loop.first %}Elegir butacas{% else %}Seleccionar función{% endif %}
+            {% if funcion.agotada %}
+            <button class="btn-secondary" type="button" disabled>Sala agotada</button>
+            {% else %}
+            <a href="{{ url_for('cliente_views.elegir_butacas', funcion_id=funcion.id) }}" class="{% if es_primera %}btn-primary{% else %}btn-secondary{% endif %}" data-btn-accion>
+                {% if es_primera %}Elegir butacas{% else %}Seleccionar función{% endif %}
             </a>
+            {% endif %}
         </article>
         {% endfor %}
     </div>
