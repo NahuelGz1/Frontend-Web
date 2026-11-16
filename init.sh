@@ -12,10 +12,16 @@ else
 fi
 
 echo "=== 2. Activando entorno virtual ==="
-source venv/bin/activate
+if [ -f "venv/Scripts/activate" ]; then
+    #para windows (usando terminal git bash)
+    source venv/Scripts/activate
+else
+    #para linux
+    source venv/bin/activate
+fi
 
 echo "=== 3. Actualizando pip ==="
-pip install --upgrade pip
+python -m pip install --upgrade pip
 
 echo "=== 4. Instalando dependencias de requirements.txt ==="
 pip install -r requirements.txt
