@@ -95,7 +95,7 @@ def _obtener_funcion(funcion_id):
     if status_code == 401:
         return None, "Tu sesión venció. Volvé a iniciar sesión para seguir con la compra."
     if status_code == 404:
-        return None, "La función que elegiste no existe."
+        return None, "La función que elegiste no existe o ya no está disponible. Elegí otra en la cartelera."
     return None, _mensaje_de_error(status_code, respuesta, ERROR_GENERICO)
 
 
@@ -163,6 +163,8 @@ def datos_del_mapa(funcion_id):
     fecha = _fecha_de_funcion(funcion)
     if fecha is None or fecha <= _ahora():
         return {**vacio, "error_mapa": "Esta función ya comenzó. Elegí otra en la cartelera."}
+    if funcion.get("estado") == "agotada":
+        return {**vacio, "error_mapa": "Esta función está agotada, no quedan butacas libres. Elegí otro horario."}
 
     status_code, respuesta = consumir_api("GET", f"/funciones/{funcion_id}/butacas")
     if status_code != 200:
