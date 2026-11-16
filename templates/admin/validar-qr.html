@@ -4,23 +4,24 @@
 {% block breadcrumb %}Validar QR{% endblock %}
 
 {% block content %}
-{% set validacion = resultado|default(none) %}
-{% set servicios_pedido = validacion.servicios|default([]) if validacion else [] %}
 <section class="qr-page" aria-labelledby="qr-title">
     <header class="page-header">
         <div>
             <h1 id="qr-title">Validar QR</h1>
-            <p>Escaneá un único QR de compra y canjeá cada entrada o servicio desde el resultado.</p>
+            <p>Elegí la categoría a validar, ingresá el QR de la compra y canjeá el servicio correspondiente.</p>
         </div>
     </header>
-    {% if validacion and validacion.funcion %}
+    {% if vista %}
     <section class="qr-current-show" aria-label="Función asociada al QR">
-        <span>Función activa · Control de acceso</span>
-        <h2>{{ validacion.funcion.pelicula_titulo }}</h2>
+        <span>Función · Control de acceso</span>
+        <h2>{{ vista.pelicula }}</h2>
         <div class="qr-show-details">
-            <p><strong>Fecha y hora:</strong> {{ validacion.funcion.fecha_hora }}</p>
-            <p><strong>Sala:</strong> {{ validacion.funcion.complejo_nombre }} · {{ validacion.funcion.sala_nombre }}</p>
-            <p><strong>Butacas:</strong> {{ validacion.butacas_texto }}</p>
+            <p><strong>Fecha y hora:</strong> {{ vista.fecha_hora }}</p>
+            <p><strong>Sala:</strong> {{ vista.complejo }} · {{ vista.sala }}</p>
+            <p><strong>Butacas:</strong> {{ vista.butacas_texto }}</p>
+            {% if vista.compra_cancelada %}
+            <p><strong>Estado:</strong> <span class="qr-show-state is-inactive">Compra cancelada</span></p>
+            {% endif %}
         </div>
     </section>
     {% else %}
@@ -43,41 +44,69 @@
             </div>
             <form method="post" action="{{ url_for('admin_views.validar_qr') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <input type="hidden" name="accion" value="validar_qr">
+                <input type="hidden" name="accion" value="consultar">
+                <fieldset class="qr-mode-selector">
+                    <legend>Categoría a validar</legend>
+                    {% for clave, nombre, ayuda in categorias %}
+                    <label title="{{ ayuda }}">
+                        <input type="radio" name="categoria" value="{{ clave }}" {{ 'checked' if clave == categoria else '' }}>
+                        {{ nombre }}
+                    </label>
+                    {% endfor %}
+                </fieldset>
                 <div class="form-field">
                     <label for="qr-identifier">Identificador del QR de compra</label>
-                    <input class="form-control" id="qr-identifier" name="codigo_qr" type="text" autocomplete="off" required>
+                    <input class="form-control" id="qr-identifier" name="codigo_qr" type="text" autocomplete="off" value="{{ vista.codigo_qr if vista else '' }}" required>
                 </div>
-                <button class="btn btn-primary" type="submit">Validar identificador</button>
+                <button class="btn btn-primary" type="submit">Consultar</button>
             </form>
         </section>
 
         <section class="panel qr-result" aria-labelledby="qr-result-title" aria-live="polite">
-            {% if validacion %}
-            <h2 id="qr-result-title">{{ validacion.titulo }}</h2>
-            <span class="qr-status-badge {{ 'is-approved' if validacion.aprobada else 'is-rejected' }}">{{ validacion.mensaje_estado }}</span>
-            <h3>{{ validacion.estado }}</h3>
-            {% if validacion.funcion %}
-            <p>{{ validacion.funcion.pelicula_titulo }} · {{ validacion.funcion.complejo_nombre }} · {{ validacion.funcion.sala_nombre }}</p>
-            <p>Butacas: {{ validacion.butacas_texto }}</p>
+            {% if estado %}
+            <h2 id="qr-result-title">{{ estado.titulo }}</h2>
+            <span class="qr-status-badge {{ 'is-approved' if estado.aprobada else 'is-rejected' }}">{{ estado.mensaje_estado }}</span>
+            <h3>{{ estado.estado }}</h3>
             {% endif %}
-            {% if servicios_pedido %}
-            <h3>Servicios asociados</h3>
+            {% if vista %}
+            {% if not estado %}<h2 id="qr-result-title">{{ vista.categoria_nombre }}</h2>{% endif %}
+            <form class="qr-category-tabs" method="post" action="{{ url_for('admin_views.validar_qr') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="accion" value="consultar">
+                <input type="hidden" name="codigo_qr" value="{{ vista.codigo_qr }}">
+                {% for pestana in vista.pestanas %}
+                <button class="btn qr-category-tab {{ 'is-active' if pestana.activa else '' }}" type="submit" name="categoria" value="{{ pestana.clave }}" {% if pestana.activa %}aria-current="true"{% endif %}>
+                    {{ pestana.nombre }} <span class="qr-category-count" title="Pendientes de canje">{{ '–' if pestana.total == 0 else ('✓' if pestana.pendientes == 0 else pestana.pendientes) }}</span>
+                </button>
+                {% endfor %}
+            </form>
+
+            {% if vista.total == 0 %}
+            <h4>Sin {{ vista.categoria_nombre|lower }} en esta compra</h4>
+            <p class="help-text">La compra no incluye nada de esta categoría.</p>
+            {% else %}
+            <h4>{{ vista.categoria_nombre }}: {{ vista.utilizados }} de {{ vista.total }} canjeados · {{ vista.pendientes }} pendientes</h4>
             <div class="qr-service-items">
-                {% for servicio in servicios_pedido %}
+                {% for unidad in vista.unidades %}
                 <article class="qr-service-item">
                     <div class="qr-service-item-info">
-                        <h4>{{ servicio.nombre }}</h4>
-                        <p class="text-muted">{{ servicio.detalle }}</p>
+                        <h4>{{ unidad.etiqueta }}</h4>
+                        {% if unidad.detalle %}<p class="text-muted">{{ unidad.detalle }}</p>{% endif %}
                     </div>
                     <div class="qr-service-item-controls">
-                        <span class="qr-service-status {{ 'is-consumed' if servicio.consumido else 'is-pending' }}">{{ 'Consumido' if servicio.consumido else 'Pendiente' }}</span>
-                        {% if not servicio.consumido %}
+                        {% if unidad.cancelada %}
+                        <span class="qr-service-status is-cancelled">Cancelada</span>
+                        {% else %}
+                        <span class="qr-service-status {{ 'is-consumed' if unidad.consumido else 'is-pending' }}">{{ 'Canjeado' if unidad.consumido else 'Pendiente' }}</span>
+                        {% endif %}
+                        {% if not unidad.consumido and not unidad.cancelada and not vista.compra_cancelada %}
                         <form method="post" action="{{ url_for('admin_views.validar_qr') }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <input type="hidden" name="accion" value="validar_servicio">
-                            <input type="hidden" name="id_detalle" value="{{ servicio.id_detalle }}">
-                            <button class="btn qr-service-action" type="submit">{{ 'Entregar' if servicio.tipo == 'candy-bar' else 'Validar acceso' }}</button>
+                            <input type="hidden" name="accion" value="canjear">
+                            <input type="hidden" name="categoria" value="{{ vista.categoria }}">
+                            <input type="hidden" name="codigo_qr" value="{{ vista.codigo_qr }}">
+                            {% if vista.categoria == 'entradas' %}<input type="hidden" name="id_entrada" value="{{ unidad.id_entrada }}">{% else %}<input type="hidden" name="id_detalle" value="{{ unidad.id_detalle }}">{% endif %}
+                            <button class="btn qr-service-action" type="submit">Canjear</button>
                         </form>
                         {% endif %}
                     </div>
@@ -85,11 +114,13 @@
                 {% endfor %}
             </div>
             {% endif %}
-            <p class="help-text">{{ validacion.detalle }}</p>
+            {% if estado %}<p class="help-text">{{ estado.detalle }}</p>{% endif %}
+            {% elif estado %}
+            <p class="help-text">{{ estado.detalle }}</p>
             {% else %}
             <h2 id="qr-result-title">Esperando una compra</h2>
             <h3>Listo para validar</h3>
-            <p class="help-text">Escaneá un código o ingresá el identificador para validar todas sus butacas y consultar sus servicios.</p>
+            <p class="help-text">Elegí una categoría e ingresá el identificador del QR para ver qué falta canjear.</p>
             {% endif %}
         </section>
     </div>
@@ -98,12 +129,12 @@
         <h2 id="qr-log-title">Guía de respuestas de validación</h2>
         <p class="help-text">Usá estos estados como guía para cada acceso.</p>
         <div class="qr-alternative-list">
-            <article class="panel qr-alternative"><h3>Compra válida</h3><span class="qr-status-badge is-approved">Aprobada · QR único</span><p class="qr-guide-instruction">Verificá función, fecha y butacas. Luego canjeá cada servicio pendiente desde el resultado.</p></article>
+            <article class="panel qr-alternative"><h3>Compra válida</h3><span class="qr-status-badge is-approved">Aprobada · QR único</span><p class="qr-guide-instruction">Verificá función, fecha y butacas. Luego canjeá la categoría elegida.</p></article>
             <article class="panel qr-alternative"><h3>Entrada ya utilizada</h3><span class="qr-status-badge is-rejected">Rechazada · Sin ingreso</span><p class="qr-guide-instruction">No permitas un segundo ingreso y revisá el registro.</p></article>
             <article class="panel qr-alternative"><h3>Entrada cancelada</h3><span class="qr-status-badge is-rejected">Rechazada · Sin ingreso</span><p class="qr-guide-instruction">No permitas el ingreso y derivá la consulta a atención.</p></article>
-            <article class="panel qr-alternative"><h3>Acceso VIP, estacionamiento o servicio</h3><span class="qr-status-badge is-approved">Validación individual</span><p class="qr-guide-instruction">Validá cada servicio pendiente desde la lista de servicios asociados.</p></article>
+            <article class="panel qr-alternative"><h3>Acceso VIP, estacionamiento o servicio</h3><span class="qr-status-badge is-approved">Validación por categoría</span><p class="qr-guide-instruction">Cada entrada, acceso VIP, entrega de servicio y auto se canjea por separado.</p></article>
+            <article class="panel qr-alternative"><h3>QR cerrado</h3><span class="qr-status-badge is-rejected">Rechazada · QR cerrado</span><p class="qr-guide-instruction">Todo lo de la compra ya fue canjeado. No admite nuevos canjes.</p></article>
             <article class="panel qr-alternative"><h3>Código no reconocido</h3><span class="qr-status-badge is-rejected">Rechazada · Sin ingreso</span><p class="qr-guide-instruction">Revisá el identificador y consultá soporte si persiste.</p></article>
         </div>
     </section>
-</section>
 {% endblock %}

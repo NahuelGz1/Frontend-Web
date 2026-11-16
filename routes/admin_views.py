@@ -3,6 +3,7 @@ import re
 import math
 import base64
 from datetime import datetime
+from urllib.parse import quote
 
 from flask import abort, Blueprint, current_app, flash, redirect, render_template, request, session, url_for
 
@@ -13,6 +14,7 @@ from routes.auth_security import (
 )
 
 from services.api_client import consumir_api
+from services.compra_service import etiqueta_butaca
 from services.estadisticas_service import obtener_estadisticas_dashboard
 from services.admin_service import (
     dar_de_baja_administrador,
@@ -733,102 +735,175 @@ def servicios():
     )
 
 
+CATEGORIAS_QR = (
+    ("entradas", "Entradas", "Cada entrada se canjea por separado."),
+    ("vip", "Acceso VIP", "Cada acceso VIP se canjea por separado."),
+    ("servicios", "Servicios", "Snacks, pochoclos y bebidas: cada entrega se canjea por separado."),
+    ("estacionamiento", "Estacionamiento", "Cada auto se canjea por separado."),
+)
+CLAVES_CATEGORIAS_QR = {clave for clave, _, _ in CATEGORIAS_QR}
+
+
+def _mensaje_error_api(respuesta, por_defecto):
+    return (respuesta.get("error") or {}).get("message", por_defecto)
+
+
+def _formatear_fecha_hora(valor):
+    try:
+        return datetime.strptime(valor, "%a, %d %b %Y %H:%M:%S GMT").strftime("%d/%m/%Y %H:%M")
+    except (TypeError, ValueError):
+        return valor or ""
+
+
+def _vista_qr(data, categoria, codigo_qr):
+    categorias = data.get("categorias") or {}
+    actual = categorias.get(categoria) or {}
+    items = actual.get("items") or []
+
+    if categoria == "entradas":
+        unidades = [
+            {
+                "id_entrada": item["id"],
+                "etiqueta": f"Butaca {etiqueta_butaca(item['numero_butaca'])}",
+                "consumido": item["estado"] == "utilizada",
+                "cancelada": item["estado"] == "cancelada",
+            }
+            for item in items
+        ]
+    else:
+        unidades = []
+        for item in items:
+            for indice in range(item.get("cantidad", 0)):
+                etiqueta = f"Auto {len(unidades) + 1}" if categoria == "estacionamiento" else item["nombre"]
+                unidades.append({
+                    "id_detalle": item["id_detalle"],
+                    "etiqueta": etiqueta,
+                    "detalle": "" if categoria == "estacionamiento" else f"Unidad {indice + 1} de {item['cantidad']}",
+                    "consumido": indice < item.get("cantidad_usada", 0),
+                })
+
+    con_items = [c for c in categorias.values() if c.get("total", 0) > 0]
+    qr_cerrado = bool(con_items) and all(c.get("pendientes", 0) == 0 for c in con_items)
+
+    return {
+        "codigo_qr": codigo_qr,
+        "qr_cerrado": qr_cerrado and not data.get("compra_cancelada"),
+        "categoria": categoria,
+        "categoria_nombre": next(n for c, n, _ in CATEGORIAS_QR if c == categoria),
+        "pelicula": data.get("pelicula") or "Película no especificada",
+        "fecha_hora": _formatear_fecha_hora(data.get("fecha_hora")),
+        "complejo": data.get("complejo") or "",
+        "sala": data.get("sala") or "",
+        "butacas_texto": ", ".join(etiqueta_butaca(n) for n in sorted(data.get("butacas") or [])) or "Sin butacas activas",
+        "compra_cancelada": bool(data.get("compra_cancelada")),
+        "total": actual.get("total", 0),
+        "utilizados": actual.get("utilizados", 0),
+        "pendientes": actual.get("pendientes", 0),
+        "unidades": unidades,
+        "pestanas": [
+            {
+                "clave": clave,
+                "nombre": nombre,
+                "pendientes": (categorias.get(clave) or {}).get("pendientes", 0),
+                "total": (categorias.get(clave) or {}).get("total", 0),
+                "activa": clave == categoria,
+            }
+            for clave, nombre, _ in CATEGORIAS_QR
+        ],
+    }
+
+
+def _consultar_vista_qr(codigo_qr, categoria):
+    status_code, respuesta = consumir_api("GET", f"/compras/qr/{quote(codigo_qr, safe='')}")
+    if status_code != 200:
+        return None, _mensaje_error_api(
+            respuesta, "El código QR presentado no es válido o no existe."
+        )
+    return _vista_qr(respuesta.get("data") or {}, categoria, codigo_qr), None
+
+
+def _estado_qr(vista, aviso, error):
+    rechazo = {"titulo": "Resultado · Acceso rechazado", "aprobada": False,
+               "mensaje_estado": "Rechazada · Sin ingreso"}
+    mensaje = (aviso or {}).get("mensaje") or error
+    if vista is None:
+        if not (aviso or error):
+            return None
+        return {**rechazo, "estado": "Código no reconocido",
+                "detalle": mensaje or "Revisá el identificador y consultá soporte si persiste."}
+    if vista["compra_cancelada"]:
+        return {**rechazo, "estado": "Entrada cancelada",
+                "detalle": "La compra está cancelada. No permitas el ingreso y derivá la consulta a atención."}
+    if aviso and aviso["aprobada"]:
+        if vista["qr_cerrado"]:
+            return {"titulo": "Resultado · QR cerrado", "aprobada": True,
+                    "mensaje_estado": "Acceso registrado",
+                    "estado": "Canje completo · QR cerrado",
+                    "detalle": "Se canjearon todos los servicios del QR. Ya no admite nuevos canjes."}
+        return {"titulo": "Resultado · Canje registrado", "aprobada": True,
+                "mensaje_estado": "Acceso registrado",
+                "estado": f"{vista['categoria_nombre']} canjeado",
+                "detalle": aviso["mensaje"]}
+    if aviso:
+        ya_usado = "ya fue" in mensaje or "ya fueron" in mensaje
+        return {**rechazo,
+                "estado": "Entrada ya utilizada" if vista["categoria"] == "entradas" and ya_usado
+                else ("Servicio ya utilizado" if ya_usado else "Canje no permitido"),
+                "detalle": mensaje}
+    if vista["qr_cerrado"]:
+        return {**rechazo, "titulo": "Resultado · QR cerrado",
+                "mensaje_estado": "Rechazada · QR cerrado",
+                "estado": "QR ya canjeado por completo",
+                "detalle": "Todos los servicios de esta compra ya fueron canjeados. No permitas un segundo ingreso."}
+    return {"titulo": "Resultado · Compra válida", "aprobada": True,
+            "mensaje_estado": "Aprobada · QR único",
+            "estado": f"Pendiente de canje · {vista['categoria_nombre']}",
+            "detalle": "Verificá función, fecha y butacas. Luego canjeá la categoría elegida."}
+
+
 @admin_views.route("/validar-qr", methods=["GET", "POST"])
 def validar_qr():
-    resultado = None
+    vista = None
+    aviso = None
     error = None
+    categoria = request.form.get("categoria", "entradas")
+    if categoria not in CLAVES_CATEGORIAS_QR:
+        categoria = "entradas"
 
     if request.method == "POST":
         accion = request.form.get("accion")
+        codigo_qr = request.form.get("codigo_qr", "").strip()
 
-        # Validar el código QR de una entrada
-        if accion == "validar_qr":
-            codigo_qr = request.form.get("codigo_qr", "").strip()
-
-            if not codigo_qr:
-                error = "Por favor, ingresá un identificador de QR válido."
-            else:
-                status_code, respuesta = consumir_api("POST", "/compras/validar-qr", datos={"codigo_qr": codigo_qr})
-
-                if status_code == 200:
-                    data = respuesta.get("data", {})
-                    servicios = data.get("servicios_adicionales") or []
-                    resultado = {
-                        "titulo": "Resultado · Compra válida",
-                        "aprobada": True,
-                        "mensaje_estado": "Acceso registrado",
-                        "detalle": "La función y la fecha fueron verificadas. Todas las butacas de la compra quedaron marcadas como utilizadas.",
-                        "id_entrada": data.get("id_entrada"),
-                        "codigo_qr": codigo_qr,
-                        "estado": "Ingreso registrado · Entrada utilizada",
-                        "butacas_texto": "Butacas: " + ", ".join(
-                            str(numero) for numero in data.get("butacas", [])
-                        ),
-                        "funcion": {
-                            "pelicula_titulo": data.get("pelicula", "Película no especificada"),
-                            "fecha_hora": data.get("fecha_hora", ""),
-                            "complejo_nombre": data.get("complejo", ""),
-                            "sala_nombre": data.get("sala", ""),
-                            "activa": True,
-                        },
-                        "servicios": [
-                            {
-                                "id": servicio.get("id_detalle"),
-                                "id_detalle": servicio.get("id_detalle"),
-                                "nombre": servicio.get("nombre", "Servicio"),
-                                "detalle": f"Cantidad: {servicio.get('cantidad', 1)}",
-                                "consumido": bool(servicio.get("usado")),
-                                "tipo": "servicio",
-                            }
-                            for servicio in servicios
-                        ],
-                    }
-                else:
-                    resultado = {
-                        "titulo": "Resultado · Acceso rechazado",
-                        "aprobada": False,
-                        "mensaje_estado": "Rechazada · Sin ingreso",
-                        "estado": "Código no válido o ya utilizado",
-                        "detalle": (respuesta.get("error") or {}).get(
-                            "message", "El código QR presentado no es válido o ya fue utilizado."
-                        ),
-                        "servicios": [],
-                    }
-
-        # Validar la entrega de un servicio adicional
-        elif accion == "validar_servicio":
-            id_detalle = request.form.get("id_detalle")
-            status_code, respuesta = consumir_api(
-                "POST", "/compras/validar-servicio", datos={"id_detalle": id_detalle}
-            )
-
+        if not codigo_qr:
+            error = "Por favor, ingresá un identificador de QR válido."
+        elif accion == "canjear":
+            datos = {"codigo_qr": codigo_qr, "categoria": categoria}
+            for campo in ("id_detalle", "id_entrada"):
+                valor = request.form.get(campo, type=int)
+                if valor is not None:
+                    datos[campo] = valor
+            status_code, respuesta = consumir_api("POST", "/compras/validar-qr", datos=datos)
             if status_code == 200:
-                resultado = {
-                    "titulo": "Resultado · Servicio validado",
-                    "aprobada": True,
-                    "mensaje_estado": "Acceso registrado",
-                    "estado": "Servicio utilizado",
-                    "detalle": "El servicio quedó marcado como utilizado y no puede volver a validarse.",
-                    "servicios": [],
-                }
+                vista = _vista_qr(respuesta.get("data") or {}, categoria, codigo_qr)
+                aviso = {"aprobada": True, "mensaje": "Canje registrado correctamente."}
             else:
-                resultado = {
-                    "titulo": "Resultado · Servicio rechazado",
+                aviso = {
                     "aprobada": False,
-                    "mensaje_estado": "Rechazado · Sin entrega",
-                    "estado": "Servicio no validado",
-                    "detalle": (respuesta.get("error") or {}).get(
-                        "message", "No se pudo validar la entrega del servicio."
-                    ),
-                    "servicios": [],
+                    "mensaje": _mensaje_error_api(respuesta, "No se pudo registrar el canje."),
                 }
+                vista, _ = _consultar_vista_qr(codigo_qr, categoria)
+        elif accion == "consultar":
+            vista, error = _consultar_vista_qr(codigo_qr, categoria)
+        else:
+            error = "La acción solicitada no es válida."
 
     return render_template(
         "admin/validar-qr.html",
-        resultado=resultado,
-        validacion=resultado,
+        vista=vista,
+        aviso=aviso,
         error=error,
+        estado=_estado_qr(vista, aviso, error),
+        categorias=CATEGORIAS_QR,
+        categoria=categoria,
         csrf_token=obtener_csrf_token(),
-        historial_entradas=[],
-        historial_servicios=[],
     )
