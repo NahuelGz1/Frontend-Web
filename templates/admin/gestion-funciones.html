@@ -64,23 +64,29 @@
                 <a class="btn {{ 'active' if estado_filtro == 'todos' }}" href="{{ url_for('admin_views.funciones', complejo=filtros.complejo or 'Todos', estado='todos') }}">Todas</a>
                 <a class="btn {{ 'active' if estado_filtro == 'activas' }}" href="{{ url_for('admin_views.funciones', complejo=filtros.complejo or 'Todos', estado='activas') }}">Activas</a>
                 <a class="btn {{ 'active' if estado_filtro == 'inactivas' }}" href="{{ url_for('admin_views.funciones', complejo=filtros.complejo or 'Todos', estado='inactivas') }}">Inactivas</a>
+                <a class="btn {{ 'active' if estado_filtro == 'finalizadas' }}" href="{{ url_for('admin_views.funciones', complejo=filtros.complejo or 'Todos', estado='finalizadas') }}">Finalizadas</a>
             </nav>
         </div>
         {% for funcion in lista_funciones %}
         <article class="function-row" id="funcion-{{ funcion.id }}">
             <div>
-                <p class="text-muted">{{ funcion.entradas_vendidas|default('—') }} vendidas / {{ funcion.capacidad|default('—') }} butacas</p>
+                <p class="text-muted">{{ funcion.entradas_vendidas|default(0) }} vendidas / {{ funcion.capacidad|default('—') }} butacas</p>
                 <h3>{{ funcion.pelicula_titulo }}</h3>
                 <p class="text-muted">{{ funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</p>
                 <p class="text-muted">{{ funcion.complejo_nombre }} · {{ funcion.sala_nombre }}</p>
-                {% if not funcion.pelicula_activa or funcion.pelicula_eliminada %}<p class="help-text">Película inactiva o retirada: la función no está disponible para nuevas ventas.</p>{% endif %}
-                <p class="help-text">Disponible para venta: {{ funcion.venta_desde.strftime('%d/%m/%Y · %H:%M') }} → {{ funcion.venta_hasta.strftime('%d/%m/%Y · %H:%M') }}</p>
+                {% if not funcion.finalizada and (not funcion.pelicula_activa or funcion.pelicula_eliminada) %}<p class="help-text">Película inactiva o retirada: la función no está disponible para nuevas ventas.</p>{% endif %}
+                {% if funcion.estado == 'en_venta' %}<p class="help-text">A la venta hasta el inicio de la función · {{ funcion.butacas_libres|default('—') }} butacas libres.</p>{% endif %}
+                {% if funcion.estado == 'agotada' %}<p class="help-text">Sala llena: no quedan butacas libres para vender.</p>{% endif %}
+                {% if funcion.motivo_bloqueo %}<p class="help-text">{{ funcion.motivo_bloqueo }}</p>{% endif %}
             </div>
             <div>
                 <p class="text-muted">{{ funcion.precio_formateado }} por entrada</p>
                 <div class="function-actions">
-                    <span class="badge {{ 'badge-success' if funcion.activa else 'badge-danger' }}">{{ 'Activa' if funcion.activa else 'Inactiva' }}</span>
+                    <span class="badge {{ funcion.estado_clase }}">{{ funcion.estado_texto }}</span>
+                    {% if funcion.puede_editar %}
                     <a class="btn" href="{{ url_for('admin_views.funciones', editar=funcion.id) }}#workspace-grid">Editar</a>
+                    {% endif %}
+                    {% if funcion.puede_cambiar_estado and (funcion.activa or funcion.puede_activar) %}
                     <form method="post" action="{{ url_for('admin_views.funciones') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="cambiar_estado">
@@ -89,6 +95,8 @@
                         <input type="hidden" name="activo" value="{{ 0 if funcion.activa else 1 }}">
                         <button class="btn" type="submit">{{ 'Desactivar función' if funcion.activa else 'Activar función' }}</button>
                     </form>
+                    {% endif %}
+                    {% if funcion.puede_eliminar %}
                     <form method="post" action="{{ url_for('admin_views.funciones') }}" data-confirm-delete="¿Eliminar esta función?" data-item-name="{{ funcion.pelicula_titulo }}" data-item-kind="función">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="eliminar">
@@ -96,6 +104,7 @@
                         <input type="hidden" name="volver_a" value="funcion-{{ funcion.id }}">
                         <button class="btn btn-delete" type="submit">Eliminar función</button>
                     </form>
+                    {% endif %}
                 </div>
             </div>
             <div class="confirmation-slot" aria-live="polite"></div>

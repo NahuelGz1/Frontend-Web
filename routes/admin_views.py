@@ -376,6 +376,44 @@ def salas():
     ))
 
 
+ESTADOS_FUNCION = {
+    "en_venta": ("En venta", "badge-success"),
+    "agotada": ("Agotada", "badge-danger"),
+    "venta_cerrada": ("Venta cerrada", "badge-danger"),
+    "finalizada": ("Finalizada", ""),
+}
+
+
+def _preparar_estado_funcion(funcion):
+    # el back manda el estado calculado, si no viene se arma con la fecha y el activo
+    estado = funcion.get("estado")
+    if estado not in ESTADOS_FUNCION:
+        if funcion["fecha_hora"] <= datetime.now():
+            estado = "finalizada"
+        else:
+            estado = "en_venta" if funcion["activa"] else "venta_cerrada"
+    funcion["estado"] = estado
+    funcion["estado_texto"], funcion["estado_clase"] = ESTADOS_FUNCION[estado]
+    funcion["finalizada"] = estado == "finalizada"
+
+    vendidas = int(funcion.get("entradas_vendidas") or 0)
+    funcion["entradas_vendidas"] = vendidas
+    funcion["puede_editar"] = not funcion["finalizada"] and vendidas == 0
+    funcion["puede_eliminar"] = funcion["puede_editar"]
+    funcion["puede_cambiar_estado"] = not funcion["finalizada"]
+    funcion["puede_activar"] = funcion["pelicula_activa"] and not funcion["pelicula_eliminada"]
+
+    if funcion["finalizada"]:
+        funcion["motivo_bloqueo"] = "La función ya se proyectó: queda en el historial y no se puede modificar."
+    elif vendidas:
+        funcion["motivo_bloqueo"] = (
+            "Tiene entradas vendidas: no se puede editar ni eliminar. "
+            "Podés desactivarla para cerrar la venta."
+        )
+    else:
+        funcion["motivo_bloqueo"] = None
+
+
 @admin_views.route("/funciones", methods=["GET", "POST"])
 def funciones():
     mensaje = request.args.get("sala_error")
@@ -465,8 +503,8 @@ def funciones():
                 )
                 if status_code == 200 and respuesta.get("ok"):
                     mensaje_estado = (
-                        "La función fue activada correctamente."
-                        if activo else "La función fue dada de baja correctamente."
+                        "La función volvió a estar a la venta."
+                        if activo else "Se cerró la venta de la función. Las entradas vendidas siguen siendo válidas."
                     )
                     mensaje_tipo = "success"
                 else:
@@ -504,8 +542,6 @@ def funciones():
         except ValueError:
             fecha_obj = None
         funcion["fecha_hora"] = fecha_obj or datetime.min
-        funcion["venta_desde"] = funcion["fecha_hora"]
-        funcion["venta_hasta"] = funcion["fecha_hora"]
         funcion["pelicula_titulo"] = funcion.get("pelicula", {}).get("titulo", "")
         funcion["complejo_nombre"] = funcion.get("sala", {}).get("local", "")
         funcion["sala_nombre"] = funcion.get("sala", {}).get("nombre", "")
@@ -513,12 +549,16 @@ def funciones():
         funcion["pelicula_activa"] = bool(funcion.get("pelicula_activa", funcion.get("pelicula", {}).get("activa", True)))
         funcion["pelicula_eliminada"] = bool(funcion.get("pelicula_eliminada", funcion.get("pelicula", {}).get("eliminada", False)))
         funcion["activa"] = bool(funcion.get("activo", True)) and funcion["pelicula_activa"] and not funcion["pelicula_eliminada"]
+        _preparar_estado_funcion(funcion)
 
     if estado_filtro == "activas":
-        funciones = [funcion for funcion in funciones if funcion["activa"]]
+        funciones = [funcion for funcion in funciones if funcion["activa"] and not funcion["finalizada"]]
     elif estado_filtro == "inactivas":
-        funciones = [funcion for funcion in funciones if not funcion["activa"]]
-    funciones.sort(key=lambda funcion: (not funcion["activa"], funcion["fecha_hora"]))
+        funciones = [funcion for funcion in funciones if not funcion["activa"] and not funcion["finalizada"]]
+    elif estado_filtro == "finalizadas":
+        funciones = [funcion for funcion in funciones if funcion["finalizada"]]
+    # primero las proximas (activas antes que inactivas) y al final las que ya pasaron
+    funciones.sort(key=lambda funcion: (funcion["finalizada"], not funcion["activa"], funcion["fecha_hora"]))
 
     salas = (
         respuesta_salas.get("data", [])
@@ -551,6 +591,10 @@ def funciones():
         if funcion_editar is None:
             mensaje_estado = "No se encontró la función seleccionada."
             mensaje_tipo = "error"
+        elif not funcion_editar["puede_editar"]:
+            mensaje_estado = funcion_editar["motivo_bloqueo"]
+            mensaje_tipo = "error"
+            funcion_editar = None
         else:
             fecha_funcion = funcion_editar.get("fecha_hora_proyeccion", "")
             try:
