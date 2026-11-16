@@ -170,8 +170,9 @@
 
                     <div class="list-content">
                         <h3>{{ resultado.titulo }}</h3>
-                        <p class="text-muted">Estreno:{{ resultado.fecha_estreno or 'No informado' }}</p>
-                        <p class="text-muted">Género:{{ resultado.genero or 'No informado' }}</p>
+                        <p class="text-muted">Estreno: {{ resultado.fecha_estreno or 'No informado' }}</p>
+                        <p class="text-muted">Duración: {% if resultado.duracion %}{{ resultado.duracion }} min{% else %}No informado{% endif %}</p>
+                        <p class="text-muted">Género: {{ resultado.genero or 'No informado' }}</p>
                         <p>{{ resultado.sinopsis or 'Sin sinopsis disponible.' }}</p>
                         <p class="help-text">ID de TMDB: {{ resultado.tmdb_id }}.</p>
                         <form method="post" action="{{ url_for('admin_views.peliculas') }}">
@@ -188,7 +189,7 @@
 
                             <div class="form-field">
                                 <label for="duracion-{{ loop.index }}">Duración (minutos)</label>
-                                <input class="form-control" id="duracion-{{ loop.index }}" name="duracion" type="number" min="1" max="999" required>
+                                <input class="form-control" id="duracion-{{ loop.index }}" name="duracion" type="number" min="1" max="999" value="{{ resultado.duracion or '' }}" required>
                             </div>
                             <div class="form-field">
                                 <label for="clasificacion-{{ loop.index }}">Clasificación</label>
