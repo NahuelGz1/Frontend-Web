@@ -1,0 +1,76 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ pelicula.titulo|default('Detalle de película') }} · Cine Paradiso{% endblock %}
+
+{% block content %}
+
+<!-- ruta de navegacion y titulo -->
+<p class="breadcrumb">
+    <a href="{{ url_for('cliente_views.cartelera') }}">Cartelera</a> / Detalle de película y funciones
+</p>
+<h1>{{ pelicula.titulo }}</h1>
+<p class="subtitulo">Elegí el complejo, la fecha y el horario de tu próxima función.</p>
+
+<!-- datos de la pelicula -->
+<section class="detalle-pelicula">
+    {% if pelicula.poster %}
+    <img src="{{ pelicula.poster }}" alt="Afiche de {{ pelicula.titulo }}">
+    {% else %}
+    <div class="poster-placeholder" role="img" aria-label="Afiche no disponible">▧</div>
+    {% endif %}
+
+    <div class="detalle-info">
+        <span class="badge">En cartelera</span>
+        <h2>{{ pelicula.titulo }}</h2>
+        <div class="tags">
+            {% if pelicula.duracion %}<span class="tag">{{ pelicula.duracion }} min</span>{% endif %}
+            {% if pelicula.clasificacion %}<span class="tag">{{ pelicula.clasificacion }}</span>{% endif %}
+            {% if pelicula.genero %}<span class="tag">{{ pelicula.genero }}</span>{% endif %}
+        </div>
+        <p class="detalle-genero">{{ pelicula.genero|default('Cine') }}</p>
+        <h3>Sinopsis</h3>
+        <p class="detalle-sinopsis">
+            {{ pelicula.sinopsis|default('Sin sinopsis disponible.') }}
+        </p>
+    </div>
+</section>
+
+<!-- selector de funcion -->
+<section class="card selector-funcion">
+    <h2>Elegí tu función</h2>
+
+    {% if pelicula.funciones and pelicula.funciones|length > 0 %}
+    <!-- contenedor de tarjetas de funciones dinámicas -->
+    <!-- la primera funcion con lugar queda marcada, las agotadas no se pueden elegir -->
+    {% set primera = pelicula.funciones|rejectattr('agotada')|first %}
+    <div id="funciones-contenedor">
+        {% for funcion in pelicula.funciones %}
+        {% set es_primera = primera and funcion.id == primera.id %}
+        <article class="funcion-card {% if es_primera %}seleccionada{% endif %}" data-complejo="{{ funcion.local }}" data-fecha="{{ funcion.fecha_hora_proyeccion }}">
+            {% if funcion.agotada %}
+            <span class="badge">Agotada</span>
+            {% elif es_primera %}
+            <span class="badge" data-badge>Seleccionada</span>
+            {% endif %}
+            <h3>{{ funcion.fecha_hora_proyeccion }}</h3>
+            <p>{{ funcion.local }} · {{ funcion.sala }} · {{ funcion.capacidad }} butacas</p>
+            {% if funcion.agotada %}
+            <button class="btn-secondary" type="button" disabled>Sala agotada</button>
+            {% else %}
+            <a href="{{ url_for('cliente_views.elegir_butacas', funcion_id=funcion.id) }}" class="{% if es_primera %}btn-primary{% else %}btn-secondary{% endif %}" data-btn-accion>
+                {% if es_primera %}Elegir butacas{% else %}Seleccionar función{% endif %}
+            </a>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="nota">No hay funciones disponibles cargadas para esta película por el momento.</p>
+    {% endif %}
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cartelera.js') }}"></script>
+{% endblock %}

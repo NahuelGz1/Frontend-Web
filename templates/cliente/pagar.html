@@ -1,0 +1,102 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Pagar · Cine Paradiso{% endblock %}
+
+{% block header_nav %}{% endblock %}
+
+{% block content %}
+{% set datos_funcion = funcion|default({}) %}
+{% set pelicula = datos_funcion.pelicula|default({}) %}
+{% set datos_resumen = resumen|default({}) %}
+{% set entradas = cantidad_entradas|default(datos_resumen.cantidad_entradas|default(2)) %}
+{% set servicios = servicios_seleccionados|default([]) %}
+{% set total = total_compra|default('32.500') %}
+
+<div class="payment-page">
+    <a class="payment-back-link" href="{{ url_for('cliente_views.servicios') }}">
+        <span aria-hidden="true">←</span> Volver
+    </a>
+    <h1>Pagar</h1>
+
+    <div class="payment-layout">
+        <form class="payment-form" method="POST" action="{{ request.path }}">
+            {% if csrf_token is defined %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% endif %}
+
+            <section class="payment-card" aria-labelledby="contact-title">
+                <h2 id="contact-title">Datos de contacto</h2>
+                <label for="payment-email">Email</label>
+                <input id="payment-email" type="email" name="email" value="{{ email_usuario|default('') }}" autocomplete="email" required>
+                <p class="payment-help">Usaremos este email para los datos de contacto de la compra.</p>
+            </section>
+
+            <section class="payment-card" aria-labelledby="confirm-title">
+                <h2 id="confirm-title">Confirmar compra</h2>
+                <p class="payment-legal">
+                    Al confirmar la compra, aceptás nuestros
+                    <a href="#">Términos y condiciones</a> y la
+                    <a href="#">Política de privacidad</a>.
+                </p>
+                <button class="payment-submit" type="submit">
+                    Confirmar compra · ${{ total }} ARS
+                </button>
+            </section>
+        </form>
+
+        <aside class="payment-summary" aria-labelledby="summary-title">
+            <h2 id="summary-title">Resumen de compra</h2>
+            <div class="payment-movie">
+                {% if pelicula.poster_url|default('') %}
+                <img src="{{ pelicula.poster_url }}" alt="Póster de {{ pelicula.titulo }}">
+                {% else %}
+                <div class="payment-poster-placeholder" aria-hidden="true">▧</div>
+                {% endif %}
+                <div>
+                    <h3>{{ pelicula.titulo|default('Volver al Futuro') }}</h3>
+                    <p>{{ datos_funcion.fecha|default('Viernes, 30 de octubre de 2026') }}</p>
+                    <p>{{ datos_funcion.horario|default('19:30') }} ·
+                        {{ datos_funcion.complejo|default('Paradiso Centro') }} ·
+                        {{ datos_funcion.sala|default('Sala 1') }}</p>
+                    <p>{{ datos_funcion.butacas|default('Fila D · Butacas 5 y 6') }}</p>
+                </div>
+            </div>
+
+            <dl class="payment-breakdown">
+                <div>
+                    <dt>{{ entradas }} entradas</dt>
+                    <dd>{{ subtotal_entradas|default(datos_resumen.subtotal_entradas|default('$20.000')) }}</dd>
+                </div>
+                <div class="payment-unit-price">
+                    <dt>{{ precio_entrada|default('$10.000') }} por entrada</dt>
+                </div>
+            </dl>
+
+            {% if servicios %}
+            <section class="payment-services" aria-labelledby="payment-services-title">
+                <h3 id="payment-services-title">Servicios</h3>
+                <dl class="payment-breakdown">
+                    {% for servicio in servicios %}
+                    <div>
+                        <dt>{{ servicio.nombre }}</dt>
+                        <dd>{{ servicio.subtotal|default(servicio.precio_total) }}</dd>
+                    </div>
+                    {% endfor %}
+                    <div>
+                        <dt>Subtotal servicios</dt>
+                        <dd>{{ subtotal_servicios|default(datos_resumen.subtotal_servicios|default('$12.500')) }}</dd>
+                    </div>
+                </dl>
+            </section>
+            {% endif %}
+
+            <div class="payment-total">
+                <span>Total</span>
+                <strong>${{ total }} ARS</strong>
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}{% endblock %}

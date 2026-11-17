@@ -1,0 +1,225 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Mi Perfil · Cine Paradiso{% endblock %}
+
+{% block content %}
+{% set usuario = current_user if current_user is defined and current_user and current_user.is_authenticated else none %}
+{% set usr_nombre = usuario.nombre if usuario else '' %}
+{% set usr_apellido = usuario.apellido|default('', true) if usuario else '' %}
+{% set usr_email = usuario.email if usuario else '' %}
+{% set usr_telefono = usuario.telefono|default('No informado', true) if usuario else 'No informado' %}
+{% set usr_fecha_nac = usuario.fecha_nacimiento|default('No informada', true) if usuario else 'No informada' %}
+{% set usr_complejo = usuario.complejo_favorito|default('No informado', true) if usuario else 'No informado' %}
+{% set usr_registro = usuario.fecha_registro|default('', true) if usuario else '' %}
+
+{% set proximas = entradas_proximas|default([]) %}
+{% set vistas = peliculas_vistas|default([]) %}
+{% set candy = consumos_candy|default([]) %}
+{% set candy_total = consumos_candy_total|default('0', true) %}
+
+<div class="profile-page">
+    <header class="profile-heading">
+        <p class="profile-kicker">TU CUENTA PARADISO</p>
+        <h1>Mi perfil</h1>
+        <p>
+            Hola, {{ usr_nombre }}. Tus entradas, películas y consumos, en un solo lugar.
+        </p>
+    </header>
+
+    <div class="profile-layout">
+        <aside class="profile-sidebar">
+            <section class="profile-user-card">
+                <div class="profile-user-heading">
+                    <div class="profile-avatar" aria-hidden="true">
+                        {{ usr_nombre[:1]|upper }}{{ usr_apellido[:1]|upper }}
+                    </div>
+                    <div>
+                        <h2>{{ usr_nombre }} {{ usr_apellido }}</h2>
+                        {% if usr_registro %}<p>Miembro desde {{ usr_registro }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div class="profile-divider"></div>
+                <h3>Datos de cuenta</h3>
+                <dl class="profile-details">
+                    <div>
+                        <dt>Correo electrónico</dt>
+                        <dd>{{ usr_email }}</dd>
+                    </div>
+                    <div>
+                        <dt>Teléfono</dt>
+                        <dd>{{ usr_telefono }}</dd>
+                    </div>
+                    <div>
+                        <dt>Fecha de nacimiento</dt>
+                        <dd>{{ usr_fecha_nac }}</dd>
+                    </div>
+                    <div>
+                        <dt>Complejo favorito</dt>
+                        <dd>{{ usr_complejo }}</dd>
+                    </div>
+                </dl>
+                <a class="profile-secondary-button" href="#editar-perfil" data-open-profile-modal>Editar datos</a>
+            </section>
+
+            <section class="profile-security-card">
+                <h2>Seguridad</h2>
+                <p>▣ Cuidá tu cuenta y mantené tus datos actualizados.</p>
+                <a class="profile-secondary-button" href="{{ url_for('auth_views.cambiar_contrasena') }}">Cambiar contraseña</a>
+                <a class="profile-logout-link" href="{{ url_for('auth_views.cerrar_sesion') }}">⇥ Cerrar sesión</a>
+            </section>
+        </aside>
+
+        <div class="profile-content">
+            <section class="profile-section">
+                <div class="profile-section-heading">
+                    <h2>Próximas entradas</h2>
+                </div>
+
+                {% if proximas %}
+                {% for entrada in proximas %}
+                <article class="upcoming-ticket">
+                    <div class="upcoming-ticket-heading">
+                        <h3>{{ entrada.pelicula.titulo }}</h3>
+                        <span class="profile-status profile-status-confirmed">Confirmada</span>
+                    </div>
+                    <div class="upcoming-ticket-main">
+                        {% if entrada.pelicula.poster_url %}
+                        <img class="upcoming-poster" src="{{ entrada.pelicula.poster_url }}" alt="Póster de {{ entrada.pelicula.titulo }}">
+                        {% else %}
+                        <div class="upcoming-poster profile-poster-placeholder" aria-hidden="true">▧</div>
+                        {% endif %}
+                        <div class="upcoming-ticket-details">
+                            <p>{{ entrada.fecha }} · {{ entrada.horario }}</p>
+                            <p>{{ entrada.complejo }} · {{ entrada.sala }}</p>
+                            <p>Butacas: {{ entrada.butacas }}</p>
+                        </div>
+                    </div>
+                    <div class="ticket-summary">
+                        <p>{{ entrada.cantidad_entradas }} entradas · {{ entrada.subtotal_entradas }} ARS</p>
+                        {% if entrada.servicios %}
+                        <div class="ticket-services">
+                            {% for servicio in entrada.servicios %}
+                            <p>{{ servicio.cantidad }} × {{ servicio.nombre }} · {{ '%.2f'|format(servicio.precio|float) }} ARS</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <p>Comida y servicios · {{ entrada.subtotal_servicios }} ARS</p>
+                        <p class="ticket-total">Total {{ entrada.total }} ARS</p>
+                        <p>Operación {{ entrada.codigo_operacion }}</p>
+                    </div>
+                    <div class="ticket-actions">
+                        <a class="profile-primary-button" href="{{ url_for('cliente_views.descargar_entradas', compra_id=entrada.id_compra) }}">⇩ Ver y descargar entradas</a>
+                        <a class="profile-secondary-button" href="{{ url_for('cliente_views.descargar_factura', compra_id=entrada.id_compra) }}">⇩ Descargar factura</a>
+                        <a class="profile-secondary-button profile-cancel-button" href="{{ url_for('cliente_views.cancelar_compra', compra_id=entrada.id_compra) }}">⇥ Cancelar compra</a>
+                    </div>
+                </article>
+                {% endfor %}
+                {% else %}
+                <div class="empty-state">
+                    <p>No tenés entradas activas para próximas funciones.</p>
+                    <a class="profile-primary-button" href="{{ url_for('cliente_views.cartelera') }}">
+                        Ver cartelera
+                    </a>
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="profile-section">
+                <div class="profile-section-heading">
+                    <h2>Películas vistas</h2>
+                    <p>Historial de entradas - Funciones anteriores</p>
+                </div>
+                <div class="watched-list">
+                    {% for pelicula in vistas %}
+                    <article class="watched-item">
+                        <span class="profile-ticket-icon" aria-hidden="true">▣</span>
+                        <div class="watched-details">
+                            <h3>{{ pelicula.titulo }}</h3>
+                            <p>{{ pelicula.fecha }} · {{ pelicula.horario }}</p>
+                            <p>{{ pelicula.sala }} · {{ pelicula.cantidad_entradas }} entradas · {{ pelicula.total }} ARS</p>
+                            <small>Op. {{ pelicula.codigo_operacion }}</small>
+                        </div>
+                        <span class="profile-status profile-status-used">Utilizada</span>
+                    </article>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>Todavía no tenés películas vistas en tu historial.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="profile-section">
+                <div class="profile-section-heading">
+                    <h2>Consumos del candy bar</h2>
+                    {% if candy %}
+                    <p>{{ candy[0].fecha }} · Pedido {{ candy[0].codigo_pedido }}</p>
+                    {% endif %}
+                </div>
+                {% if candy %}
+                <div class="candy-list">
+                    {% for consumo in candy %}
+                    <article class="candy-item">
+                        {% if consumo.imagen_url %}
+                        <img src="{{ consumo.imagen_url }}" alt="">
+                        {% else %}
+                        <span class="candy-icon" aria-hidden="true">◉</span>
+                        {% endif %}
+                        <div>
+                            <h3>{{ consumo.nombre }}</h3>
+                            <p>{{ consumo.cantidad }} x {{ consumo.precio_unitario }} ARS</p>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+                <div class="candy-total">
+                    <span>Total de consumos</span>
+                    <strong>{{ candy_total }} ARS</strong>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p>No tenés consumos registrados en el candy bar.</p>
+                </div>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+</div>
+
+<div class="profile-modal" id="editar-perfil" data-profile-modal hidden>
+    <div class="profile-modal-backdrop" data-close-profile-modal></div>
+    <section class="profile-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="editar-perfil-titulo">
+        <button class="profile-modal-close" type="button" aria-label="Cerrar" data-close-profile-modal>×</button>
+        <p class="login-kicker">TU CUENTA PARADISO</p>
+        <h2 id="editar-perfil-titulo">Editar datos</h2>
+        <p class="login-description">
+            Completá solo los datos que quieras actualizar. Si modificás tu nombre, ingresá nombre y apellido.
+        </p>
+
+        <form class="login-form" method="post" action="{{ url_for('cliente_views.mi_perfil') }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <p class="flash-alert error" data-profile-modal-error style="display: none;"></p>
+
+            <label for="perfil-nombre">Nombre</label>
+            <input id="perfil-nombre" name="nombre" type="text" placeholder="Ingresá tu nuevo nombre" maxlength="50">
+
+            <label for="perfil-apellido">Apellido</label>
+            <input id="perfil-apellido" name="apellido" type="text" placeholder="Ingresá tu nuevo apellido" maxlength="50">
+
+            <label for="perfil-email">Correo electrónico</label>
+            <input id="perfil-email" name="email" type="email" placeholder="Ingresá tu nuevo correo electrónico" maxlength="100">
+
+            <div class="profile-modal-actions">
+                <a class="btn-secondary" href="#" data-close-profile-modal>Cancelar</a>
+                <button class="btn-primary" type="submit">Guardar cambios</button>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/mi-perfil.js') }}"></script>
+{% endblock %}

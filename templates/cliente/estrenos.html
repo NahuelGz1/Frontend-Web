@@ -1,0 +1,45 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Próximos Estrenos · Cine Paradiso{% endblock %}
+
+{% block content %}
+{% set peliculas_estrenos = peliculas|default([], true) %}
+
+{% macro poster_image(movie, title) %}
+{% set image_url = movie.poster_url|default('', true) %}
+{% if not image_url and movie.poster_path is defined and movie.poster_path %}
+{% set image_url = 'https://image.tmdb.org/t/p/w500' ~ movie.poster_path %}
+{% elif image_url and image_url[:1] == '/' %}
+{% set image_url = 'https://image.tmdb.org/t/p/w500' ~ image_url %}
+{% endif %}
+{% if image_url %}
+<img src="{{ image_url }}" alt="Afiche de {{ title }}" loading="lazy">
+{% else %}
+<div class="poster-placeholder" role="img" aria-label="Afiche no disponible">▧</div>
+{% endif %}
+{% endmacro %}
+
+<div class="cartelera-page">
+    <div class="section-head">
+        <h1>Próximos Estrenos</h1>
+        <p class="cartelera-fechas">Próximamente en nuestras salas</p>
+    </div>
+
+    <section class="cartelera-grid" aria-label="Próximos estrenos">
+        {% if peliculas_estrenos %}
+        {% for pelicula in peliculas_estrenos %}
+        {% set titulo = pelicula.titulo|default(pelicula.title|default('Película', true), true) %}
+        {% set fecha = pelicula.fecha_estreno|default(pelicula.release_date|default('Próximamente', true), true) %}
+        <article class="poster-card">
+            {{ poster_image(pelicula, titulo) }}
+            <h3>{{ titulo }}</h3>
+            {% if fecha %}<p class="date">Estreno: {{ fecha }}</p>{% endif %}
+            <button class="btn-secondary btn-block" disabled>Próximamente</button>
+        </article>
+        {% endfor %}
+        {% else %}
+        <p class="text-muted">No se pudieron cargar los próximos estrenos en este momento.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

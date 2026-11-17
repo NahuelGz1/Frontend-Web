@@ -1,0 +1,99 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Cancelar compra · Cine Paradiso{% endblock %}
+
+{% block content %}
+{% set funcion_mostrada = funcion|default({}, true) %}
+{% set poster = funcion_mostrada.pelicula.poster_url|default('', true) %}
+{% set entradas = reserva.entradas|default([], true) %}
+{% set codigo = reserva.codigo|default('CP-' ~ reserva.id, true) %}
+{% set titulo = funcion_mostrada.pelicula.titulo|default('Tu función', true) %}
+{% set butacas = entradas|map(attribute='numero_butaca')|join(', ') %}
+{% set subtotal_entradas = resumen.subtotal_entradas|default(0, true)|float %}
+{% set subtotal_servicios = resumen.subtotal_servicios|default(0, true)|float %}
+{% set estado_actual = estado|default('pendiente', true) %}
+
+<section class="cancelacion-page" aria-labelledby="cancelacion-titulo">
+    <header class="cancelacion-heading">
+        <nav class="cancelacion-breadcrumb" aria-label="Migas de pan">
+            <a href="{{ url_for('cliente_views.cartelera') }}">Cartelera</a>
+            <span aria-hidden="true">/</span>
+            <span>Cancelar compra</span>
+        </nav>
+        <h1 id="cancelacion-titulo">
+            {% if estado_actual == 'cancelada' %}Compra cancelada
+            {% elif estado_actual == 'vencida' %}Plazo de cancelación vencido
+            {% else %}Cancelar compra{% endif %}
+        </h1>
+        {% if estado_actual == 'pendiente' %}
+        <p>Revisá tu operación antes de confirmar. La cancelación alcanza las entradas y los servicios de esta compra.</p>
+        {% endif %}
+    </header>
+
+    <article class="cancelacion-resumen" aria-labelledby="compra-titulo">
+        <h2 id="compra-titulo">Compra {{ codigo }}</h2>
+        <div class="cancelacion-funcion">
+            {% if poster %}
+            <img class="cancelacion-poster" src="{{ poster }}" alt="Afiche de {{ titulo }}" width="72" height="96">
+            {% else %}
+            <div class="cancelacion-poster cancelacion-poster--placeholder" aria-label="Afiche no disponible">▧</div>
+            {% endif %}
+            <div class="cancelacion-funcion-datos">
+                <h3>{{ titulo }}</h3>
+                <p>{{ funcion_mostrada.fecha_hora_proyeccion|default('Fecha no disponible', true) }}</p>
+                <p>{{ funcion_mostrada.sala.local|default('', true) }} · {{ funcion_mostrada.sala.nombre|default('', true) }}</p>
+                <p>Butacas: {{ butacas }}</p>
+            </div>
+        </div>
+        <dl class="cancelacion-importes">
+            <div><dt>{{ entradas|length }} entrada(s)</dt><dd>${{ '%.2f'|format(subtotal_entradas) }}</dd></div>
+            {% for servicio in resumen.servicios|default([], true) %}
+            <div><dt>{{ servicio.cantidad }} × {{ servicio.nombre }}</dt><dd>${{ '%.2f'|format((servicio.precio|float) * (servicio.cantidad|int)) }}</dd></div>
+            {% endfor %}
+            <div><dt>Subtotal servicios</dt><dd>${{ '%.2f'|format(subtotal_servicios) }}</dd></div>
+        </dl>
+        <div class="cancelacion-total">
+            <strong>Total</strong>
+            <strong>${{ '%.2f'|format(subtotal_entradas + subtotal_servicios) }} ARS</strong>
+        </div>
+    </article>
+
+    {% if estado_actual == 'pendiente' %}
+    <article class="cancelacion-estado cancelacion-estado--pendiente">
+        <span class="cancelacion-badge">Pendiente de tu confirmación</span>
+        <h2>¿Querés cancelar esta compra?</h2>
+        <div class="cancelacion-estado-detalle">
+            <p>Se cancelarían las entradas {{ butacas }} y los servicios de esta compra. Los QR quedarían invalidados y las butacas se liberarían.</p>
+            <p>No podrás usar estas entradas después de cancelar.</p>
+        </div>
+        <div class="cancelacion-acciones">
+            <a class="cancelacion-btn cancelacion-btn--secondary" href="{{ url_for('cliente_views.mi_perfil') }}">Conservar compra</a>
+            <form method="post" action="{{ url_for('cliente_views.cancelar_reserva', reserva_id=reserva.id) }}">
+                {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token }}">{% endif %}
+                <button class="cancelacion-btn cancelacion-btn--danger" type="submit">Sí, cancelar compra</button>
+            </form>
+        </div>
+    </article>
+    {% elif estado_actual == 'cancelada' %}
+    <article class="cancelacion-estado">
+        <span class="cancelacion-badge">Compra cancelada</span>
+        <h2>Tu compra fue cancelada</h2>
+        <div class="cancelacion-estado-detalle">
+            <p>Las butacas {{ butacas }} fueron liberadas y los códigos QR quedaron invalidados.</p>
+        </div>
+        <a class="cancelacion-btn cancelacion-btn--secondary" href="{{ url_for('cliente_views.mi_perfil') }}">Volver a mis compras</a>
+    </article>
+    {% elif estado_actual == 'vencida' %}
+    <article class="cancelacion-estado">
+        <span class="cancelacion-badge">Cancelación no disponible</span>
+        <h2>Ya no podés cancelar esta compra</h2>
+        <div class="cancelacion-estado-detalle">
+            <p>Se superó el límite de cancelación previo a la función. La operación no fue modificada.</p>
+        </div>
+        <a class="cancelacion-btn cancelacion-btn--secondary" href="{{ url_for('cliente_views.mi_perfil') }}">Conservar compra</a>
+    </article>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}{% endblock %}

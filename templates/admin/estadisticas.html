@@ -1,0 +1,261 @@
+{% extends "layouts/base-admin.html" %}
+
+{% block title %}Estadísticas detalladas · Cine Paradiso{% endblock %}
+{% block breadcrumb %}Estadísticas{% endblock %}
+
+{% block content %}
+{% set metricas = resumen|default({}) %}
+{% set funciones_por_ocupacion = ocupacion_funciones|default([]) %}
+{% set peliculas_por_ocupacion = ocupacion_peliculas|default([]) %}
+{% set ventas_por_genero = ventas_genero|default([]) %}
+{% set ventas_por_franja = ventas_franjas|default([]) %}
+{% set lista_cancelaciones = cancelaciones|default([]) %}
+<section class="stats-page" aria-labelledby="stats-title">
+    <header class="page-header">
+        <div>
+            <h1 id="stats-title">Estadísticas detalladas</h1>
+            <p>Detalle de ocupación, ventas y cancelaciones de las funciones seleccionadas.</p>
+        </div>
+    </header>
+
+    <form class="stats-filters" method="get" action="{{ url_for('admin_views.estadisticas') }}" aria-label="Filtros de estadísticas">
+        <div class="form-field">
+            <label for="stats-period">Período de funciones</label>
+            <select class="form-control" id="stats-period" name="periodo" onchange="this.form.submit()">
+                <option value="">Todos los períodos</option>
+                {% if filtros.periodo|default('') and filtros.periodo not in periodos|map(attribute='valor')|list %}
+                <option value="{{ filtros.periodo }}" selected>{{ filtros.periodo }}</option>
+                {% endif %}
+                {% for periodo in periodos|default([]) %}
+                <option value="{{ periodo.valor }}" {% if filtros.periodo|default('') == periodo.valor|string %}selected{% endif %}>{{ periodo.etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="stats-complex">Complejo</label>
+            <select class="form-control" id="stats-complex" name="complejo" onchange="this.form.submit()">
+                <option value="">Todos los complejos</option>
+                {% for complejo in complejos|default([]) %}
+                <option value="{{ complejo.id }}" {% if filtros.complejo|default('') == complejo.id|string %}selected{% endif %}>{{ complejo.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    <section class="stats-summary" aria-label="Resumen del período">
+        <article class="panel stats-card">
+            <p>Entradas vendidas netas</p>
+            <strong>{{ metricas.entradas_netas|default('—') }}</strong>
+            <small>{{ metricas.entradas_emitidas|default('—') }} emitidas − {{ metricas.entradas_canceladas|default('—') }} canceladas</small>
+        </article>
+        <article class="panel stats-card">
+            <p>Ocupación ponderada</p>
+            <strong>{{ metricas.ocupacion_porcentaje|default('—') }}{% if metricas.ocupacion_porcentaje is defined %}%{% endif %}</strong>
+            <small>{{ metricas.entradas_netas|default('—') }} entradas / {{ metricas.capacidad_total|default('—') }} butacas</small>
+        </article>
+        <article class="panel stats-card">
+            <p>Ingresos por entradas</p>
+            <strong>{{ metricas.ingresos_entradas|default('—') }}</strong>
+            <small>ARS · Sin servicios</small>
+        </article>
+        <article class="panel stats-card">
+            <p>Ingresos por servicios</p>
+            <strong>{{ metricas.ingresos_servicios|default('—') }}</strong>
+            {% if metricas.desglose_servicios is defined %}
+            <small>Candy Bar: {{ metricas.desglose_servicios.candy_bar.ingresos }} · {{ metricas.desglose_servicios.candy_bar.porcentaje }}%<br>
+                Mejoras de experiencia: {{ metricas.desglose_servicios.mejoras_experiencia.ingresos }} · {{ metricas.desglose_servicios.mejoras_experiencia.porcentaje }}%
+                {% if metricas.desglose_servicios.otras_categorias.unidades %}<br>Otras categorías: {{ metricas.desglose_servicios.otras_categorias.ingresos }} · {{ metricas.desglose_servicios.otras_categorias.porcentaje }}%{% endif %}
+            </small>
+            {% endif %}
+        </article>
+        <article class="panel stats-card">
+            <p>Entradas canceladas</p>
+            <strong>{{ metricas.entradas_canceladas|default('—') }} · {{ metricas.tasa_cancelacion|default('—') }}{% if metricas.tasa_cancelacion is defined %}%{% endif %}</strong>
+            <small>{{ metricas.entradas_canceladas|default('—') }} canceladas / {{ metricas.entradas_emitidas|default('—') }} emitidas</small>
+        </article>
+    </section>
+
+    <section class="panel stats-section" aria-labelledby="occupancy-title">
+        <h2 id="occupancy-title">Ocupación por función</h2>
+        <p class="help-text">Cada fila corresponde a una fecha y hora completas.</p>
+        <div class="stats-show-list">
+            {% for funcion in funciones_por_ocupacion %}
+            <article class="stats-show-row">
+                <div class="stats-show-name">
+                    <h3>{{ funcion.pelicula_titulo }}</h3>
+                    <p>{{ funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') if funcion.fecha_hora is defined and funcion.fecha_hora.strftime else funcion.fecha_hora }}</p>
+                    <p>{{ funcion.complejo_nombre }} · {{ funcion.sala_nombre }}</p>
+                </div>
+                <div class="stats-show-occupancy">
+                    <p>Vendidas netas / capacidad</p>
+                    <strong>{{ funcion.entradas_netas }} / {{ funcion.capacidad }} · {{ funcion.ocupacion_porcentaje }}%</strong>
+                    <div class="stats-progress" role="img" aria-label="Ocupación: {{ funcion.ocupacion_porcentaje }} por ciento"><span style="--progress:{{ funcion.ocupacion_porcentaje }}%"></span></div>
+                </div>
+                <div class="stats-show-total">
+                    <p>{{ funcion.entradas_emitidas }} emitidas · {{ funcion.entradas_canceladas }} canceladas</p>
+                    <strong>{{ funcion.ingresos_formateados }}</strong>
+                </div>
+            </article>
+            {% else %}
+            <p class="text-muted">No hay funciones para mostrar en este período.</p>
+            {% endfor %}
+        </div>
+        <div class="stats-total">
+            <strong>Total neto / capacidad</strong>
+            <strong>{{ metricas.entradas_netas|default('—') }} / {{ metricas.capacidad_total|default('—') }} · {{ metricas.ocupacion_porcentaje|default('—') }}{% if metricas.ocupacion_porcentaje is defined %}%{% endif %}</strong>
+        </div>
+    </section>
+
+    <section class="panel stats-section" aria-labelledby="movie-occupancy-title">
+        <h2 id="movie-occupancy-title">Ocupación por película</h2>
+        <p class="help-text">Capacidad acumulada de sus funciones. Ocupación = entradas netas / butacas disponibles. Los servicios se cuentan por compra con al menos una entrada activa.</p>
+        <div class="stats-movie-rings" aria-label="Ocupación por película">
+            {% for pelicula in peliculas_por_ocupacion %}
+            <div class="stats-movie-ring">
+                <div class="stats-ring {{ ['stats-ring-red', 'stats-ring-amber', 'stats-ring-purple'][(loop.index0 % 3)] }}" style="--progress:{{ pelicula.ocupacion_porcentaje }}%"><span>{{ pelicula.ocupacion_porcentaje }}%</span></div>
+                <small>{{ pelicula.titulo }}</small>
+            </div>
+            {% else %}
+            <p class="text-muted">No hay datos de ocupación por película.</p>
+            {% endfor %}
+        </div>
+        <div class="stats-movie-list">
+            {% for pelicula in peliculas_por_ocupacion %}
+            <article>
+                <div>
+                    <h3>{{ pelicula.titulo }}</h3>
+                    <p>{{ pelicula.cantidad_funciones }} funciones · {{ pelicula.entradas_netas }} / {{ pelicula.capacidad }} · {{ pelicula.ocupacion_porcentaje }}%</p>
+                    <small>Entradas: {{ pelicula.ingresos_formateados }}</small>
+                </div>
+                <div class="stats-movie-services">
+                    {% if pelicula.servicios_formateados != '$ 0' %}
+                    <div class="stats-movie-services-header">
+                        <strong>Servicios: {{ pelicula.servicios_formateados }}</strong>
+                        <span class="stats-movie-services-badge">{{ pelicula.tasa_servicios }}% con extras</span>
+                    </div>
+                    <p class="stats-movie-services-line">
+                        <b>Candy Bar:</b> {{ pelicula.desglose_servicios.candy_bar.ingresos }} · {{ pelicula.desglose_servicios.candy_bar.unidades }} u.
+                        <span>{% if pelicula.candy_mas_vendido %}Más vendido: {{ pelicula.candy_mas_vendido.nombre }} ({{ pelicula.candy_mas_vendido.cantidad }}){% else %}Sin ventas de Candy Bar{% endif %}</span>
+                    </p>
+                    {% if pelicula.mejoras_vendidas or pelicula.desglose_servicios.otras_categorias.unidades %}
+                    <p class="stats-movie-services-line">
+                        {% if pelicula.mejoras_vendidas %}
+                        <b>Mejoras:</b> {{ pelicula.desglose_servicios.mejoras_experiencia.ingresos }} · {{ pelicula.desglose_servicios.mejoras_experiencia.unidades }} u.
+                        <span>{% for mejora in pelicula.mejoras_vendidas %}{{ mejora.nombre }} ({{ mejora.cantidad }}){% if not loop.last %}, {% endif %}{% endfor %}</span>
+                        {% endif %}
+                        {% if pelicula.desglose_servicios.otras_categorias.unidades %}
+                        <span>Otras categorías: {{ pelicula.desglose_servicios.otras_categorias.ingresos }} · {{ pelicula.desglose_servicios.otras_categorias.unidades }} u.</span>
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                    {% else %}
+                    <p class="stats-movie-services-empty">Servicios: {{ pelicula.servicios_formateados }}</p>
+                    <p class="stats-movie-services-empty">Sin servicios vendidos</p>
+                    {% endif %}
+                </div>
+                <div class="stats-movie-total">
+                    <strong>Total real: {{ pelicula.total_combinado_formateado }}</strong>
+                    <p>{{ pelicula.promedio_entrada_formateado }} / entrada</p>
+                </div>
+            </article>
+            {% else %}
+            <p class="text-muted">No hay películas para mostrar.</p>
+            {% endfor %}
+        </div>
+        <p class="stats-footnote">Total: {{ metricas.entradas_netas|default('—') }} / {{ metricas.capacidad_total|default('—') }} · {{ metricas.ocupacion_porcentaje|default('—') }}{% if metricas.ocupacion_porcentaje is defined %}%{% endif %} · {{ metricas.ingresos_entradas|default('—') }}</p>
+    </section>
+
+    <div class="stats-chart-grid">
+        <section class="panel stats-section" aria-labelledby="genre-title">
+            <h2 id="genre-title">Ventas por género</h2>
+            <p class="help-text">Entradas netas · Total: {{ metricas.entradas_netas|default('—') }}</p>
+            {% if ventas_por_genero %}
+            {% set ns = namespace(position=0, segments=[]) %}
+            {% set chart_colors = ['#b85e64', '#d3a166', '#9992b5'] %}
+            {% for genero in ventas_por_genero %}
+            {% set end = ns.position + genero.porcentaje %}
+            {% set color = chart_colors[(loop.index0 % 3)] %}
+            {% set ns.segments = ns.segments + [color ~ ' ' ~ ns.position ~ '% ' ~ end ~ '%'] %}
+            {% set ns.position = end %}
+            {% endfor %}
+            <div class="stats-donut-wrap">
+                <div class="stats-donut" role="img" aria-label="Distribución de {{ metricas.entradas_netas }} entradas por género" style="background: conic-gradient({{ ns.segments|join(', ') }})">
+                    <div><strong>{{ metricas.entradas_netas|default('—') }}</strong><small>entradas netas</small></div>
+                </div>
+                <small class="stats-chart-caption">{{ ventas_por_genero|length }} géneros · Distribución de entradas</small>
+            </div>
+            <div class="stats-legend">
+                {% for genero in ventas_por_genero %}
+                <div class="stats-legend-row {{ ['stats-red', 'stats-amber', 'stats-purple'][(loop.index0 % 3)] }}">
+                    <div><strong>{{ genero.nombre }}</strong><small>{{ genero.porcentaje }}% · {{ genero.ingresos_formateados }}</small></div><b>{{ genero.entradas_netas }}</b>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No hay ventas por género para mostrar.</p>
+            {% endif %}
+            <div class="stats-total"><span>Total</span><strong>{{ metricas.entradas_netas|default('—') }}{% if metricas.entradas_netas is defined %} · 100%{% endif %}</strong></div>
+            <p class="stats-footnote">Ingresos: {{ metricas.ingresos_entradas|default('—') }}</p>
+        </section>
+
+        <section class="panel stats-section" aria-labelledby="hours-title">
+            <h2 id="hours-title">Comparación de franjas horarias</h2>
+            <p class="help-text">Según la hora de inicio de la función · Entradas netas</p>
+            {% if ventas_por_franja %}
+            {% set max_ventas = ventas_por_franja|max(attribute='entradas_netas')|attr('entradas_netas') %}
+            <div class="stats-bar-chart" role="img" aria-label="Entradas netas por franja horaria">
+                <div class="stats-y-axis">
+                    <span>{{ max_ventas }}</span>
+                    <span>{{ (max_ventas * 0.75)|round|int }}</span>
+                    <span>{{ (max_ventas * 0.5)|round|int }}</span>
+                    <span>{{ (max_ventas * 0.25)|round|int }}</span>
+                    <span>0</span>
+                </div>
+                <div class="stats-bars">
+                    {% for franja in ventas_por_franja %}
+                    <div class="stats-bar-group {{ ['stats-red', 'stats-amber', 'stats-purple'][(loop.index0 % 3)] }}">
+                        <b>{{ franja.entradas_netas }}</b>
+                        <span style="--bar-height:{{ (franja.entradas_netas / max_ventas * 100) if max_ventas else 0 }}%"></span>
+                        <small>{{ franja.nombre }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="stats-hour-list">
+                {% for franja in ventas_por_franja %}
+                <article><span>{{ franja.nombre }}</span><b>{{ franja.entradas_netas }}</b><small>{{ franja.cantidad_funciones }} funciones · {{ franja.porcentaje }}% · {{ franja.ingresos_formateados }}</small></article>
+                {% endfor %}
+            </div>
+            {% set franja_mas_vendida = ventas_por_franja|max(attribute='entradas_netas') %}
+            <p class="stats-highlight">Más vendida: {{ franja_mas_vendida.nombre }}</p>
+            {% else %}
+            <p class="text-muted">No hay ventas por franja horaria para mostrar.</p>
+            {% endif %}
+            <p class="stats-footnote">Total: {{ metricas.entradas_netas|default('—') }} entradas · {{ metricas.ingresos_entradas|default('—') }}</p>
+        </section>
+    </div>
+
+    <section class="panel stats-section" aria-labelledby="cancellations-title">
+        <h2 id="cancellations-title">Cancelaciones por función</h2>
+        <p class="help-text">Tasa = entradas canceladas / entradas emitidas antes de cancelaciones. Incluye funciones eliminadas. No representa compras ni un reintegro aprobado.</p>
+        <div class="stats-cancellation-list">
+            {% for funcion in lista_cancelaciones %}
+            <article>
+                <h3>{{ funcion.pelicula_titulo }} · {{ funcion.complejo_nombre }} · {{ funcion.sala_nombre }}</h3>
+                <p>{{ funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') if funcion.fecha_hora is defined and funcion.fecha_hora.strftime else funcion.fecha_hora }}</p>
+                <strong>{{ funcion.entradas_canceladas }} canceladas / {{ funcion.entradas_emitidas }} emitidas · {{ funcion.tasa_cancelacion }}%</strong>
+            </article>
+            {% else %}
+            <p class="text-muted">No hay cancelaciones para mostrar.</p>
+            {% endfor %}
+        </div>
+        <div class="stats-total">
+            <strong>Tasa total</strong>
+            <strong>{{ metricas.entradas_canceladas|default('—') }} / {{ metricas.entradas_emitidas|default('—') }} · {{ metricas.tasa_cancelacion|default('—') }}{% if metricas.tasa_cancelacion is defined %}%{% endif %}</strong>
+        </div>
+        <p class="stats-footnote">Los ingresos corresponden a entradas netas; el reintegro por entradas canceladas se informará cuando los datos estén disponibles.</p>
+    </section>
+</section>
+{% endblock %}
+
+{% block scripts %}{% endblock %}

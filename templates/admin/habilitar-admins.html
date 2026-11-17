@@ -1,0 +1,61 @@
+{% extends "layouts/base-admin.html" %}
+
+{% block title %}Habilitar admins · Cine Paradiso{% endblock %}
+{% block breadcrumb %}Habilitar admins{% endblock %}
+
+{% block content %}
+<section class="admin-permission-page" aria-labelledby="admin-permission-title">
+    <header class="page-header">
+        <div>
+            <h1 id="admin-permission-title">Habilitar administradores</h1>
+            <p>Concedé permisos de administración a una cuenta registrada.</p>
+        </div>
+    </header>
+
+    <section class="panel admin-permission-panel">
+        <h2>Agregar una cuenta</h2>
+        <p class="help-text">La persona debe haberse registrado previamente con este correo.</p>
+        {% if mensaje %}
+        <div class="movie-notice success" role="status">{{ mensaje }}</div>
+        {% endif %}
+        {% if error %}
+        <div class="movie-notice error" role="alert">{{ error }}</div>
+        {% endif %}
+        <form method="post" action="{{ url_for('admin_views.habilitar_admins') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-field">
+                <label for="admin-email">Correo de la cuenta</label>
+                <input class="form-control" id="admin-email" name="email" type="email"
+                       value="{{ email }}" maxlength="100" required autocomplete="email">
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Habilitar administrador</button>
+            </div>
+        </form>
+    </section>
+    <section class="panel admin-permission-panel" style="margin-top: 1rem;">
+        <h2>Administradores habilitados</h2>
+        <p class="help-text">Sólo aparecen cuentas con permisos de administración.</p>
+        {% for administrador in administradores|default([]) %}
+        <div class="list-item">
+            <div class="list-content">
+                <strong>{{ administrador.email }}</strong>
+                <p class="text-muted">{{ administrador.nombre }}</p>
+            </div>
+            {% if administrador.email|lower != config.SUPER_ADMIN_EMAIL %}
+            <form method="post" action="{{ url_for('admin_views.habilitar_admins') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="accion" value="dar_de_baja">
+                <input type="hidden" name="id_admin" value="{{ administrador.id }}">
+                <button class="btn btn-delete" type="submit">Dar de baja</button>
+            </form>
+            {% else %}
+            <span class="badge badge-success">Administrador principal</span>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="text-muted">No hay administradores habilitados.</p>
+        {% endfor %}
+    </section>
+</section>
+{% endblock %}

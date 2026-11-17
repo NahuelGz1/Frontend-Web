@@ -1,0 +1,11 @@
+# Secretos y entorno
+.env
+.env.docker
+instance/
+.venv/
+venv/
+__pycache__/
+
+# Configuración del IDE (JetBrains / VS Code)
+.idea/
+.vscode/

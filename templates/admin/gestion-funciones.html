@@ -1,0 +1,264 @@
+{% extends "layouts/base-admin.html" %}
+
+{% block title %}Gestión de funciones · Cine Paradiso{% endblock %}
+{% block breadcrumb %}Funciones{% endblock %}
+
+{% block content %}
+{% set lista_funciones = funciones|default([]) %}
+{% set lista_salas = salas|default([]) %}
+{% set lista_salas_formulario = salas_formulario|default(lista_salas) %}
+{% set lista_peliculas = peliculas|default([]) %}
+{% set lista_complejos = complejos|default([]) %}
+{% set funcion_actual = funcion_editar|default(none) %}
+{% set funcion_a_cancelar = funcion_cancelar|default(none) %}
+{% set sala_actual = sala_editar|default(none) %}
+<section aria-labelledby="functions-title">
+    <header class="page-header">
+        <div>
+            <h1 id="functions-title">Gestión de funciones y salas</h1>
+            <p>Programá cada función por fecha y hora. La capacidad se toma de la sala seleccionada.</p>
+        </div>
+    </header>
+
+    <div class="room-tabs" role="tablist" aria-label="Filtrar funciones">
+        <a class="btn {{ 'active' if not filtros.complejo|default('') or filtros.complejo == 'Todos' }}" href="{{ url_for('admin_views.funciones', complejo='Todos', estado=estado_filtro) }}" role="tab">Todos</a>
+        {% for complejo in lista_complejos %}
+        <a class="btn {{ 'active' if filtros.complejo|default('') == complejo.id|string }}" href="{{ url_for('admin_views.funciones', complejo=complejo.id, estado=estado_filtro) }}" role="tab" aria-selected="{{ 'true' if filtros.complejo|default('') == complejo.id|string else 'false' }}">{{ complejo.nombre }}</a>
+        {% endfor %}
+        <a class="btn btn-primary function-create-link" href="{{ url_for('admin_views.funciones', crear='funcion') }}">Crear función</a>
+    </div>
+
+    <section class="panel" aria-labelledby="rooms-title">
+        <div class="panel-heading">
+            <h2 id="rooms-title">Salas Totales {{ lista_salas|length }}</h2>
+        </div>
+        <div class="room-complex-list" id="room-list">
+            {% for complejo in lista_complejos %}
+            {% set salas_complejo = lista_salas|selectattr('local', 'equalto', complejo.id)|list %}
+            {% if salas_complejo %}
+            <section class="room-complex-group" aria-labelledby="complex-{{ loop.index }}">
+                <h3 id="complex-{{ loop.index }}">{{ complejo.nombre }}</h3>
+                <div class="room-grid">
+                    {% for sala in salas_complejo %}
+                    <article class="room-card">
+                        <h4>{{ sala.nombre }}</h4>
+                        <p class="text-muted">{{ sala.filas|default('—') }} filas · {{ sala.butacas_por_fila|default('—') }} butacas por fila · {{ sala.capacidad }} butacas</p>
+                        <a class="btn" href="{{ url_for('admin_views.funciones', editar_sala=sala.id) }}#room-config-panel">Configurar sala</a>
+                    </article>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+            {% else %}
+            <p class="text-muted">No hay salas para mostrar.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% set aviso_funcion = mensaje or mensaje_estado %}
+    <div class="flash-alert movie-notice function-notice {{ mensaje_tipo|default('') }}" role="status" aria-live="polite" {% if not aviso_funcion %}hidden{% endif %}>{{ aviso_funcion|default('') }}</div>
+
+    <section class="panel" aria-labelledby="schedule-title" style="margin-top: 1rem;">
+        <div class="panel-heading">
+            <h2 id="schedule-title">Funciones programadas · {{ lista_funciones|length }} registros</h2>
+            <nav class="status-tabs" aria-label="Filtrar estado de funciones">
+                <a class="btn {{ 'active' if estado_filtro == 'todos' }}" href="{{ url_for('admin_views.funciones', complejo=filtros.complejo or 'Todos', estado='todos') }}">Todas</a>
+                <a class="btn {{ 'active' if estado_filtro == 'activas' }}" href="{{ url_for('admin_views.funciones', complejo=filtros.complejo or 'Todos', estado='activas') }}">Activas</a>
+                <a class="btn {{ 'active' if estado_filtro == 'inactivas' }}" href="{{ url_for('admin_views.funciones', complejo=filtros.complejo or 'Todos', estado='inactivas') }}">Inactivas</a>
+                <a class="btn {{ 'active' if estado_filtro == 'finalizadas' }}" href="{{ url_for('admin_views.funciones', complejo=filtros.complejo or 'Todos', estado='finalizadas') }}">Finalizadas</a>
+            </nav>
+        </div>
+        {% for funcion in lista_funciones %}
+        <article class="function-row" id="funcion-{{ funcion.id }}">
+            <div>
+                <p class="text-muted">{{ funcion.entradas_vendidas|default(0) }} vendidas / {{ funcion.capacidad|default('—') }} butacas</p>
+                <h3>{{ funcion.pelicula_titulo }}</h3>
+                <p class="text-muted">{{ funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</p>
+                <p class="text-muted">{{ funcion.complejo_nombre }} · {{ funcion.sala_nombre }}</p>
+                {% if not funcion.finalizada and (not funcion.pelicula_activa or funcion.pelicula_eliminada) %}<p class="help-text">Película inactiva o retirada: la función no está disponible para nuevas ventas.</p>{% endif %}
+                {% if funcion.estado == 'en_venta' %}<p class="help-text">A la venta hasta el inicio de la función · {{ funcion.butacas_libres|default('—') }} butacas libres.</p>{% endif %}
+                {% if funcion.estado == 'agotada' %}<p class="help-text">Sala llena: no quedan butacas libres para vender.</p>{% endif %}
+                {% if funcion.motivo_bloqueo %}<p class="help-text">{{ funcion.motivo_bloqueo }}</p>{% endif %}
+            </div>
+            <div>
+                <p class="text-muted">{{ funcion.precio_formateado }} por entrada</p>
+                <div class="function-actions">
+                    <span class="badge {{ funcion.estado_clase }}">{{ funcion.estado_texto }}</span>
+                    {% if funcion.puede_editar %}
+                    <a class="btn" href="{{ url_for('admin_views.funciones', editar=funcion.id) }}#workspace-grid">Editar</a>
+                    {% endif %}
+                    {% if funcion.puede_cambiar_estado and (funcion.activa or funcion.puede_activar) %}
+                    <form method="post" action="{{ url_for('admin_views.funciones') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                        <input type="hidden" name="accion" value="cambiar_estado">
+                        <input type="hidden" name="funcion_id" value="{{ funcion.id }}">
+                        <input type="hidden" name="volver_a" value="funcion-{{ funcion.id }}">
+                        <input type="hidden" name="activo" value="{{ 0 if funcion.activa else 1 }}">
+                        <button class="btn" type="submit">{{ 'Desactivar función' if funcion.activa else 'Activar función' }}</button>
+                    </form>
+                    {% endif %}
+                    {% if funcion.puede_eliminar %}
+                    <form method="post" action="{{ url_for('admin_views.funciones') }}" data-confirm-delete="¿Eliminar esta función?" data-item-name="{{ funcion.pelicula_titulo }}" data-item-kind="función">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                        <input type="hidden" name="accion" value="eliminar">
+                        <input type="hidden" name="funcion_id" value="{{ funcion.id }}">
+                        <input type="hidden" name="volver_a" value="funcion-{{ funcion.id }}">
+                        <button class="btn btn-delete" type="submit">Eliminar función</button>
+                    </form>
+                    {% endif %}
+                    {% if funcion.puede_cancelar %}
+                    <a class="btn btn-delete" href="{{ url_for('admin_views.funciones', cancelar=funcion.id) }}#funcion-{{ funcion.id }}">Cancelar función</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="confirmation-slot" aria-live="polite">{% if funcion_a_cancelar and funcion_a_cancelar.id == funcion.id %}
+                <form class="confirmation-card" role="alert" method="post" action="{{ url_for('admin_views.funciones') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                    <input type="hidden" name="accion" value="cancelar">
+                    <input type="hidden" name="funcion_id" value="{{ funcion.id }}">
+                    <input type="hidden" name="volver_a" value="funcion-{{ funcion.id }}">
+                    <strong>Estado · Confirmar cancelación</strong>
+                    <span class="badge badge-danger">Confirmación pendiente</span>
+                    <h3>¿Cancelar la función de {{ funcion.pelicula_titulo }}?</h3>
+                    <p>Se devuelve el dinero de las {{ funcion.entradas_vendidas }} entradas vendidas y de sus servicios, los QR dejan de ser válidos y cada comprador recibe un mail con el motivo. No se puede deshacer.</p>
+                    <div class="form-field">
+                        <label for="motivo-{{ funcion.id }}">Motivo (lo reciben los compradores)</label>
+                        <input class="form-control" id="motivo-{{ funcion.id }}" name="motivo" type="text" maxlength="255" required placeholder="Ej.: falla técnica en el proyector de la sala">
+                    </div>
+                    <div class="form-actions">
+                        <a class="btn" href="{{ url_for('admin_views.funciones') }}#funcion-{{ funcion.id }}">Conservar función</a>
+                        <button class="btn btn-delete" type="submit">Sí, cancelar función</button>
+                    </div>
+                </form>
+            {% endif %}</div>
+        </article>
+        {% else %}
+        <p class="text-muted">No hay funciones para este complejo.</p>
+        {% endfor %}
+    </section>
+
+    <div class="workspace-grid" id="workspace-grid" {% if not funcion_actual and not sala_actual and request.args.get('crear') != 'funcion' %}hidden{% endif %}>
+    <section class="panel" id="edit-panel" aria-labelledby="edit-title" {% if not funcion_actual and request.args.get('crear') != 'funcion' %}hidden{% endif %}>
+    <h2 id="edit-title">{{ 'Editar función' if funcion_actual else 'Crear función' }}</h2>
+    <form id="function-form" method="post" action="{{ url_for('admin_views.funciones') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+        <input name="accion" type="hidden" value="guardar_funcion">
+        <input type="hidden" name="crear" value="funcion">
+        <input type="hidden" name="complejo_id" value="{{ complejo_form }}">
+        {% if funcion_actual %}<input name="funcion_id" type="hidden" value="{{ funcion_actual.id }}">{% endif %}
+        <div class="form-field">
+            <label for="function-movie">Película</label>
+            <select class="form-control" id="function-movie" name="pelicula_id" required>
+                <option value="">Seleccioná una película</option>
+                {% for pelicula in lista_peliculas %}
+                <option value="{{ pelicula.id }}" {% if funcion_actual and funcion_actual.pelicula_id|string == pelicula.id|string %}selected{% endif %}>{{ pelicula.titulo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="function-complex">Complejo</label>
+            <select class="form-control" id="function-complex" name="complejo_form">
+                <option value="">No se especifica complejo</option>
+                {% for complejo in lista_complejos %}
+                <option value="{{ complejo.id }}" {% if complejo_form == complejo.id|string %}selected{% endif %}>{{ complejo.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="function-room">Sala</label>
+            <select class="form-control" id="function-room" name="sala_id" required {% if not complejo_form %}disabled{% endif %}>
+                <option value="">Seleccioná una sala</option>
+                {% for sala in lista_salas_formulario %}
+                <option value="{{ sala.id }}" data-complejo="{{ sala.local }}" {% if funcion_actual and funcion_actual.sala.id|string == sala.id|string %}selected{% endif %}>{{ sala.complejo_nombre }} · {{ sala.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="function-start">Fecha y hora completas</label>
+            <input class="form-control" id="function-start" name="fecha_hora" type="datetime-local" value="{{ funcion_actual.fecha_hora_form|default('') if funcion_actual else '' }}" required>
+        </div>
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="function-from">Disponible desde</label>
+                <input class="form-control" id="function-from" name="venta_desde" type="datetime-local" value="{{ funcion_actual.venta_desde_form|default('') if funcion_actual else '' }}" required>
+            </div>
+            <div class="form-field">
+                <label for="function-until">Disponible hasta</label>
+                <input class="form-control" id="function-until" name="venta_hasta" type="datetime-local" value="{{ funcion_actual.venta_hasta_form|default('') if funcion_actual else '' }}" required>
+            </div>
+        </div>
+        <div class="form-field">
+            <label for="function-price">Precio de entrada - ARS</label>
+            <input class="form-control" id="function-price" name="precio" type="number" min="0" step="1" value="{{ funcion_actual.precio|default('') if funcion_actual else '' }}" required>
+        </div>
+        <div class="form-field">
+            <label for="function-status">Estado</label>
+            <select class="form-control" id="function-status" name="activa">
+                <option value="" {% if not funcion_actual %}selected{% endif %}>Seleccioná un estado</option>
+                <option value="1" {% if funcion_actual and funcion_actual.activa %}selected{% endif %}>Activa</option>
+                <option value="0" {% if funcion_actual and not funcion_actual.activa %}selected{% endif %}>Inactiva</option>
+            </select>
+        </div>
+        <p class="help-text">La capacidad de la sala no se modifica desde una función.</p>
+        <div class="form-actions">
+            {% if funcion_actual %}<a class="btn" href="{{ url_for('admin_views.funciones') }}">Cancelar</a>{% endif %}
+            <button class="btn btn-primary" type="submit">{{ 'Guardar cambios' if funcion_actual else 'Crear función' }}</button>
+        </div>
+    </form>
+</section>
+
+<section class="panel" id="room-config-panel" aria-labelledby="room-config-title" {% if not sala_actual %}hidden{% endif %}>
+    <h2 id="room-config-title">Configuración de sala</h2>
+    <form method="post" action="{{ url_for('admin_views.salas') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+        <input name="accion" type="hidden" value="guardar_sala">
+        {% if sala_actual %}<input name="sala_id" type="hidden" value="{{ sala_actual.id }}">{% endif %}
+        <div class="form-field">
+            <label for="room-complex">Complejo</label>
+            <select class="form-control" id="room-complex" name="complejo_id" required>
+                <option value="">Seleccioná un complejo</option>
+                {% for complejo in lista_complejos %}
+                <option value="{{ complejo.id }}" {% if sala_actual and sala_actual.local|string == complejo.id|string %}selected{% endif %}>{{ complejo.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="room-name">Nombre de sala</label>
+            <input class="form-control" id="room-name" name="nombre" maxlength="40" value="{{ sala_actual.nombre|default('') if sala_actual else '' }}" required>
+        </div>
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="room-rows">Filas</label>
+                <input class="form-control" id="room-rows" name="filas" type="number" min="1" required value="{{ sala_actual.filas|default('') if sala_actual else '' }}">
+            </div>
+            <div class="form-field">
+                <label for="room-seats">Butacas por fila</label>
+                <input class="form-control" id="room-seats" name="butacas_por_fila" type="number" min="1" required value="{{ sala_actual.butacas_por_fila|default('') if sala_actual else '' }}">
+            </div>
+        </div>
+        <p class="help-text">La capacidad se calculará en el servidor a partir de filas y butacas por fila.</p>
+        <div class="screen-label">PANTALLA</div>
+        <div class="seat-map" aria-label="Distribución de butacas">
+            {% for fila in range(1, (sala_actual.filas|default(0)|int) + 1) %}
+            <div class="seat-row">
+                <span>{{ fila }}</span>
+                {% for butaca in range(1, (sala_actual.butacas_por_fila|default(0)|int) + 1) %}
+                <i>{{ butaca }}</i>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        <p class="help-text">La identificación de butacas se mostrará según la configuración de la sala.</p>
+        <p class="help-text">Los cambios de distribución deben revisarse si hay funciones con entradas vendidas.</p>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Guardar configuración</button>
+            {% if sala_actual %}<a class="btn" href="{{ url_for('admin_views.salas') }}">Cancelar cambios de sala</a>{% endif %}
+        </div>
+    </form>
+</section>
+</div>
+
+</section>
+{% endblock %}
+
+{% block scripts %}{% endblock %}

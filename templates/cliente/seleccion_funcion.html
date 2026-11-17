@@ -1,0 +1,89 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Elegir función · Cine Paradiso{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/compra.css') }}">
+{% endblock %}
+
+{% block header_nav %}{% endblock %}
+
+{% block content %}
+{% set error_funciones_msg = error_funciones|default(none) %}
+{% set lista_funciones = funciones|default([]) %}
+
+<section class="compra" aria-labelledby="compra-titulo">
+    <a class="compra-volver" href="{{ url_for('cliente_views.cartelera') }}">
+        <img src="{{ url_for('static', filename='images/compra-volver.svg') }}" alt="" width="16" height="16">
+        Volver a cartelera
+    </a>
+
+    <header class="compra-encabezado">
+        <h1 id="compra-titulo">Elegir función</h1>
+        <p>Elegí la película, fecha y horario. En el siguiente paso vas a elegir tus butacas.</p>
+    </header>
+
+    <nav class="compra-pasos" aria-label="Pasos de la compra">
+        <ol>
+            <li aria-current="step"><span aria-hidden="true">1</span> Función</li>
+            <li><span aria-hidden="true">2</span> Butacas</li>
+            <li><span aria-hidden="true">3</span> Servicios y pago</li>
+            <li><span aria-hidden="true">4</span> Confirmación</li>
+        </ol>
+    </nav>
+
+    <section class="compra-cartelera" aria-labelledby="funciones-titulo">
+        <h2 id="funciones-titulo">Funciones en cartelera</h2>
+        {% if error_funciones_msg %}
+        <div class="compra-estado compra-estado--error" role="alert">
+            <h3>No pudimos cargar las funciones</h3>
+            <p>{{ error_funciones_msg }}</p>
+            <a class="compra-volver" href="{{ url_for('cliente_views.cartelera') }}">Volver a cartelera</a>
+        </div>
+        {% else %}
+        <ul class="compra-funciones">
+            {% for funcion in lista_funciones %}
+            <li>
+                <article class="compra-funcion" aria-labelledby="funcion-{{ funcion.id|default(loop.index) }}-titulo">
+                    <h3 id="funcion-{{ funcion.id|default(loop.index) }}-titulo">{{ funcion.pelicula.titulo|default('Película') }}</h3>
+                    <dl class="compra-datos">
+                        <div>
+                            <dt>Fecha</dt>
+                            <dd><time datetime="{{ funcion.fecha|default('') }}">{{ funcion.fecha|default('-') }}</time></dd>
+                        </div>
+                        <div>
+                            <dt>Horario</dt>
+                            <dd><time class="compra-horario" datetime="{{ funcion.horario|default('') }}">{{ funcion.horario|default('-') }}</time></dd>
+                        </div>
+                        <div>
+                            <dt>Sala</dt>
+                            <dd>{{ funcion.sala.nombre|default('Sala 1') }}</dd>
+                        </div>
+                    </dl>
+                    {% if funcion.disponible|default(true) %}
+                    <a class="btn-primary compra-continuar"
+                       href="{{ url_for('cliente_views.elegir_butacas', funcion_id=funcion.id|default(1)) }}"
+                       aria-label="Elegir butacas para {{ funcion.pelicula.titulo|default('Película') }}, {{ funcion.fecha|default('') }} a las {{ funcion.horario|default('') }}, {{ funcion.sala.nombre|default('Sala 1') }}">
+                        Elegir butacas
+                    </a>
+                    {% else %}
+                    <p class="compra-agotada">Función sin disponibilidad</p>
+                    {% endif %}
+                </article>
+            </li>
+            {% else %}
+            <li class="compra-estado">
+                <h3>No hay funciones disponibles</h3>
+                <p>Volvé a consultar la cartelera más adelante.</p>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+
+    <p class="compra-aviso">La disponibilidad de las butacas se confirma al crear la reserva.</p>
+</section>
+{% endblock %}
+
+{% block scripts %}{% endblock %}

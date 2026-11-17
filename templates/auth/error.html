@@ -1,0 +1,9 @@
+{% extends "layouts/base.html" %}
+{% block title %}No se pudo completar la solicitud · Cine Paradiso{% endblock %}
+{% block content %}
+<section aria-labelledby="error-titulo">
+    <h1 id="error-titulo">No se pudo completar la solicitud</h1>
+    <p role="alert">{{ mensaje }}</p>
+    <a class="compra-volver" href="{{ url_for('auth_views.iniciar_sesion') }}">Volver a iniciar sesión</a>
+</section>
+{% endblock %}
