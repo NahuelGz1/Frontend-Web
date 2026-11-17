@@ -68,10 +68,11 @@ def proteger_admin():
 def estadisticas():
     token = session.get("access_token")
     complejo_filtro = request.args.get("complejo", "").strip()
+    periodo_filtro = request.args.get("periodo", "").strip()
     estado_locales, respuesta_locales = consumir_api("GET", "/funciones/locales")
 
     status_code, datos_estadisticas = obtener_estadisticas_dashboard(
-        token, complejo_filtro or None
+        token, complejo_filtro or None, periodo_filtro or None
     )
 
     error_api = False
@@ -98,8 +99,8 @@ def estadisticas():
                 if estado_locales == 200 else []
             )
         ],
-        periodos=[],
-        filtros={"complejo": complejo_filtro, "periodo": request.args.get("periodo", "")},
+        periodos=datos_estadisticas.get("periodos", []),
+        filtros={"complejo": complejo_filtro, "periodo": periodo_filtro},
         error_api=error_api
     )
 

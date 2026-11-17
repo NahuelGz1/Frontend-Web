@@ -23,6 +23,9 @@
             <label for="stats-period">Período de funciones</label>
             <select class="form-control" id="stats-period" name="periodo" onchange="this.form.submit()">
                 <option value="">Todos los períodos</option>
+                {% if filtros.periodo|default('') and filtros.periodo not in periodos|map(attribute='valor')|list %}
+                <option value="{{ filtros.periodo }}" selected>{{ filtros.periodo }}</option>
+                {% endif %}
                 {% for periodo in periodos|default([]) %}
                 <option value="{{ periodo.valor }}" {% if filtros.periodo|default('') == periodo.valor|string %}selected{% endif %}>{{ periodo.etiqueta }}</option>
                 {% endfor %}
@@ -54,6 +57,16 @@
             <p>Ingresos por entradas</p>
             <strong>{{ metricas.ingresos_entradas|default('—') }}</strong>
             <small>ARS · Sin servicios</small>
+        </article>
+        <article class="panel stats-card">
+            <p>Ingresos por servicios</p>
+            <strong>{{ metricas.ingresos_servicios|default('—') }}</strong>
+            {% if metricas.desglose_servicios is defined %}
+            <small>Candy Bar: {{ metricas.desglose_servicios.candy_bar.ingresos }} · {{ metricas.desglose_servicios.candy_bar.porcentaje }}%<br>
+                Mejoras de experiencia: {{ metricas.desglose_servicios.mejoras_experiencia.ingresos }} · {{ metricas.desglose_servicios.mejoras_experiencia.porcentaje }}%
+                {% if metricas.desglose_servicios.otras_categorias.unidades %}<br>Otras categorías: {{ metricas.desglose_servicios.otras_categorias.ingresos }} · {{ metricas.desglose_servicios.otras_categorias.porcentaje }}%{% endif %}
+            </small>
+            {% endif %}
         </article>
         <article class="panel stats-card">
             <p>Entradas canceladas</p>
@@ -95,7 +108,7 @@
 
     <section class="panel stats-section" aria-labelledby="movie-occupancy-title">
         <h2 id="movie-occupancy-title">Ocupación por película</h2>
-        <p class="help-text">Capacidad acumulada de sus funciones. Ocupación = entradas netas / butacas disponibles.</p>
+        <p class="help-text">Capacidad acumulada de sus funciones. Ocupación = entradas netas / butacas disponibles. Los servicios se cuentan por compra con al menos una entrada activa.</p>
         <div class="stats-movie-rings" aria-label="Ocupación por película">
             {% for pelicula in peliculas_por_ocupacion %}
             <div class="stats-movie-ring">
@@ -109,9 +122,41 @@
         <div class="stats-movie-list">
             {% for pelicula in peliculas_por_ocupacion %}
             <article>
-                <h3>{{ pelicula.titulo }}</h3>
-                <p>{{ pelicula.cantidad_funciones }} funciones · {{ pelicula.entradas_netas }} / {{ pelicula.capacidad }} · {{ pelicula.ocupacion_porcentaje }}%</p>
-                <small>Ingresos: {{ pelicula.ingresos_formateados }}</small>
+                <div>
+                    <h3>{{ pelicula.titulo }}</h3>
+                    <p>{{ pelicula.cantidad_funciones }} funciones · {{ pelicula.entradas_netas }} / {{ pelicula.capacidad }} · {{ pelicula.ocupacion_porcentaje }}%</p>
+                    <small>Entradas: {{ pelicula.ingresos_formateados }}</small>
+                </div>
+                <div class="stats-movie-services">
+                    {% if pelicula.servicios_formateados != '$ 0' %}
+                    <div class="stats-movie-services-header">
+                        <strong>Servicios: {{ pelicula.servicios_formateados }}</strong>
+                        <span class="stats-movie-services-badge">{{ pelicula.tasa_servicios }}% con extras</span>
+                    </div>
+                    <p class="stats-movie-services-line">
+                        <b>Candy Bar:</b> {{ pelicula.desglose_servicios.candy_bar.ingresos }} · {{ pelicula.desglose_servicios.candy_bar.unidades }} u.
+                        <span>{% if pelicula.candy_mas_vendido %}Más vendido: {{ pelicula.candy_mas_vendido.nombre }} ({{ pelicula.candy_mas_vendido.cantidad }}){% else %}Sin ventas de Candy Bar{% endif %}</span>
+                    </p>
+                    {% if pelicula.mejoras_vendidas or pelicula.desglose_servicios.otras_categorias.unidades %}
+                    <p class="stats-movie-services-line">
+                        {% if pelicula.mejoras_vendidas %}
+                        <b>Mejoras:</b> {{ pelicula.desglose_servicios.mejoras_experiencia.ingresos }} · {{ pelicula.desglose_servicios.mejoras_experiencia.unidades }} u.
+                        <span>{% for mejora in pelicula.mejoras_vendidas %}{{ mejora.nombre }} ({{ mejora.cantidad }}){% if not loop.last %}, {% endif %}{% endfor %}</span>
+                        {% endif %}
+                        {% if pelicula.desglose_servicios.otras_categorias.unidades %}
+                        <span>Otras categorías: {{ pelicula.desglose_servicios.otras_categorias.ingresos }} · {{ pelicula.desglose_servicios.otras_categorias.unidades }} u.</span>
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                    {% else %}
+                    <p class="stats-movie-services-empty">Servicios: {{ pelicula.servicios_formateados }}</p>
+                    <p class="stats-movie-services-empty">Sin servicios vendidos</p>
+                    {% endif %}
+                </div>
+                <div class="stats-movie-total">
+                    <strong>Total real: {{ pelicula.total_combinado_formateado }}</strong>
+                    <p>{{ pelicula.promedio_entrada_formateado }} / entrada</p>
+                </div>
             </article>
             {% else %}
             <p class="text-muted">No hay películas para mostrar.</p>
@@ -192,7 +237,7 @@
 
     <section class="panel stats-section" aria-labelledby="cancellations-title">
         <h2 id="cancellations-title">Cancelaciones por función</h2>
-        <p class="help-text">Tasa = entradas canceladas / entradas emitidas antes de cancelaciones. No representa compras ni un reintegro aprobado.</p>
+        <p class="help-text">Tasa = entradas canceladas / entradas emitidas antes de cancelaciones. Incluye funciones eliminadas. No representa compras ni un reintegro aprobado.</p>
         <div class="stats-cancellation-list">
             {% for funcion in lista_cancelaciones %}
             <article>
