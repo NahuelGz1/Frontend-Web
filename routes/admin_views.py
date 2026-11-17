@@ -382,34 +382,65 @@ ESTADOS_FUNCION = {
     "agotada": ("Agotada", "badge-danger"),
     "venta_cerrada": ("Venta cerrada", "badge-danger"),
     "finalizada": ("Finalizada", ""),
+    "cancelada": ("Cancelada", "badge-danger"),
 }
+
+
+def _plural(cantidad, singular, plural):
+    return f"{cantidad} {singular if cantidad == 1 else plural}"
+
+
+def _mensaje_cancelacion(datos):
+    compras = int(datos.get("compras_afectadas") or 0)
+    if not compras:
+        return "Se canceló la función. No tenía entradas vendidas, así que no hubo devoluciones."
+    total = f"${int(datos.get('total_devuelto') or 0):,}".replace(",", ".")
+    mensaje = (
+        f"Se canceló la función: se devolvieron {_plural(int(datos.get('entradas_canceladas') or 0), 'entrada', 'entradas')} "
+        f"de {_plural(compras, 'compra', 'compras')} ({total}) y sus QR ya no son válidos."
+    )
+    sin_mail = compras - int(datos.get("correos_enviados") or 0)
+    if sin_mail:
+        mensaje += f" No se pudo enviar el mail a {_plural(sin_mail, 'comprador', 'compradores')}, revisá la configuración del correo."
+    return mensaje
 
 
 def _preparar_estado_funcion(funcion):
     # el back manda el estado calculado, si no viene se arma con la fecha y el activo
     estado = funcion.get("estado")
     if estado not in ESTADOS_FUNCION:
-        if funcion["fecha_hora"] <= datetime.now():
+        if funcion.get("cancelada"):
+            estado = "cancelada"
+        elif funcion["fecha_hora"] <= datetime.now():
             estado = "finalizada"
         else:
             estado = "en_venta" if funcion["activa"] else "venta_cerrada"
     funcion["estado"] = estado
     funcion["estado_texto"], funcion["estado_clase"] = ESTADOS_FUNCION[estado]
     funcion["finalizada"] = estado == "finalizada"
+    funcion["cancelada"] = estado == "cancelada"
+    cerrada = funcion["finalizada"] or funcion["cancelada"]
 
     vendidas = int(funcion.get("entradas_vendidas") or 0)
     funcion["entradas_vendidas"] = vendidas
-    funcion["puede_editar"] = not funcion["finalizada"] and vendidas == 0
+    funcion["puede_editar"] = not cerrada and vendidas == 0
     funcion["puede_eliminar"] = funcion["puede_editar"]
-    funcion["puede_cambiar_estado"] = not funcion["finalizada"]
+    funcion["puede_cambiar_estado"] = not cerrada
     funcion["puede_activar"] = funcion["pelicula_activa"] and not funcion["pelicula_eliminada"]
+    # con ventas no se puede eliminar, pero si cancelar devolviendo el dinero
+    funcion["puede_cancelar"] = not cerrada and vendidas > 0
 
-    if funcion["finalizada"]:
+    if funcion["cancelada"]:
+        funcion["motivo_bloqueo"] = (
+            f"Función cancelada ({funcion.get('motivo_cancelacion') or 'sin motivo'}). "
+            "Se devolvió el dinero y se avisó por mail a los compradores."
+        )
+    elif funcion["finalizada"]:
         funcion["motivo_bloqueo"] = "La función ya se proyectó: queda en el historial y no se puede modificar."
     elif vendidas:
         funcion["motivo_bloqueo"] = (
             "Tiene entradas vendidas: no se puede editar ni eliminar. "
-            "Podés desactivarla para cerrar la venta."
+            "Podés desactivarla para cerrar la venta o cancelarla para devolver el dinero."
         )
     else:
         funcion["motivo_bloqueo"] = None
@@ -482,8 +513,22 @@ def funciones():
                 )
                 mensaje_tipo = "error"
 
-        elif accion in ("cambiar_estado", "eliminar"):
-            if accion == "eliminar":
+        elif accion in ("cambiar_estado", "eliminar", "cancelar"):
+            if accion == "cancelar":
+                status_code, respuesta = consumir_api(
+                    "PUT",
+                    f"/funciones/{funcion_id}/cancelar",
+                    datos={"motivo": request.form.get("motivo", "")},
+                )
+                if status_code == 200 and respuesta.get("ok"):
+                    mensaje_estado = _mensaje_cancelacion(respuesta.get("data") or {})
+                    mensaje_tipo = "success"
+                else:
+                    mensaje = (respuesta.get("error") or {}).get(
+                        "message", "No se pudo cancelar la función."
+                    )
+                    mensaje_tipo = "error"
+            elif accion == "eliminar":
                 status_code, respuesta = consumir_api(
                     "DELETE", f"/funciones/{funcion_id}"
                 )
@@ -615,6 +660,20 @@ def funciones():
             ).get("id")
             complejo_form = str(funcion_editar.get("sala", {}).get("local", ""))
 
+    funcion_cancelar = None
+    id_cancelar = request.args.get("cancelar", type=int)
+    if id_cancelar is not None:
+        funcion_cancelar = next((f for f in funciones if f.get("id") == id_cancelar), None)
+        if funcion_cancelar is None:
+            mensaje_estado = "No se encontró la función seleccionada."
+            mensaje_tipo = "error"
+        elif not funcion_cancelar["puede_cancelar"]:
+            mensaje_estado = funcion_cancelar["motivo_bloqueo"] or (
+                "Esta función no tiene entradas vendidas: podés eliminarla o desactivarla."
+            )
+            mensaje_tipo = "error"
+            funcion_cancelar = None
+
     sala_actual = next(
         (sala for sala in salas if str(sala.get("id")) == editar_sala),
         None,
@@ -624,6 +683,7 @@ def funciones():
         "admin/gestion-funciones.html",
         funciones=funciones,
         funcion_editar=funcion_editar,
+        funcion_cancelar=funcion_cancelar,
         filtros={"complejo": complejo_filtro},
         estado_filtro=estado_filtro,
         salas=salas,
