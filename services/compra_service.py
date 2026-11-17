@@ -5,7 +5,7 @@ import re
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from flask import session
+from flask import current_app, session
 
 from services.api_client import consumir_api
 
@@ -107,24 +107,53 @@ def _obtener_poster(pelicula_id):
     return pelicula.get("poster_url") or pelicula.get("poster") or ""
 
 
-def _servicios_con_precio(elegidos, cantidad_entradas=0):
+def disponibilidad_estacionamiento(funcion_id):
+    status_code, respuesta = consumir_api("GET", f"/funciones/{funcion_id}/estacionamiento")
+    if status_code != 200:
+        current_app.logger.warning("No se pudo consultar el estacionamiento de la función %s (HTTP %s)",
+                                   funcion_id, status_code)
+        return None, "No pudimos consultar la disponibilidad de estacionamiento. Intentá nuevamente."
+    datos = respuesta.get("data")
+    disponibles = datos.get("disponibles") if isinstance(datos, dict) else None
+    if type(disponibles) is not int or not 0 <= disponibles <= 20:
+        current_app.logger.error("Respuesta inválida de disponibilidad de estacionamiento para la función %s",
+                                 funcion_id)
+        return None, "No pudimos consultar la disponibilidad de estacionamiento. Intentá nuevamente."
+    return disponibles, None
+
+
+def _servicios_con_precio(elegidos, cantidad_entradas, funcion_id):
     if not elegidos:
         return [], None, None
     status_code, respuesta = consumir_api("GET", "/servicios")
     if status_code != 200:
         return None, None, "No pudimos cargar los servicios adicionales. Intentá de nuevo."
     catalogo = {servicio["id"]: servicio for servicio in respuesta.get("data") or []}
+    hay_estacionamiento = any(
+        "estacionamiento" in (catalogo.get(elegido.get("id_servicio")) or {}).get("nombre", "").lower()
+        for elegido in elegidos
+    )
+    limite_estacionamiento = 0
+    if hay_estacionamiento:
+        disponibles, error = disponibilidad_estacionamiento(funcion_id)
+        if error:
+            return None, None, error
+        limite_estacionamiento = min(cantidad_entradas, disponibles)
     servicios = []
+    ajuste_estacionamiento = False
     for elegido in elegidos:
         servicio = catalogo.get(elegido.get("id_servicio"))
         cantidad = elegido.get("cantidad")
         if servicio and isinstance(cantidad, int) and cantidad > 0:
             nombre_normalizado = servicio.get("nombre", "").lower()
 
-            # Si es Estacionamiento o Acceso VIP, limitamos la cantidad al total de entradas
-            if ("estacionamiento" in nombre_normalizado or "vip" in nombre_normalizado) and cantidad_entradas > 0:
-                if cantidad > cantidad_entradas:
-                    cantidad = cantidad_entradas
+            if "estacionamiento" in nombre_normalizado:
+                cantidad_original = cantidad
+                cantidad = min(cantidad, limite_estacionamiento)
+                limite_estacionamiento -= cantidad
+                ajuste_estacionamiento |= cantidad != cantidad_original
+            elif "vip" in nombre_normalizado:
+                cantidad = min(cantidad, cantidad_entradas)
 
             if cantidad > 0:
                 servicios.append({
@@ -134,7 +163,9 @@ def _servicios_con_precio(elegidos, cantidad_entradas=0):
                     "precio": float(servicio["precio"])
                 })
     aviso = None
-    if len(servicios) < len(elegidos):
+    if ajuste_estacionamiento:
+        aviso = "La disponibilidad de estacionamiento cambió. Revisá las cantidades y el total antes de confirmar."
+    elif len(servicios) < len(elegidos):
         aviso = "Algún servicio que elegiste ya no está disponible y lo quitamos del resumen."
     return servicios, aviso, None
 
@@ -243,13 +274,28 @@ def guardar_servicios(formulario):
         if codigo != 200:
             return "No pudimos validar los servicios. Intentá nuevamente."
         catalogo = {s["id"]: s for s in respuesta.get("data") or []}
+        cantidad_estacionamiento = 0
+        ids_elegidos = set()
         for elegido in elegidos:
             servicio = catalogo.get(elegido["id_servicio"])
             if not servicio or not servicio.get("activo", True):
                 return "Algún servicio ya no está disponible. Revisá tu selección."
+            if elegido["id_servicio"] in ids_elegidos:
+                return "Hay servicios repetidos. Revisá tu selección."
+            ids_elegidos.add(elegido["id_servicio"])
             nombre = servicio["nombre"].lower()
             if ("estacionamiento" in nombre or "vip" in nombre) and elegido["cantidad"] > len(compra["butacas"]):
                 return "Estacionamiento y VIP admiten como máximo una unidad por entrada."
+            if "estacionamiento" in nombre:
+                cantidad_estacionamiento += elegido["cantidad"]
+        if cantidad_estacionamiento:
+            if cantidad_estacionamiento > len(compra["butacas"]):
+                return "Estacionamiento admite como máximo una unidad por entrada."
+            disponibles, error = disponibilidad_estacionamiento(compra["id_funcion"])
+            if error:
+                return error
+            if cantidad_estacionamiento > disponibles:
+                return f"No hay suficientes espacios de estacionamiento disponibles para esta función. Quedan {disponibles} lugares."
     compra["servicios"] = elegidos
     session[CLAVE_COMPRA] = compra
     return None
@@ -281,7 +327,7 @@ def guardar_email_contacto(email):
     return True
 
 
-def armar_resumen():
+def armar_resumen(incluir_servicios=True):
     compra = session.get(CLAVE_COMPRA) or {}
     if not compra.get("id_funcion") or not compra.get("butacas"):
         return None, "Primero elegí una función y tus butacas."
@@ -295,13 +341,15 @@ def armar_resumen():
 
     butacas = compra["butacas"]
 
-    # Pasamos len(butacas) como la cantidad de entradas asociadas
-    servicios, aviso, error = _servicios_con_precio(compra.get("servicios") or [], cantidad_entradas=len(butacas))
-    if error:
-        return None, error
-
-    compra["servicios"] = [{"id_servicio": s["id_servicio"], "cantidad": s["cantidad"]} for s in servicios]
-    session[CLAVE_COMPRA] = compra
+    servicios, aviso = [], None
+    if incluir_servicios:
+        servicios, aviso, error = _servicios_con_precio(
+            compra.get("servicios") or [], len(butacas), compra["id_funcion"]
+        )
+        if error:
+            return None, error
+        compra["servicios"] = [{"id_servicio": s["id_servicio"], "cantidad": s["cantidad"]} for s in servicios]
+        session[CLAVE_COMPRA] = compra
 
     precio_entrada = float(funcion.get("precio_entrada") or 0)
     subtotal_entradas = precio_entrada * len(butacas)
@@ -366,7 +414,9 @@ def confirmar_compra(resumen):
     if not 200 <= status_code < 300:
         # Si el back rechaza los datos (por ejemplo una butaca ya vendida) hay que volver al mapa
         mensaje = _mensaje_de_error(status_code, respuesta, "No pudimos confirmar la compra. Intentá de nuevo en unos minutos.")
-        return False, mensaje, 400 <= status_code < 500 and status_code != 401
+        if status_code == 400 and "estacionamiento" in mensaje.lower():
+            return False, mensaje, "servicios"
+        return False, mensaje, "butacas" if 400 <= status_code < 500 and status_code != 401 else None
     session[CLAVE_COMPRA_CONFIRMADA] = _datos_compra_exitosa(resumen["vista"], respuesta.get("data") or {})
     session.pop(CLAVE_COMPRA, None)
     return True, None, False
