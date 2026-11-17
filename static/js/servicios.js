@@ -118,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // si ya tiene al menos uno, escondemos el botón "Agregar" y mostramos los controles
         if (addBtn) {
             addBtn.hidden = cantidad > 0;
+            if (maxQty === 0) addBtn.disabled = true;
         }
         if (quantitySection) {
             quantitySection.hidden = cantidad === 0;
@@ -139,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // botón "Agregar +" que aparece la primera vez
         const addBtn = e.target.closest('[data-add]');
         if (addBtn) {
+            if (addBtn.disabled) return;
             const card   = addBtn.closest('[data-service-card]');
             if (!card) return;
             const id     = card.dataset.serviceId;
@@ -236,5 +238,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (checkoutBtnSec) checkoutBtnSec.addEventListener('click', manejarCheckout);
 
     // arrancamos con todo en cero
+    contenedorServicios.querySelectorAll('[data-service-card]').forEach(actualizarCard);
     actualizarUI();
 });

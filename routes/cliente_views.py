@@ -173,7 +173,7 @@ def servicios():
             servicio["precio_formateado"] = f"${int(servicio['precio']):,}".replace(",", ".")
 
     contexto_compra = None
-    resumen, error = compra_service.armar_resumen()
+    resumen, error = compra_service.armar_resumen(incluir_servicios=False)
     if not error and resumen:
         vista_funcion = resumen["vista"]["funcion"]
         cant_entradas = resumen["vista"]["cantidad_entradas"]
@@ -191,11 +191,22 @@ def servicios():
                 "asientos": vista_funcion.get("butacas", ""),
             }
         }
+    elif compra_service.funcion_en_curso() and error:
+        flash(error, "warning")
+
+    estacionamiento_disponible = None
+    error_estacionamiento = None
+    if compra_service.funcion_en_curso():
+        estacionamiento_disponible, error_estacionamiento = compra_service.disponibilidad_estacionamiento(
+            compra_service.funcion_en_curso()
+        )
 
     return render_template(
         "cliente/servicios.html",
         servicios=lista_servicios,
         contexto_compra=contexto_compra,
+        estacionamiento_disponible=estacionamiento_disponible,
+        error_estacionamiento=error_estacionamiento,
         error_servicios=error_servicios,
         cantidades_servicios=compra_service.servicios_seleccionados(),
         csrf_token=compra_service.token_csrf(),
@@ -273,12 +284,16 @@ def pagar():
     resumen, error = compra_service.armar_resumen()
     if error:
         flash(error, "warning")
+        if "estacionamiento" in error.lower():
+            return redirect(url_for("cliente_views.servicios"))
         funcion_id = compra_service.funcion_en_curso()
         if funcion_id:
             return redirect(url_for("cliente_views.elegir_butacas", funcion_id=funcion_id))
         return redirect(url_for("cliente_views.cartelera"))
     if resumen["aviso"]:
         flash(resumen["aviso"], "warning")
+        if request.method == "POST":
+            return redirect(url_for("cliente_views.pagar"))
 
     if request.method == "POST":
         if not compra_service.csrf_valido(request.form.get("csrf_token")):
@@ -287,11 +302,13 @@ def pagar():
         if not compra_service.guardar_email_contacto(request.form.get("email")):
             flash("Ingresá un email de contacto válido.", "warning")
             return redirect(url_for("cliente_views.pagar"))
-        exito, mensaje, elegir_de_nuevo = compra_service.confirmar_compra(resumen)
+        exito, mensaje, destino_error = compra_service.confirmar_compra(resumen)
         if exito:
             return redirect(url_for("cliente_views.compra_exitosa", compra_id=compra_service.id_compra_confirmada()))
         flash(mensaje, "danger")
-        if elegir_de_nuevo:
+        if destino_error == "servicios":
+            return redirect(url_for("cliente_views.servicios"))
+        if destino_error == "butacas":
             return redirect(url_for("cliente_views.elegir_butacas", funcion_id=resumen["id_funcion"]))
         return redirect(url_for("cliente_views.pagar"))
 
