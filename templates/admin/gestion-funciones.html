@@ -10,6 +10,7 @@
 {% set lista_peliculas = peliculas|default([]) %}
 {% set lista_complejos = complejos|default([]) %}
 {% set funcion_actual = funcion_editar|default(none) %}
+{% set funcion_a_cancelar = funcion_cancelar|default(none) %}
 {% set sala_actual = sala_editar|default(none) %}
 <section aria-labelledby="functions-title">
     <header class="page-header">
@@ -105,9 +106,31 @@
                         <button class="btn btn-delete" type="submit">Eliminar función</button>
                     </form>
                     {% endif %}
+                    {% if funcion.puede_cancelar %}
+                    <a class="btn btn-delete" href="{{ url_for('admin_views.funciones', cancelar=funcion.id) }}#funcion-{{ funcion.id }}">Cancelar función</a>
+                    {% endif %}
                 </div>
             </div>
-            <div class="confirmation-slot" aria-live="polite"></div>
+            <div class="confirmation-slot" aria-live="polite">{% if funcion_a_cancelar and funcion_a_cancelar.id == funcion.id %}
+                <form class="confirmation-card" role="alert" method="post" action="{{ url_for('admin_views.funciones') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                    <input type="hidden" name="accion" value="cancelar">
+                    <input type="hidden" name="funcion_id" value="{{ funcion.id }}">
+                    <input type="hidden" name="volver_a" value="funcion-{{ funcion.id }}">
+                    <strong>Estado · Confirmar cancelación</strong>
+                    <span class="badge badge-danger">Confirmación pendiente</span>
+                    <h3>¿Cancelar la función de {{ funcion.pelicula_titulo }}?</h3>
+                    <p>Se devuelve el dinero de las {{ funcion.entradas_vendidas }} entradas vendidas y de sus servicios, los QR dejan de ser válidos y cada comprador recibe un mail con el motivo. No se puede deshacer.</p>
+                    <div class="form-field">
+                        <label for="motivo-{{ funcion.id }}">Motivo (lo reciben los compradores)</label>
+                        <input class="form-control" id="motivo-{{ funcion.id }}" name="motivo" type="text" maxlength="255" required placeholder="Ej.: falla técnica en el proyector de la sala">
+                    </div>
+                    <div class="form-actions">
+                        <a class="btn" href="{{ url_for('admin_views.funciones') }}#funcion-{{ funcion.id }}">Conservar función</a>
+                        <button class="btn btn-delete" type="submit">Sí, cancelar función</button>
+                    </div>
+                </form>
+            {% endif %}</div>
         </article>
         {% else %}
         <p class="text-muted">No hay funciones para este complejo.</p>
