@@ -35,14 +35,22 @@
     <div class="qr-workspace">
         <section class="panel qr-scanner" aria-labelledby="scanner-title">
             <h2 id="scanner-title">Escanear QR de compra</h2>
-            <div class="qr-camera" aria-label="Área reservada para integrar el lector QR">
+            <div class="qr-camera" id="qr-camera-panel">
+                <div class="qr-camera-reader" id="qr-camera-reader-wrapper" hidden aria-label="Vista previa de la cámara"><div id="qr-camera-reader"></div></div>
                 <div class="qr-scan-frame" aria-hidden="true">
                     <span class="qr-corner"></span><span class="qr-corner"></span>
-                    <span class="qr-corner"></span><span class="qr-corner"></span><span class="qr-code-mark"></span>
+                    <span class="qr-corner"></span><span class="qr-corner"></span>
                 </div>
-                <span>El lector de cámara se integrará en una etapa posterior.</span>
+                <p class="qr-camera-placeholder" id="qr-camera-placeholder">Vista previa del lector · Tocá «Validar con cámara» para activar</p>
             </div>
-            <form method="post" action="{{ url_for('admin_views.validar_qr') }}">
+            {% set mensaje_consulta = estado and estado.aprobada and vista and vista.pendientes > 0 and not aviso|default(none) %}
+            <p class="qr-camera-message{% if mensaje_consulta %} is-success{% endif %}" id="qr-camera-message" role="status" aria-live="polite">{% if mensaje_consulta %}Compra válida. Pendiente de canje.{% endif %}</p>
+            <p class="help-text qr-camera-guide" id="qr-camera-guide" hidden>Encuadrá el código QR dentro de la guía.</p>
+            <div class="form-field qr-camera-selector" id="qr-camera-selector" hidden>
+                <label for="qr-camera-select">Cámara</label>
+                <select class="form-control" id="qr-camera-select"></select>
+            </div>
+            <form id="form-validar-qr" method="post" action="{{ url_for('admin_views.validar_qr') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" name="accion" value="consultar">
                 <fieldset class="qr-mode-selector">
@@ -60,6 +68,14 @@
                 </div>
                 <button class="btn btn-primary" type="submit">Consultar</button>
             </form>
+            <div class="qr-camera-controls" id="qr-camera-controls" hidden>
+                <button class="btn qr-camera-button" id="qr-camera-open" type="button" aria-controls="qr-camera-panel" aria-expanded="false">Validar con cámara</button>
+                <div id="qr-camera-active-controls" hidden>
+                    <button class="btn qr-camera-button" id="qr-camera-close" type="button">Cerrar cámara</button>
+                </div>
+                <input class="qr-photo-input" id="qr-photo" type="file" accept="image/*" capture="environment">
+                <label class="btn qr-photo-button" for="qr-photo">Escanear desde foto</label>
+            </div>
         </section>
 
         <section class="panel qr-result" aria-labelledby="qr-result-title" aria-live="polite">
@@ -137,4 +153,10 @@
             <article class="panel qr-alternative"><h3>Código no reconocido</h3><span class="qr-status-badge is-rejected">Rechazada · Sin ingreso</span><p class="qr-guide-instruction">Revisá el identificador y consultá soporte si persiste.</p></article>
         </div>
     </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous" defer></script>
+<script src="{{ url_for('static', filename='js/validar-qr.js') }}" defer></script>
 {% endblock %}
