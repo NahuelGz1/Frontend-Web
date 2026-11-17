@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (formValidarQR) {
         const inputQR = formValidarQR.querySelector('input[name="codigo_qr"]');
         if (inputQR) {
-            inputQR.focus();
+            inputQR.focus({ preventScroll: true });
         }
     }
 });
