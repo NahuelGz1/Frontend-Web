@@ -122,14 +122,14 @@ Los puertos y direcciones anteriores corresponden a la configuración local pred
 - Inicio, cartelera, detalle de películas y próximos estrenos.
 - Registro, inicio y cierre de sesión; recuperación y cambio de contraseña.
 - Selección de función y butacas.
-- Selección de servicios adicionales y confirmación de compra.
+- Selección de servicios adicionales con comprobación del cupo de estacionamiento por función (**máximo 20 plazas**), actualización de cantidades y confirmación de compra.
 - Consulta del perfil y del historial de compras; opciones de descarga y cancelación según las reglas del sistema.
 
 ### Administración
 
 - Consulta de estadísticas y métricas.
 - Gestión de películas, incluida la búsqueda externa mediante TMDB.
-- Gestión de salas, funciones y servicios adicionales.
+- Gestión de salas, funciones y servicios adicionales. Incluye cancelación administrativa de funciones con motivo, cálculo de devolución e intento de notificación por correo a los compradores.
 - Gestión de permisos de otras cuentas administrativas, restringida al administrador principal.
 - Consulta y validación de códigos QR.
 
@@ -202,7 +202,7 @@ Seguí [`DOCKER.md`](DOCKER.md) para configurar `.env.docker`, construir los con
 - [Backend_Api — API REST y configuración de MySQL](https://github.com/NahuelGz1/Backend_Api).
 - [DOCKER.md — Ejecución del proyecto con Docker](DOCKER.md).
 - [Issue #83 — Documentación técnica del proyecto](https://github.com/NahuelGz1/Backend_Api/issues/83).
-- El manual de endpoints OpenAPI se mantiene en el repositorio del backend, en `docs/Manual_API_Cine_paradiso.yaml` (una vez incorporada su rama de documentación).
+- [Manual de API (OpenAPI 3.0)](https://github.com/NahuelGz1/Backend_Api/blob/develop/docs/Manual_API_Cine_paradiso.yaml), mantenido en el repositorio Backend_Api. El enlace funcionará una vez incorporado el Pull Request correspondiente a `develop`.
 
 ---
 
