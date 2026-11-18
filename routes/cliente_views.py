@@ -432,3 +432,23 @@ def estrenos():
                 estrenos_lista.append(pelicula)
 
     return render_template("cliente/estrenos.html", peliculas=estrenos_lista)
+
+
+@cliente_views_bp.route("/puntuar-pelicula", methods=["POST"])
+@requiere_sesion
+def puntuar_pelicula():
+    pelicula_id = request.form.get("pelicula_id")
+    puntuacion = request.form.get("puntuacion")
+    
+    status_code, respuesta = consumir_api("POST", "/compras/reseña", {
+        "id_pelicula": int(pelicula_id) if pelicula_id else None,
+        "puntuacion": int(puntuacion) if puntuacion else None
+    })
+    
+    if status_code in (200, 201):
+        flash("¡Gracias por tu puntuación!", "success")
+    else:
+        mensaje = respuesta.get("error", {}).get("message", "No se pudo registrar la puntuación.")
+        flash(mensaje, "danger")
+        
+    return redirect(url_for("cliente_views.mi_perfil"))
