@@ -398,7 +398,9 @@ def confirmar_compra(resumen):
     if not 200 <= status_code < 300:
         # Si el back rechaza los datos (por ejemplo una butaca ya vendida) hay que volver al mapa
         mensaje = _mensaje_de_error(status_code, respuesta, "No pudimos confirmar la compra. Intentá de nuevo en unos minutos.")
-        if status_code == 400 and "estacionamiento" in mensaje.lower():
+        if status_code in (400, 409) and (
+            "estacionamiento" in mensaje.lower() or "servicio" in mensaje.lower()
+        ):
             return False, mensaje, "servicios"
         return False, mensaje, "butacas" if 400 <= status_code < 500 and status_code != 401 else None
     session[CLAVE_COMPRA_CONFIRMADA] = _datos_compra_exitosa(resumen["vista"], respuesta.get("data") or {})
