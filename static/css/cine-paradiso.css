@@ -2409,6 +2409,18 @@ button.btn-secondary:disabled {
 }
 
 .profile-status-used {
+    background-color: var(--cinema-850);
+    color: var(--text-muted);
+}
+
+.profile-status-cancelled {
+    background-color: var(--cinema-850);
+    color: var(--cinema-red-light);
+}
+
+.profile-status-partial,
+.profile-status-pending {
+    background-color: var(--cinema-850);
     color: var(--text-muted);
 }
 
@@ -2526,12 +2538,66 @@ button.btn-secondary:disabled {
     margin-top: 0.2rem;
 }
 
+.watched-details .watched-total {
+    margin-top: 0.25rem;
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+.watched-invoice-link {
+    display: inline-flex;
+    width: auto;
+    min-height: 1.8rem;
+    margin-top: 0.4rem;
+    font-size: 0.6rem;
+}
+
+.candy-orders {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.candy-order {
+    padding: 0.65rem 0.7rem;
+    border: 1px solid var(--cinema-800);
+    border-radius: 0.35rem;
+    background-color: var(--cinema-850);
+}
+
+.candy-order-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.55rem;
+}
+
+.candy-order-heading h3,
+.candy-order-heading strong {
+    color: var(--text-light);
+    font-size: 0.68rem;
+}
+
+.candy-order-heading p {
+    margin-top: 0.15rem;
+    color: var(--text-muted);
+    font-size: 0.62rem;
+}
+
+.candy-order-heading strong {
+    white-space: nowrap;
+}
+
 .candy-item {
     display: grid;
     grid-template-columns: 1.6rem 1fr;
     gap: 0.6rem;
     align-items: center;
     padding: 0.55rem 0;
+    border-top: 1px solid var(--cinema-800);
+}
+
+.candy-order .candy-item:first-child {
     border-top: 1px solid var(--cinema-800);
 }
 
