@@ -131,20 +131,41 @@
                 </div>
                 <div class="watched-list">
                     {% for pelicula in vistas %}
-                    <article class="watched-item">
-                        <span class="profile-ticket-icon" aria-hidden="true">▣</span>
-                        <div class="watched-details">
-                            <h3>{{ pelicula.titulo }}</h3>
-                            <p>{{ pelicula.complejo }} · {{ pelicula.sala }}</p>
-                            <p>{{ pelicula.fecha }} · {{ pelicula.horario }}</p>
-                            <p>{{ pelicula.cantidad_entradas }} entradas · Butacas: {{ pelicula.butacas }}</p>
-                            <p class="watched-total">{{ pelicula.total_formateado }}</p>
-                            <small>Op. {{ pelicula.codigo_operacion }}</small>
-                            {% if pelicula.id_compra %}
-                            <a class="profile-secondary-button watched-invoice-link" href="{{ url_for('cliente_views.descargar_factura', compra_id=pelicula.id_compra) }}">Descargar factura</a>
+                    <article class="watched-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <span class="profile-ticket-icon" aria-hidden="true">🎬</span>
+                            <div class="watched-details">
+                                <h3>{{ pelicula.titulo }}</h3>
+                                <p>{{ pelicula.complejo }} · {{ pelicula.sala }}</p>
+                                <p>{{ pelicula.fecha }} · {{ pelicula.horario }}</p>
+                                <p>{{ pelicula.cantidad_entradas }} entradas · Butacas: {{ pelicula.butacas }}</p>
+                                <p class="watched-total">{{ pelicula.total_formateado }}</p>
+                                <small>Op. {{ pelicula.codigo_operacion }}</small>
+                                {% if pelicula.id_compra %}
+                                <a class="profile-secondary-button watched-invoice-link" href="{{ url_for('cliente_views.descargar_factura', compra_id=pelicula.id_compra) }}">Descargar factura</a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                            <span class="profile-status {{ pelicula.estado.clase }}">{{ pelicula.estado.texto }}</span>
+
+                            {% if pelicula.estado.texto == 'Utilizada' or pelicula.puede_puntuar is not defined or pelicula.puede_puntuar %}
+                            <form method="POST" action="{{ url_for('cliente_views.puntuar_pelicula') }}" style="display: flex; align-items: center; gap: 0.4rem;">
+                                {% if csrf_token is defined %}
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                {% endif %}
+                                <input type="hidden" name="pelicula_id" value="{{ pelicula.id_pelicula }}">
+
+                                {% for i in range(1, 6) %}
+                                <button type="submit" name="puntuacion" value="{{ i }}" title="Puntuar con {{ i }} estrellas"
+                                    style="background: none; border: none; cursor: pointer; font-size: 1.3rem; padding: 0 2px; color: {% if pelicula.puntuacion_usuario and i <= pelicula.puntuacion_usuario %}#f5c518{% else %}#666{% endif %};">
+                                    ★
+                                </button>
+                                {% endfor %}
+                            </form>
                             {% endif %}
                         </div>
-                        <span class="profile-status {{ pelicula.estado.clase }}">{{ pelicula.estado.texto }}</span>
                     </article>
                     {% else %}
                     <div class="empty-state">
