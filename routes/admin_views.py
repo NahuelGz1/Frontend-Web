@@ -117,15 +117,10 @@ def exportar_estadisticas_pdf():
         params["periodo"] = periodo
 
 
+    status, contenido, cabeceras = descargar_api("/dashboard/ocupacion/pdf", params=params)
 
-
-
-    status_code, contenido, cabeceras = descargar_api(
-        "GET",
-        "/dashboard/ocupacion/pdf",
-        params=params,
-    )
-    if status_code != 200 or not contenido:
+    
+    if status != 200 or not contenido:
         abort(502)
 
     respuesta = make_response(contenido)
