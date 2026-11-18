@@ -133,7 +133,11 @@
                     {% for pelicula in vistas %}
                     <article class="watched-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
                         <div style="display: flex; align-items: center; gap: 1rem;">
-                            <span class="profile-ticket-icon" aria-hidden="true">🎬</span>
+                            {% if pelicula.poster_url %}
+                            <img class="watched-poster" src="{{ pelicula.poster_url }}" alt="Póster de {{ pelicula.titulo }}" loading="lazy">
+                            {% else %}
+                            <div class="watched-poster profile-poster-placeholder" aria-hidden="true">▧</div>
+                            {% endif %}
                             <div class="watched-details">
                                 <h3>{{ pelicula.titulo }}</h3>
                                 <p>{{ pelicula.complejo }} · {{ pelicula.sala }}</p>

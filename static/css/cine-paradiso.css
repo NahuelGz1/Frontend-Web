@@ -2376,7 +2376,13 @@ button.btn-secondary:disabled {
 }
 
 .upcoming-ticket {
+    padding: 0.7rem 0;
+    border-top: 1px solid var(--cinema-800);
+}
+
+.upcoming-ticket:first-of-type {
     padding-top: 0.1rem;
+    border-top: 0;
 }
 
 .upcoming-ticket-heading {
@@ -2431,7 +2437,8 @@ button.btn-secondary:disabled {
     border-bottom: 1px solid var(--cinema-800);
 }
 
-.upcoming-poster {
+.upcoming-poster,
+.watched-poster {
     width: 3.2rem;
     height: 4.5rem;
     flex: 0 0 3.2rem;
