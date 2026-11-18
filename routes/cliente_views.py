@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, abort, c
 from services.api_client import consumir_api
 from services import compra_service, auth_service
 from routes.auth_security import requiere_sesion, csrf_token
+from utils.butacas import etiquetas_butacas
 
 cliente_views_bp = Blueprint("cliente_views", __name__)
 
@@ -268,6 +269,12 @@ def mi_perfil():
     if status_code != 200 or not isinstance(datos_perfil, dict):
         current_app.logger.error("No se pudo obtener el perfil completo de la API")
         abort(503, description="No se pudo cargar tu perfil. Intentá más tarde.")
+
+    for entrada in datos_perfil.get("entradas_proximas", []):
+        if "numeros_butacas" in entrada:
+            entrada["butacas"] = etiquetas_butacas(
+                [int(numero) for numero in entrada["numeros_butacas"]]
+            )
     usuario = session.get("usuario") or {}
     partes_nombre = str(usuario.get("nombre", "")).split(maxsplit=1)
     datos_perfil["nombre_form"] = partes_nombre[0] if partes_nombre else ""

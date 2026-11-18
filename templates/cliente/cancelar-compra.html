@@ -8,7 +8,7 @@
 {% set entradas = reserva.entradas|default([], true) %}
 {% set codigo = reserva.codigo|default('CP-' ~ reserva.id, true) %}
 {% set titulo = funcion_mostrada.pelicula.titulo|default('Tu función', true) %}
-{% set butacas = entradas|map(attribute='numero_butaca')|join(', ') %}
+{% set butacas = entradas|map(attribute='codigo_butaca')|join(', ') %}
 {% set subtotal_entradas = resumen.subtotal_entradas|default(0, true)|float %}
 {% set subtotal_servicios = resumen.subtotal_servicios|default(0, true)|float %}
 {% set estado_actual = estado|default('pendiente', true) %}
@@ -64,6 +64,7 @@
         <h2>¿Querés cancelar esta compra?</h2>
         <div class="cancelacion-estado-detalle">
             <p>Se cancelarían las entradas {{ butacas }} y los servicios de esta compra. Los QR quedarían invalidados y las butacas se liberarían.</p>
+            <p>La compra no puede cancelarse si ya se utilizó alguna entrada o servicio.</p>
             <p>No podrás usar estas entradas después de cancelar.</p>
         </div>
         <div class="cancelacion-acciones">
