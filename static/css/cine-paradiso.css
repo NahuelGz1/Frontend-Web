@@ -2515,6 +2515,41 @@ button.btn-secondary:disabled {
     border-top: 1px solid var(--cinema-800);
 }
 
+.rating-item {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid var(--cinema-800);
+}
+
+.rating-movie {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.rating-form {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.rating-star {
+    padding: 0 2px;
+    border: 0;
+    background: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 1.3rem;
+}
+
+.rating-star-selected {
+    color: #f5c518;
+}
+
 .profile-ticket-icon,
 .candy-icon {
     display: inline-flex;

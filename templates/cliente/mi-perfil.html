@@ -14,6 +14,7 @@
 
 {% set proximas = entradas_proximas|default([]) %}
 {% set vistas = peliculas_vistas|default([]) %}
+{% set puntuables = peliculas_para_puntuar|default([]) %}
 {% set pedidos = consumos_pedidos|default([]) %}
 
 <div class="profile-page">
@@ -126,6 +127,41 @@
 
             <section class="profile-section">
                 <div class="profile-section-heading">
+                    <h2>Mis valoraciones</h2>
+                    <p>Una puntuación por película con entrada validada. Podés cambiarla cuando quieras.</p>
+                </div>
+                {% for pelicula in puntuables %}
+                <article class="rating-item">
+                    <div class="rating-movie">
+                        {% if pelicula.poster_url %}
+                        <img class="watched-poster" src="{{ pelicula.poster_url }}" alt="Póster de {{ pelicula.titulo }}" loading="lazy">
+                        {% else %}
+                        <div class="watched-poster profile-poster-placeholder" aria-hidden="true">▧</div>
+                        {% endif %}
+                        <div class="watched-details">
+                            <h3>{{ pelicula.titulo }}</h3>
+                            <p>{% if pelicula.puntuacion_usuario %}Tu puntuación: {{ pelicula.puntuacion_usuario }} de 5{% else %}Todavía no puntuaste esta película.{% endif %}</p>
+                        </div>
+                    </div>
+                    <form class="rating-form" method="POST" action="{{ url_for('cliente_views.puntuar_pelicula') }}" aria-label="Puntuar {{ pelicula.titulo }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="pelicula_id" value="{{ pelicula.id_pelicula }}">
+                        {% for i in range(1, 6) %}
+                        <button class="rating-star{% if pelicula.puntuacion_usuario and i <= pelicula.puntuacion_usuario %} rating-star-selected{% endif %}"
+                                type="submit" name="puntuacion" value="{{ i }}" aria-label="Puntuar {{ pelicula.titulo }} con {{ i }} estrellas"
+                                title="Puntuar con {{ i }} estrellas">★</button>
+                        {% endfor %}
+                    </form>
+                </article>
+                {% else %}
+                <div class="empty-state">
+                    <p>Cuando validen una entrada, vas a poder puntuar la película acá.</p>
+                </div>
+                {% endfor %}
+            </section>
+
+            <section class="profile-section">
+                <div class="profile-section-heading">
                     <h2>Películas vistas</h2>
                     <p>Historial de entradas - Funciones anteriores</p>
                 </div>
@@ -154,21 +190,6 @@
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
                             <span class="profile-status {{ pelicula.estado.clase }}">{{ pelicula.estado.texto }}</span>
 
-                            {% if pelicula.estado.texto == 'Utilizada' or pelicula.puede_puntuar is not defined or pelicula.puede_puntuar %}
-                            <form method="POST" action="{{ url_for('cliente_views.puntuar_pelicula') }}" style="display: flex; align-items: center; gap: 0.4rem;">
-                                {% if csrf_token is defined %}
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                {% endif %}
-                                <input type="hidden" name="pelicula_id" value="{{ pelicula.id_pelicula }}">
-
-                                {% for i in range(1, 6) %}
-                                <button type="submit" name="puntuacion" value="{{ i }}" title="Puntuar con {{ i }} estrellas"
-                                    style="background: none; border: none; cursor: pointer; font-size: 1.3rem; padding: 0 2px; color: {% if pelicula.puntuacion_usuario and i <= pelicula.puntuacion_usuario %}#f5c518{% else %}#666{% endif %};">
-                                    ★
-                                </button>
-                                {% endfor %}
-                            </form>
-                            {% endif %}
                         </div>
                     </article>
                     {% else %}
