@@ -8,10 +8,13 @@ from datetime import datetime, timedelta, timezone
 from flask import current_app, session
 
 from services.api_client import consumir_api
+from utils.butacas import (
+    etiquetas_butacas,
+    texto_butacas,
+    ubicacion_butaca,
+)
 
-BUTACAS_POR_FILA = 10
 MAXIMO_BUTACAS_POR_COMPRA = 10
-LETRAS_FILAS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 DIAS = ("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
 MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
          "agosto", "septiembre", "octubre", "noviembre", "diciembre")
@@ -51,25 +54,6 @@ def _numero_con_puntos(monto):
 
 def formatear_precio(monto):
     return f"${_numero_con_puntos(monto)}"
-
-
-def _nombre_fila(indice):
-    return LETRAS_FILAS[indice] if indice < len(LETRAS_FILAS) else str(indice + 1)
-
-
-def _ubicacion(numero_butaca):
-    # El back numera las butacas de 1 a capacidad, aca se pasa a fila y numero
-    indice_fila, posicion = divmod(numero_butaca - 1, BUTACAS_POR_FILA)
-    return _nombre_fila(indice_fila), posicion + 1
-
-
-def etiqueta_butaca(numero_butaca):
-    fila, numero = _ubicacion(numero_butaca)
-    return f"{fila}{numero}"
-
-
-def _texto_butacas(numeros):
-    return "Butacas " + ", ".join(etiqueta_butaca(n) for n in sorted(numeros))
 
 
 def _fecha_de_funcion(funcion):
@@ -173,12 +157,12 @@ def armar_filas(butacas):
     filas = []
     for butaca in sorted(butacas, key=lambda b: b["numero_butaca"]):
         numero_butaca = butaca["numero_butaca"]
-        indice_fila = (numero_butaca - 1) // BUTACAS_POR_FILA
-        while len(filas) <= indice_fila:
-            filas.append({"nombre": _nombre_fila(len(filas)), "butacas": []})
-        filas[indice_fila]["butacas"].append({
+        nombre, numero = ubicacion_butaca(numero_butaca)
+        if not filas or filas[-1]["nombre"] != nombre:
+            filas.append({"nombre": nombre, "butacas": []})
+        filas[-1]["butacas"].append({
             "id": numero_butaca,
-            "numero": _ubicacion(numero_butaca)[1],
+            "numero": numero,
             "ocupada": butaca.get("estado") != "disponible",
         })
     return filas
@@ -230,7 +214,7 @@ def validar_seleccion(valores, filas):
         return siguen_libres, f"Podés elegir hasta {MAXIMO_BUTACAS_POR_COMPRA} butacas por compra."
     ocupadas = sorted(elegidas - libres)
     if ocupadas:
-        etiquetas = ", ".join(etiqueta_butaca(n) for n in ocupadas)
+        etiquetas = etiquetas_butacas(ocupadas)
         return siguen_libres, f"Estas butacas ya están ocupadas: {etiquetas}. Elegí otras."
     return sorted(elegidas), None
 
@@ -364,7 +348,7 @@ def armar_resumen(incluir_servicios=True):
             "horario": fecha.strftime("%H:%M"),
             "complejo": sala.get("local", ""),
             "sala": sala.get("nombre", ""),
-            "butacas": _texto_butacas(butacas),
+            "butacas": texto_butacas(butacas),
         },
         "cantidad_entradas": len(butacas),
         "precio_entrada": formatear_precio(precio_entrada),
@@ -382,7 +366,7 @@ def armar_resumen(incluir_servicios=True):
 def _datos_compra_exitosa(vista, compra_api):
     entradas = []
     for entrada in compra_api.get("entradas") or []:
-        fila, numero = _ubicacion(entrada["numero_butaca"])
+        fila, numero = ubicacion_butaca(entrada["numero_butaca"])
         entradas.append({
             "fila": fila,
             "numero": numero,
@@ -414,7 +398,9 @@ def confirmar_compra(resumen):
     if not 200 <= status_code < 300:
         # Si el back rechaza los datos (por ejemplo una butaca ya vendida) hay que volver al mapa
         mensaje = _mensaje_de_error(status_code, respuesta, "No pudimos confirmar la compra. Intentá de nuevo en unos minutos.")
-        if status_code == 400 and "estacionamiento" in mensaje.lower():
+        if status_code in (400, 409) and (
+            "estacionamiento" in mensaje.lower() or "servicio" in mensaje.lower()
+        ):
             return False, mensaje, "servicios"
         return False, mensaje, "butacas" if 400 <= status_code < 500 and status_code != 401 else None
     session[CLAVE_COMPRA_CONFIRMADA] = _datos_compra_exitosa(resumen["vista"], respuesta.get("data") or {})
@@ -432,7 +418,7 @@ def datos_confirmacion(datos):
     reserva = datos["reserva"]
     entradas = []
     for entrada in reserva["entradas"]:
-        fila, numero = _ubicacion(entrada["numero_butaca"])
+        fila, numero = ubicacion_butaca(entrada["numero_butaca"])
         entradas.append({
             **entrada, "fila": fila, "numero": numero, "codigo": entrada["codigo_qr"],
             "qr_url": f"data:image/png;base64,{entrada['qr_imagen_base64']}",
@@ -448,7 +434,7 @@ def datos_confirmacion(datos):
         "funcion": {
             **funcion, "fecha": fecha.strftime("%d/%m/%Y"), "horario": fecha.strftime("%H:%M"),
             "complejo": funcion["sala"]["local"],
-            "butacas": _texto_butacas([e["numero_butaca"] for e in reserva["entradas"]]),
+            "butacas": texto_butacas([e["numero_butaca"] for e in reserva["entradas"]]),
         },
         "reserva": {**reserva, "entradas": entradas},
         "resumen": {
@@ -479,7 +465,7 @@ def preparar_datos_documento(datos):
             try:
                 num_int =int(num)
                 butacas_nums.append(num_int)
-                fila, col = _ubicacion(num_int)
+                fila, col = ubicacion_butaca(num_int)
                 codigo_butaca = f"{fila}{col}"
             except (ValueError, TypeError):
                 fila, col, codigo_butaca = "", num, str(num)
@@ -494,12 +480,14 @@ def preparar_datos_documento(datos):
             "numero": col,
             "codigo_butaca": codigo_butaca,
         })
-    butacas_texto = reserva.get("butacas_texto") or _texto_butacas(butacas_nums)
+    butacas_texto = reserva.get("butacas_texto") or texto_butacas(butacas_nums)
+    butacas_listado = re.sub(r"^Butacas?:?\s+", "", butacas_texto, flags=re.IGNORECASE)
     codigo_qr = datos.get("compra", {}).get("codigo_qr") or reserva.get("codigo_qr") or (entradas_raw[0].get("codigo_qr") if entradas_raw else "")
     return {
         **datos,
         "qr_imagen_base64": qr_imagen,
         "butacas_texto": butacas_texto,
+        "butacas_listado": butacas_listado,
         "codigo_qr": codigo_qr,
         "reserva": {
             **reserva,

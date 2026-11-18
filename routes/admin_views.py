@@ -5,7 +5,7 @@ import base64
 from datetime import datetime
 from urllib.parse import quote
 
-from flask import abort, Blueprint, current_app, flash, redirect, render_template, request, session, url_for
+from flask import abort, Blueprint, current_app, flash, make_response, redirect, render_template, request, session, url_for
 
 from routes.auth_security import (
     csrf_token as obtener_csrf_token,
@@ -13,9 +13,9 @@ from routes.auth_security import (
     verificar_sesion
 )
 
-from services.api_client import consumir_api
-from services.compra_service import etiqueta_butaca
+from services.api_client import consumir_api, descargar_api
 from services.estadisticas_service import obtener_estadisticas_dashboard
+from utils.butacas import etiqueta_butaca, etiquetas_butacas
 from services.admin_service import (
     dar_de_baja_administrador,
     habilitar_administrador,
@@ -103,6 +103,35 @@ def estadisticas():
         filtros={"complejo": complejo_filtro, "periodo": periodo_filtro},
         error_api=error_api
     )
+
+
+@admin_views.route("/estadisticas/exportar-pdf")
+def exportar_estadisticas_pdf():
+    params = {}
+    complejo = request.args.get ("complejo", "").strip()
+    periodo = request.args.get("periodo", "").strip()
+
+    if complejo:
+        params["complejo"] = complejo
+    if periodo:
+        params["periodo"] = periodo
+
+
+    status, contenido, cabeceras = descargar_api("/dashboard/ocupacion/pdf", params=params)
+
+    
+    if status != 200 or not contenido:
+        abort(502)
+
+    respuesta = make_response(contenido)
+    respuesta.status_code = 200
+    respuesta.headers["Content-Type"] = "application/pdf"
+    respuesta.headers["Content-Disposition"] = (
+        cabeceras.get("Content-Disposition")
+        or 'attachment; filename="reporte_de_ventas_cine_paradiso.pdf"'
+    )
+    respuesta.headers["Cache-Control"] = "no-store"
+    return respuesta
 
 
 @admin_views.route("/habilitar-admins", methods=["GET", "POST"])
@@ -899,9 +928,11 @@ def _vista_qr(data, categoria, codigo_qr):
         "fecha_hora": _formatear_fecha_hora(data.get("fecha_hora")),
         "complejo": data.get("complejo") or "",
         "sala": data.get("sala") or "",
-        "butacas_texto": ", ".join(etiqueta_butaca(n) for n in sorted(data.get("butacas") or [])) or "Sin butacas activas",
+        "butacas_texto": etiquetas_butacas(data.get("butacas") or []) or "Sin butacas activas",
         "compra_cancelada": bool(data.get("compra_cancelada")),
-        "total": actual.get("total", 0),
+        "fuera_de_fecha": data.get("valida") is False,
+        "estado_validacion": data.get("estado_validacion"),
+        "mensaje_validacion": data.get("mensaje_validacion") or "",
         "utilizados": actual.get("utilizados", 0),
         "pendientes": actual.get("pendientes", 0),
         "unidades": unidades,
@@ -939,6 +970,10 @@ def _estado_qr(vista, aviso, error):
     if vista["compra_cancelada"]:
         return {**rechazo, "estado": "Entrada cancelada",
                 "detalle": "La compra está cancelada. No permitas el ingreso y derivá la consulta a atención."}
+    if vista["fuera_de_fecha"]:
+        anticipada = vista["estado_validacion"] == "funcion_anticipada"
+        return {**rechazo, "estado": "Función aún no habilitada" if anticipada else "Función vencida",
+                "detalle": vista["mensaje_validacion"] or "La función está fuera de la ventana de ingreso permitida."}
     if aviso and aviso["aprobada"]:
         if vista["qr_cerrado"]:
             return {"titulo": "Resultado · QR cerrado", "aprobada": True,

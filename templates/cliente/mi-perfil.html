@@ -14,8 +14,8 @@
 
 {% set proximas = entradas_proximas|default([]) %}
 {% set vistas = peliculas_vistas|default([]) %}
-{% set candy = consumos_candy|default([]) %}
-{% set candy_total = consumos_candy_total|default('0', true) %}
+{% set puntuables = peliculas_para_puntuar|default([]) %}
+{% set pedidos = consumos_pedidos|default([]) %}
 
 <div class="profile-page">
     <header class="profile-heading">
@@ -127,20 +127,70 @@
 
             <section class="profile-section">
                 <div class="profile-section-heading">
+                    <h2>Mis valoraciones</h2>
+                    <p>Una puntuación por película con entrada validada. Podés cambiarla cuando quieras.</p>
+                </div>
+                {% for pelicula in puntuables %}
+                <article class="rating-item">
+                    <div class="rating-movie">
+                        {% if pelicula.poster_url %}
+                        <img class="watched-poster" src="{{ pelicula.poster_url }}" alt="Póster de {{ pelicula.titulo }}" loading="lazy">
+                        {% else %}
+                        <div class="watched-poster profile-poster-placeholder" aria-hidden="true">▧</div>
+                        {% endif %}
+                        <div class="watched-details">
+                            <h3>{{ pelicula.titulo }}</h3>
+                            <p>{% if pelicula.puntuacion_usuario %}Tu puntuación: {{ pelicula.puntuacion_usuario }} de 5{% else %}Todavía no puntuaste esta película.{% endif %}</p>
+                        </div>
+                    </div>
+                    <form class="rating-form" method="POST" action="{{ url_for('cliente_views.puntuar_pelicula') }}" aria-label="Puntuar {{ pelicula.titulo }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="pelicula_id" value="{{ pelicula.id_pelicula }}">
+                        {% for i in range(1, 6) %}
+                        <button class="rating-star{% if pelicula.puntuacion_usuario and i <= pelicula.puntuacion_usuario %} rating-star-selected{% endif %}"
+                                type="submit" name="puntuacion" value="{{ i }}" aria-label="Puntuar {{ pelicula.titulo }} con {{ i }} estrellas"
+                                title="Puntuar con {{ i }} estrellas">★</button>
+                        {% endfor %}
+                    </form>
+                </article>
+                {% else %}
+                <div class="empty-state">
+                    <p>Cuando validen una entrada, vas a poder puntuar la película acá.</p>
+                </div>
+                {% endfor %}
+            </section>
+
+            <section class="profile-section">
+                <div class="profile-section-heading">
                     <h2>Películas vistas</h2>
                     <p>Historial de entradas - Funciones anteriores</p>
                 </div>
                 <div class="watched-list">
                     {% for pelicula in vistas %}
-                    <article class="watched-item">
-                        <span class="profile-ticket-icon" aria-hidden="true">▣</span>
-                        <div class="watched-details">
-                            <h3>{{ pelicula.titulo }}</h3>
-                            <p>{{ pelicula.fecha }} · {{ pelicula.horario }}</p>
-                            <p>{{ pelicula.sala }} · {{ pelicula.cantidad_entradas }} entradas · {{ pelicula.total }} ARS</p>
-                            <small>Op. {{ pelicula.codigo_operacion }}</small>
+                    <article class="watched-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            {% if pelicula.poster_url %}
+                            <img class="watched-poster" src="{{ pelicula.poster_url }}" alt="Póster de {{ pelicula.titulo }}" loading="lazy">
+                            {% else %}
+                            <div class="watched-poster profile-poster-placeholder" aria-hidden="true">▧</div>
+                            {% endif %}
+                            <div class="watched-details">
+                                <h3>{{ pelicula.titulo }}</h3>
+                                <p>{{ pelicula.complejo }} · {{ pelicula.sala }}</p>
+                                <p>{{ pelicula.fecha }} · {{ pelicula.horario }}</p>
+                                <p>{{ pelicula.cantidad_entradas }} entradas · Butacas: {{ pelicula.butacas }}</p>
+                                <p class="watched-total">{{ pelicula.total_formateado }}</p>
+                                <small>Op. {{ pelicula.codigo_operacion }}</small>
+                                {% if pelicula.id_compra %}
+                                <a class="profile-secondary-button watched-invoice-link" href="{{ url_for('cliente_views.descargar_factura', compra_id=pelicula.id_compra) }}">Descargar factura</a>
+                                {% endif %}
+                            </div>
                         </div>
-                        <span class="profile-status profile-status-used">Utilizada</span>
+
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                            <span class="profile-status {{ pelicula.estado.clase }}">{{ pelicula.estado.texto }}</span>
+
+                        </div>
                     </article>
                     {% else %}
                     <div class="empty-state">
@@ -152,34 +202,36 @@
 
             <section class="profile-section">
                 <div class="profile-section-heading">
-                    <h2>Consumos del candy bar</h2>
-                    {% if candy %}
-                    <p>{{ candy[0].fecha }} · Pedido {{ candy[0].codigo_pedido }}</p>
-                    {% endif %}
+                    <h2>Consumos y servicios</h2>
                 </div>
-                {% if candy %}
-                <div class="candy-list">
-                    {% for consumo in candy %}
-                    <article class="candy-item">
-                        {% if consumo.imagen_url %}
-                        <img src="{{ consumo.imagen_url }}" alt="">
-                        {% else %}
-                        <span class="candy-icon" aria-hidden="true">◉</span>
-                        {% endif %}
-                        <div>
-                            <h3>{{ consumo.nombre }}</h3>
-                            <p>{{ consumo.cantidad }} x {{ consumo.precio_unitario }} ARS</p>
+                {% if pedidos %}
+                <div class="candy-orders">
+                    {% for pedido in pedidos %}
+                    <article class="candy-order">
+                        <div class="candy-order-heading">
+                            <div>
+                                <h3>{{ pedido.fecha }}</h3>
+                                <p>{{ 'Operación' if pedido.id_compra else 'Pedido' }} {{ pedido.codigo_pedido }}</p>
+                            </div>
+                            <strong>{{ pedido.total }}</strong>
+                        </div>
+                        <div class="candy-list">
+                            {% for consumo in pedido["items"] %}
+                            <article class="candy-item">
+                                <span class="candy-icon" aria-hidden="true">◉</span>
+                                <div>
+                                    <h3>{{ consumo.cantidad }} × {{ consumo.nombre }}</h3>
+                                    <p>{{ consumo.precio_unitario_formateado }} c/u · Subtotal {{ consumo.subtotal }}</p>
+                                </div>
+                            </article>
+                            {% endfor %}
                         </div>
                     </article>
                     {% endfor %}
                 </div>
-                <div class="candy-total">
-                    <span>Total de consumos</span>
-                    <strong>{{ candy_total }} ARS</strong>
-                </div>
                 {% else %}
                 <div class="empty-state">
-                    <p>No tenés consumos registrados en el candy bar.</p>
+                    <p>No tenés consumos ni servicios registrados.</p>
                 </div>
                 {% endif %}
             </section>

@@ -16,6 +16,17 @@
             <h1 id="stats-title">Estadísticas detalladas</h1>
             <p>Detalle de ocupación, ventas y cancelaciones de las funciones seleccionadas.</p>
         </div>
+        <a
+            class="btn btn-primary"
+            href="{{ url_for(
+                'admin_views.exportar_estadisticas_pdf',
+                complejo=filtros.complejo,
+                periodo=filtros.periodo
+            ) }}"
+        >
+            Descargar reporte PDF
+        </a>
+        
     </header>
 
     <form class="stats-filters" method="get" action="{{ url_for('admin_views.estadisticas') }}" aria-label="Filtros de estadísticas">

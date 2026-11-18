@@ -21,8 +21,20 @@
             <p><strong>Butacas:</strong> {{ vista.butacas_texto }}</p>
             {% if vista.compra_cancelada %}
             <p><strong>Estado:</strong> <span class="qr-show-state is-inactive">Compra cancelada</span></p>
+            {% elif vista.qr_cerrado %}
+            <p><strong>Estado:</strong> <span class="qr-show-state is-complete">QR cerrado</span></p>
+            {% elif vista.fuera_de_fecha %}
+            <p><strong>Estado:</strong> <span class="qr-show-state is-inactive">Fuera de fecha</span></p>
+            {% else %}
+            <p><strong>Estado:</strong> <span class="qr-show-state is-active">Válida</span></p>
             {% endif %}
         </div>
+    </section>
+    {% elif estado %}
+    <section class="qr-current-show" aria-label="Datos asociados al QR">
+        <span>Control de acceso</span>
+        <h2>Código no reconocido</h2>
+        <div class="qr-show-details"><p><strong>Estado:</strong> <span class="qr-show-state is-inactive">Rechazada</span></p></div>
     </section>
     {% else %}
     <section class="qr-current-show" aria-label="Datos asociados al QR">
@@ -86,6 +98,7 @@
             {% endif %}
             {% if vista %}
             {% if not estado %}<h2 id="qr-result-title">{{ vista.categoria_nombre }}</h2>{% endif %}
+            {% if not vista.fuera_de_fecha %}
             <form class="qr-category-tabs" method="post" action="{{ url_for('admin_views.validar_qr') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" name="accion" value="consultar">
@@ -130,6 +143,7 @@
                 {% endfor %}
             </div>
             {% endif %}
+            {% endif %}
             {% if estado %}<p class="help-text">{{ estado.detalle }}</p>{% endif %}
             {% elif estado %}
             <p class="help-text">{{ estado.detalle }}</p>
@@ -148,6 +162,7 @@
             <article class="panel qr-alternative"><h3>Compra válida</h3><span class="qr-status-badge is-approved">Aprobada · QR único</span><p class="qr-guide-instruction">Verificá función, fecha y butacas. Luego canjeá la categoría elegida.</p></article>
             <article class="panel qr-alternative"><h3>Entrada ya utilizada</h3><span class="qr-status-badge is-rejected">Rechazada · Sin ingreso</span><p class="qr-guide-instruction">No permitas un segundo ingreso y revisá el registro.</p></article>
             <article class="panel qr-alternative"><h3>Entrada cancelada</h3><span class="qr-status-badge is-rejected">Rechazada · Sin ingreso</span><p class="qr-guide-instruction">No permitas el ingreso y derivá la consulta a atención.</p></article>
+            <article class="panel qr-alternative"><h3>Función fuera de fecha</h3><span class="qr-status-badge is-rejected">Rechazada · Sin ingreso</span><p class="qr-guide-instruction">El QR corresponde a una función vencida o fuera de la ventana de ingreso permitida.</p></article>
             <article class="panel qr-alternative"><h3>Acceso VIP, estacionamiento o servicio</h3><span class="qr-status-badge is-approved">Validación por categoría</span><p class="qr-guide-instruction">Cada entrada, acceso VIP, entrega de servicio y auto se canjea por separado.</p></article>
             <article class="panel qr-alternative"><h3>QR cerrado</h3><span class="qr-status-badge is-rejected">Rechazada · QR cerrado</span><p class="qr-guide-instruction">Todo lo de la compra ya fue canjeado. No admite nuevos canjes.</p></article>
             <article class="panel qr-alternative"><h3>Código no reconocido</h3><span class="qr-status-badge is-rejected">Rechazada · Sin ingreso</span><p class="qr-guide-instruction">Revisá el identificador y consultá soporte si persiste.</p></article>
