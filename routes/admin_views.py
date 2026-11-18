@@ -5,7 +5,7 @@ import base64
 from datetime import datetime
 from urllib.parse import quote
 
-from flask import abort, Blueprint, current_app, flash, redirect, render_template, request, session, url_for
+from flask import abort, Blueprint, current_app, flash, make_response, redirect, render_template, request, session, url_for
 
 from routes.auth_security import (
     csrf_token as obtener_csrf_token,
@@ -13,7 +13,7 @@ from routes.auth_security import (
     verificar_sesion
 )
 
-from services.api_client import consumir_api
+from services.api_client import consumir_api, descargar_api
 from services.estadisticas_service import obtener_estadisticas_dashboard
 from utils.butacas import etiqueta_butaca, etiquetas_butacas
 from services.admin_service import (
@@ -103,6 +103,40 @@ def estadisticas():
         filtros={"complejo": complejo_filtro, "periodo": periodo_filtro},
         error_api=error_api
     )
+
+
+@admin_views.route("/estadisticas/exportar-pdf")
+def exportar_estadisticas_pdf():
+    params = {}
+    complejo = request.args.get ("complejo", "").strip()
+    periodo = request.args.get("periodo", "").strip()
+
+    if complejo:
+        params["complejo"] = complejo
+    if periodo:
+        params["periodo"] = periodo
+
+
+
+
+
+    status_code, contenido, cabeceras = descargar_api(
+        "GET",
+        "/dashboard/ocupacion/pdf",
+        params=params,
+    )
+    if status_code != 200 or not contenido:
+        abort(502)
+
+    respuesta = make_response(contenido)
+    respuesta.status_code = 200
+    respuesta.headers["Content-Type"] = "application/pdf"
+    respuesta.headers["Content-Disposition"] = (
+        cabeceras.get("Content-Disposition")
+        or 'attachment; filename="reporte_de_ventas_cine_paradiso.pdf"'
+    )
+    respuesta.headers["Cache-Control"] = "no-store"
+    return respuesta
 
 
 @admin_views.route("/habilitar-admins", methods=["GET", "POST"])
