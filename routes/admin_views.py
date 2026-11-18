@@ -901,7 +901,9 @@ def _vista_qr(data, categoria, codigo_qr):
         "sala": data.get("sala") or "",
         "butacas_texto": etiquetas_butacas(data.get("butacas") or []) or "Sin butacas activas",
         "compra_cancelada": bool(data.get("compra_cancelada")),
-        "total": actual.get("total", 0),
+        "fuera_de_fecha": data.get("valida") is False,
+        "estado_validacion": data.get("estado_validacion"),
+        "mensaje_validacion": data.get("mensaje_validacion") or "",
         "utilizados": actual.get("utilizados", 0),
         "pendientes": actual.get("pendientes", 0),
         "unidades": unidades,
@@ -939,6 +941,10 @@ def _estado_qr(vista, aviso, error):
     if vista["compra_cancelada"]:
         return {**rechazo, "estado": "Entrada cancelada",
                 "detalle": "La compra está cancelada. No permitas el ingreso y derivá la consulta a atención."}
+    if vista["fuera_de_fecha"]:
+        anticipada = vista["estado_validacion"] == "funcion_anticipada"
+        return {**rechazo, "estado": "Función aún no habilitada" if anticipada else "Función vencida",
+                "detalle": vista["mensaje_validacion"] or "La función está fuera de la ventana de ingreso permitida."}
     if aviso and aviso["aprobada"]:
         if vista["qr_cerrado"]:
             return {"titulo": "Resultado · QR cerrado", "aprobada": True,
