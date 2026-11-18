@@ -2,6 +2,19 @@ import requests
 from flask import current_app, has_request_context, session
 
 
+def descargar_api(endpoint, params=None):
+    url = current_app.config["API_BASE_URL"] + endpoint
+    headers = {"Accept": "application/pdf"}
+    token = session.get("access_token")
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    try:
+        r = requests.get(url, params=params, headers=headers, timeout=30)
+        return r.status_code, r.content, r.headers
+    except requests.exceptions.RequestException:
+        current_app.logger.warning("No se pudo conectar con el servicio de reportes")
+        return 503, None, {}
+
 def consumir_api(metodo, endpoint, datos=None, params=None, headers=None):
     url = current_app.config["API_BASE_URL"].rstrip("/") + "/" + endpoint.lstrip("/")
     cabeceras = {"Accept": "application/json"}
