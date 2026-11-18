@@ -14,8 +14,8 @@ from routes.auth_security import (
 )
 
 from services.api_client import consumir_api
-from services.compra_service import etiqueta_butaca
 from services.estadisticas_service import obtener_estadisticas_dashboard
+from utils.butacas import etiqueta_butaca, etiquetas_butacas
 from services.admin_service import (
     dar_de_baja_administrador,
     habilitar_administrador,
@@ -899,7 +899,7 @@ def _vista_qr(data, categoria, codigo_qr):
         "fecha_hora": _formatear_fecha_hora(data.get("fecha_hora")),
         "complejo": data.get("complejo") or "",
         "sala": data.get("sala") or "",
-        "butacas_texto": ", ".join(etiqueta_butaca(n) for n in sorted(data.get("butacas") or [])) or "Sin butacas activas",
+        "butacas_texto": etiquetas_butacas(data.get("butacas") or []) or "Sin butacas activas",
         "compra_cancelada": bool(data.get("compra_cancelada")),
         "total": actual.get("total", 0),
         "utilizados": actual.get("utilizados", 0),

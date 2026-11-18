@@ -10,22 +10,19 @@
         .meta { color: #5d6470; }
         .ticket { border: 1px solid #c9cdd3; padding: 24px; margin: 18px 0; border-radius: 8px; page-break-inside: avoid; }
         .ticket h2 { margin-top: 0; margin-bottom: 18px; font-size: 1.3rem; border-bottom: 1px solid #e1e4e8; padding-bottom: 10px; }
-        .ticket-content { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
-        .ticket-details { flex: 1; }
-        .ticket dl { display: grid; grid-template-columns: 140px 1fr; gap: 9px 14px; margin: 0; }
+        .ticket dl { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 9px 14px; margin: 0; }
         dt { font-weight: bold; }
         dd { margin: 0; }
-        .code { font-family: monospace; letter-spacing: .04em; word-break: break-all; }
-        .ticket-qr { text-align: center; min-width: 200px; padding: 12px; background: #fafbfc; border: 1px solid #e1e4e8; border-radius: 6px; }
-        .ticket-qr img { display: block; margin: 0 auto 8px; }
+        .code { font-family: monospace; letter-spacing: .04em; white-space: nowrap; overflow-x: auto; margin: 0 0 10px; }
+        .ticket-qr { text-align: center; margin-top: 20px; padding: 16px 12px; background: #fafbfc; border: 1px solid #e1e4e8; border-radius: 6px; }
+        .ticket-qr img { display: block; max-width: 100%; height: auto; margin: 0 auto 8px; }
         .ticket-qr-nota { font-size: 0.85rem; color: #5d6470; margin: 0; line-height: 1.3; }
         .ticket-services { margin-top: 20px; padding-top: 16px; border-top: 1px dashed #c9cdd3; }
         .ticket-services h3 { margin: 0 0 10px; font-size: 1rem; color: #20232a; }
         .ticket-services ul { margin: 0; padding-left: 20px; color: #40444f; }
         @media print { body { margin: 0 auto; } .ticket { border-color: #000; } }
         @media (max-width: 600px) {
-            .ticket-content { flex-direction: column-reverse; align-items: center; }
-            .ticket dl { grid-template-columns: 110px 1fr; }
+            .ticket dl { grid-template-columns: 110px minmax(0, 1fr); }
         }
     </style>
 </head>
@@ -44,10 +41,9 @@
                     <dt>Película</dt><dd><strong>{{ funcion.pelicula.titulo }}</strong></dd>
                     <dt>Función</dt><dd>{{ funcion.fecha_hora_proyeccion }}</dd>
                     <dt>Sala</dt><dd>{{ funcion.sala.local }} · {{ funcion.sala.nombre }}</dd>
-                    <dt>Butacas</dt><dd><strong>{{ butacas_texto|default(reserva.butacas_texto) }}</strong></dd>
+                    <dt>Butacas</dt><dd><strong>{{ butacas_listado }}</strong></dd>
                     <dt>Cantidad</dt><dd>{{ reserva.entradas|length }} {{ 'butaca' if reserva.entradas|length == 1 else 'butacas' }}</dd>
                     <dt>Estado</dt><dd>{{ reserva.estado|default('comprada') }}</dd>
-                    <dt>Código QR</dt><dd class="code">{{ codigo_qr|default(reserva.codigo_qr) }}</dd>
                 </dl>
 
                 {% if resumen and resumen.servicios %}
@@ -63,12 +59,15 @@
             </div>
 
             {% set qr = qr_imagen_base64|default(reserva.qr_imagen_base64) %}
-            {% if qr %}
             <div class="ticket-qr">
+                {% if qr %}
                 <img src="data:image/png;base64,{{ qr }}" alt="Código QR de acceso unificado" width="180" height="180">
-                <p class="ticket-qr-nota">Presentá este único QR al ingresar a la sala para validar todas tus butacas.</p>
+                {% else %}
+                <p class="ticket-qr-nota">No se pudo mostrar la imagen del código QR.</p>
+                {% endif %}
+                <p class="code">Código QR: {{ codigo_qr|default(reserva.codigo_qr) }}</p>
+                <p class="ticket-qr-nota">Con este mismo código QR se validan el ingreso a la sala para todas las butacas y los consumos y servicios adicionales incluidos en la compra.</p>
             </div>
-            {% endif %}
         </div>
     </article>
 </body>
