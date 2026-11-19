@@ -98,8 +98,8 @@
     <div style="border-top: 1px solid #2a2a2a; padding-top: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; color: #777; font-size: 0.85rem;">
         <p>© 2026 Cine Paradiso. Todos los derechos reservados.</p>
         <div style="display: flex; gap: 1.5rem;">
-            <a href="#" style="color: #777; text-decoration: none;">Términos y condiciones</a>
-            <a href="#" style="color: #777; text-decoration: none;">Privacidad</a>
+            <a href="{{ url_for('cliente_views.terminos_y_condiciones') }}" style="color: #777; text-decoration: none;">Términos y condiciones</a>
+            <a href="{{ url_for('cliente_views.privacidad') }}" style="color: #777; text-decoration: none;">Privacidad</a>
         </div>
     </div>
 </footer>
