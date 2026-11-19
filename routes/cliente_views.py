@@ -459,3 +459,13 @@ def puntuar_pelicula():
         flash(mensaje, "danger")
         
     return redirect(url_for("cliente_views.mi_perfil"))
+
+
+@cliente_views_bp.route("/terminos-y-condiciones")
+def terminos_y_condiciones():
+    return render_template("cliente/terminos-y-condiciones.html")
+
+
+@cliente_views_bp.route("/privacidad")
+def privacidad():
+    return render_template("cliente/privacidad.html")
