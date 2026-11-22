@@ -11,3 +11,15 @@ def obtener_administradores():
 
 def dar_de_baja_administrador(id_usuario):
     return consumir_api("DELETE", f"/auth/usuarios/admins/{id_usuario}")
+
+
+def habilitar_empleado(email):
+    return consumir_api("POST", "/auth/usuarios/empleados", datos={"email": email})
+
+
+def obtener_empleados():
+    return consumir_api("GET", "/auth/usuarios/empleados")
+
+
+def dar_de_baja_empleado(id_usuario):
+    return consumir_api("DELETE", f"/auth/usuarios/empleados/{id_usuario}")
