@@ -93,7 +93,15 @@
                     <h3>Servicios adicionales (Candy Bar)</h3>
                     <ul>
                         {% for servicio in resumen.servicios %}
-                        <li>{{ servicio.nombre if servicio.nombre is string else (servicio.cantidad ~ ' × ' ~ servicio.nombre) }}</li>
+                        <li>
+                            {% if servicio is mapping and servicio.cantidad %}
+                            {{ servicio.cantidad }} × {{ servicio.nombre }}
+                            {% elif servicio is mapping %}
+                            {{ servicio.nombre }}
+                            {% else %}
+                            {{ servicio }}
+                            {% endif %}
+                        </li>
                         {% endfor %}
                     </ul>
                 </div>
