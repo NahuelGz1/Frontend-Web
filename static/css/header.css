@@ -54,3 +54,50 @@
 .nav-links a:hover {
     color: var(--cinema-red);
 }
+
+/* ===== encabezado de administradores en celulares ===== */
+
+@media (max-width: 600px) {
+
+    .site-header > .header-user-actions:has(.header-admin-link) {
+        width: 100%;
+        margin-left: 0;
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr) 36px;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .header-user-actions .header-admin-link {
+        grid-column: 2;
+        margin-right: 0;
+        text-align: center;
+        font-size: 0.8rem;
+    }
+
+    .site-header > .admin-header-actions {
+        width: 100%;
+        margin-left: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) 36px;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .admin-header-actions .nav-links {
+        justify-content: center;
+        gap: 0;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    .admin-header-actions .header-admin-link {
+        margin-right: 0;
+        font-size: 0.75rem;
+        text-align: center;
+    }
+
+    .site-header .user-avatar {
+        flex-shrink: 0;
+    }
+}
