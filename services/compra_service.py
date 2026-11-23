@@ -558,6 +558,17 @@ def confirmar_compra(resumen):
 def id_compra_confirmada():
     return ((session.get(CLAVE_COMPRA_CONFIRMADA) or {}).get("reserva") or {}).get("id_compra")
 
+def _agrupar_servicios(servicios):
+    agrupados = {}
+    for s in servicios or []:
+        nombre = s.get("nombre", "")
+        precio = float(s.get("precio") or 0)
+        cantidad = int(s.get("cantidad") or 1)
+        clave = (nombre, precio)
+        if clave not in agrupados:
+            agrupados[clave] = {**s, "nombre": nombre, "precio": precio, "cantidad": 0}
+        agrupados[clave]["cantidad"] += cantidad
+    return list(agrupados.values())
 
 def datos_confirmacion(datos):
     funcion = datos["funcion"]
@@ -591,8 +602,8 @@ def datos_confirmacion(datos):
             "total": formatear_precio(subtotal_entradas + subtotal_servicios) + " ARS",
             "servicios": [
                 {"nombre": f"{s['nombre']} x{s['cantidad']}",
-                 "subtotal": formatear_precio(float(s["precio"]) * s["cantidad"])}
-                for s in resumen["servicios"]
+                 "subtotal": formatear_precio(s["precio"] * s["cantidad"])}
+                for s in _agrupar_servicios(resumen.get("servicios"))
             ],
         },
     }
@@ -630,12 +641,19 @@ def preparar_datos_documento(datos):
     butacas_texto = reserva.get("butacas_texto") or texto_butacas(butacas_nums)
     butacas_listado = re.sub(r"^Butacas?:?\s+", "", butacas_texto, flags=re.IGNORECASE)
     codigo_qr = datos.get("compra", {}).get("codigo_qr") or reserva.get("codigo_qr") or (entradas_raw[0].get("codigo_qr") if entradas_raw else "")
+    resumen_doc = datos.get("resumen")
+    if isinstance(resumen_doc, dict) and "servicios" in resumen_doc:
+        resumen_doc = {
+            **resumen_doc,
+            "servicios": _agrupar_servicios(resumen_doc.get("servicios")),
+        }
     return {
         **datos,
         "qr_imagen_base64": qr_imagen,
         "butacas_texto": butacas_texto,
         "butacas_listado": butacas_listado,
         "codigo_qr": codigo_qr,
+        "resumen": resumen_doc,
         "reserva": {
             **reserva,
             "qr_imagen_base64": qr_imagen,
