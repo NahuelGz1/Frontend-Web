@@ -738,53 +738,6 @@
     margin-bottom: 0.5rem;
 }
 
-/* afiche a la izquierda, datos a la derecha */
-.detalle-pelicula {
-    display: flex;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.detalle-pelicula > img {
-    width: 160px;
-    align-self: flex-start;
-    object-fit: cover;
-    border-radius: 8px;
-    background-color: var(--cinema-800);
-    flex-shrink: 0;
-}
-
-.detalle-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: flex-start;
-}
-
-.detalle-info h2 {
-    font-size: 2rem;
-}
-
-/* duracion, clasificacion y año */
-.tags {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.tag {
-    background-color: var(--cinema-800);
-    color: var(--cinema-red-light);
-    font-size: 0.7rem;
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
-}
-
-.detalle-genero,
-.detalle-sinopsis {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
 /* caja del selector de funcion */
 .selector-funcion {
     padding: 1.25rem;

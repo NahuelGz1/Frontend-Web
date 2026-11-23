@@ -2,6 +2,11 @@
 
 {% block title %}{{ pelicula.titulo|default('Detalle de película') }} · Cine Paradiso{% endblock %}
 
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/detalle-pelicula.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <!-- ruta de navegacion y titulo -->

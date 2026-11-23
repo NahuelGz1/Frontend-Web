@@ -1,0 +1,82 @@
+/* afiche a la izquierda, datos a la derecha */
+.detalle-pelicula {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.detalle-pelicula > img {
+    width: 160px;
+    align-self: flex-start;
+    object-fit: cover;
+    border-radius: 8px;
+    background-color: var(--cinema-800);
+    flex-shrink: 0;
+}
+
+.detalle-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+.detalle-info h2 {
+    font-size: 2rem;
+}
+
+/* duracion, clasificacion y año */
+.tags {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tag {
+    background-color: var(--cinema-800);
+    color: var(--cinema-red-light);
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+}
+
+.detalle-genero,
+.detalle-sinopsis {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+
+/* ===== detalle de pelicula en celulares ===== */
+@media (max-width: 600px) {
+    .detalle-pelicula {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .detalle-pelicula > img,
+    .detalle-pelicula > .poster-placeholder {
+        width: 140px;
+        max-width: 100%;
+        height: auto;
+        flex-shrink: 0;
+    }
+
+    .detalle-info {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .detalle-info .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .detalle-sinopsis {
+        width: 100%;
+        line-height: 1.6;
+        overflow-wrap: break-word;
+    }
+}
