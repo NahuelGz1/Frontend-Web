@@ -527,3 +527,25 @@ def seleccionar_entrada_servicios():
     else:
         flash("La entrada seleccionada no está disponible.", "warning")
     return redirect(url_for("cliente_views.servicios"), code=303)
+  
+@cliente_views_bp.route("/puntuar-desde-mail", methods=["GET"])
+def puntuar_desde_mail():
+    token = request.args.get("token", "").strip()
+    puntuacion = request.args.get("puntuacion", "").strip()
+
+    if not token or not puntuacion.isdigit():
+        flash("El enlace de valoración es inválido.", "danger")
+        return redirect(url_for("cliente_views.cartelera"))
+
+    status_code, respuesta = consumir_api("POST", "/compras/resena/desde-mail", {
+        "token": token,
+        "puntuacion": int(puntuacion),
+    })
+
+    if status_code in (200, 201):
+        flash(f"¡Gracias! Registramos tu puntuación de {puntuacion} estrellas.", "success")
+    else:
+        mensaje = respuesta.get("error", {}).get("message", "No se pudo registrar la puntuación.")
+        flash(mensaje, "danger")
+
+    return redirect(url_for("cliente_views.mi_perfil"))

@@ -11,6 +11,7 @@ from routes.admin_views import admin_views
 from routes.auth_security import csrf_token
 from routes.auth_views import auth_views_bp
 from routes.cliente_views import cliente_views_bp
+from services import auth_service
 
 
 def create_app(config=None):
@@ -43,6 +44,14 @@ def create_app(config=None):
     @app.context_processor
     def contexto_auth():
         usuario = getattr(g, "current_user", None)
+        if usuario is None and session.get("access_token"):
+            codigo, respuesta = auth_service.perfil(session["access_token"])
+            datos = respuesta.get("data") if codigo == 200 else None
+            if isinstance(datos, dict):
+                session["usuario"] = datos
+                usuario = {**datos, "is_authenticated": True}
+            elif codigo in (401, 403, 404):
+                session.clear()
         if usuario is None and session.get("usuario"):
             usuario = {**session["usuario"], "is_authenticated": True}
         return {"csrf_token": csrf_token(), "current_user": usuario}

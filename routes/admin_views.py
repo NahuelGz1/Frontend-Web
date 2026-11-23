@@ -20,6 +20,9 @@ from services.admin_service import (
     dar_de_baja_administrador,
     habilitar_administrador,
     obtener_administradores,
+    dar_de_baja_empleado,
+    habilitar_empleado,
+    obtener_empleados
 )
 from services.gestion_peliculas_service import (
     buscar_peliculas_tmdb,
@@ -62,6 +65,8 @@ def _imagen_servicio_desde_formulario(archivo):
 def proteger_admin():
     if request.method == "POST":
         validar_csrf()
+    if request.endpoint == "admin_views.validar_qr":
+        return verificar_sesion(("administrador", "empleado"))
     return verificar_sesion("administrador")
 
 @admin_views.route("/estadisticas")
@@ -143,15 +148,25 @@ def habilitar_admins():
     mensaje = None
     error = None
     email = ""
+    rol_seleccionado = "administrador"
     administrador_creado = None
+    empleado_creado = None
     if request.method == "POST":
         accion = request.form.get("accion")
         if accion == "dar_de_baja":
-            id_admin = request.form.get("id_admin", "")
-            if not id_admin.isdigit():
-                error = "El administrador seleccionado no es válido."
+            id_usuario = request.form.get("id_admin", "")
+            rol_baja = request.form.get("rol", "administrador")
+            if not id_usuario.isdigit():
+                error = "El cuenta seleccionado no es válido."
+            elif rol_baja == "empleado":
+                estado, respuesta = dar_de_baja_empleado(id_usuario)
+                if estado == 200 and respuesta.get("ok"):
+                    mensaje = "La cuenta dejó de tener permisos de empleado"
+                else:
+                    error = (respuesta.get("error") or {}).get(
+                        "message", "No se pudo dar de baja al empleado.")
             else:
-                estado, respuesta = dar_de_baja_administrador(id_admin)
+                estado, respuesta = dar_de_baja_administrador(id_usuario)
                 if estado == 200 and respuesta.get("ok"):
                     mensaje = "La cuenta dejó de tener permisos de administración."
                 else:
@@ -160,14 +175,25 @@ def habilitar_admins():
                     )
         else:
             email = request.form.get("email", "").strip().lower()
+            rol_seleccionado = request.form.get("rol", "administrador")
             if not email or len(email) > 100 or "@" not in email:
                 error = "Ingresá un correo electrónico válido."
+            elif rol_seleccionado not in ("administrador", "empleado"):
+                error = "Selecciona un rol valido"
+            elif rol_seleccionado == "empleado":
+                estado, respuesta = habilitar_empleado(email)
+                if estado == 200 and respuesta.get("ok"):
+                    mensaje = "La cuenta fue habilitada como empleada."
+                    empleado_creado = respuesta.get("data")
+                    email = ""
+                else:
+                    error = (respuesta.get("error") or {}).get("message", "No se pudo habilitar la cuenta.")
             else:
                 estado, respuesta = habilitar_administrador(email)
                 if estado == 200 and respuesta.get("ok"):
                     mensaje = "La cuenta fue habilitada como administradora."
                     administrador_creado = respuesta.get("data")
-                    email = ""
+                    email = ""    
                 else:
                     error = (
                         respuesta.get("error") or {}
@@ -175,6 +201,8 @@ def habilitar_admins():
 
     estado_admins, respuesta_admins = obtener_administradores()
     administradores = respuesta_admins.get("data", []) if estado_admins == 200 else []
+    estado_empls, respuesta_empls = obtener_empleados()
+    empleados = respuesta_empls.get("data", []) if estado_empls == 200 else []
     if administrador_creado and not any(
         str(item.get("id")) == str(administrador_creado.get("id"))
         for item in administradores
@@ -183,14 +211,24 @@ def habilitar_admins():
     if estado_admins != 200:
         api_error = respuesta_admins.get("error") or {}
         error = error or api_error.get("message", "No se pudo cargar la lista de administradores.")
+    if empleado_creado and not any(
+        str(item.get("id")) == str(empleado_creado.get("id"))
+        for item in empleados
+    ):
+        empleados.append(empleado_creado)
+    if estado_empls != 200:
+        api_error = respuesta_empls.get("error") or {}
+        error = error or api_error.get("message", "No se pudo cargar la lista de empleados.")
 
     return render_template(
         "admin/habilitar-admins.html",
         email=email,
+        rol=rol_seleccionado,
         mensaje=mensaje,
         error=error,
         csrf_token=obtener_csrf_token(),
         administradores=administradores,
+        empleados=empleados,
     )
 
 

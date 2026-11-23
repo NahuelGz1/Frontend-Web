@@ -27,7 +27,7 @@ def usuario_valido(usuario):
         and isinstance(usuario.get("id"), int)
         and isinstance(usuario.get("nombre"), str)
         and isinstance(usuario.get("email"), str)
-        and usuario.get("rol") in ("cliente", "administrador")
+        and usuario.get("rol") in ("cliente", "administrador", "empleado")
     )
 
 
@@ -45,7 +45,8 @@ def verificar_sesion(rol=None):
     if codigo != 200 or not usuario_valido(usuario):
         current_app.logger.error("No se pudo verificar la sesión con la API")
         abort(503, description="No se pudo verificar tu sesión. Intentá más tarde.")
-    if rol and usuario["rol"] != rol:
+    roles_permitidos = (rol,) if isinstance(rol, str) else tuple(rol or ())
+    if roles_permitidos and usuario["rol"] not in roles_permitidos:
         abort(403, description="Tu cuenta no tiene permiso para acceder a esta página.")
     session["usuario"] = usuario
     g.current_user = {**usuario, "is_authenticated": True}
