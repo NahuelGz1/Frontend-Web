@@ -6,6 +6,7 @@
     <title>{% block title %}Cine Paradiso{% endblock %}</title>
 
     <!-- traemos el css nativo de la carpeta static -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/cine-paradiso.css') }}">
     {% block head %}{% endblock %}
 </head>
