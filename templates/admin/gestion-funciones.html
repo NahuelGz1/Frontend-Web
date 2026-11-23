@@ -42,8 +42,19 @@
                     {% for sala in salas_complejo %}
                     <article class="room-card">
                         <h4>{{ sala.nombre }}</h4>
+                        <p class="text-muted">Estado: {{ 'Disponible' if sala.activo|default(true) else 'En mantenimiento' }}</p>
                         <p class="text-muted">{{ sala.filas|default('—') }} filas · {{ sala.butacas_por_fila|default('—') }} butacas por fila · {{ sala.capacidad }} butacas</p>
-                        <a class="btn" href="{{ url_for('admin_views.funciones', editar_sala=sala.id) }}#room-config-panel">Configurar sala</a>
+                        <div class="room-card-actions">
+                            <a class="btn" href="{{ url_for('admin_views.funciones', editar_sala=sala.id) }}#room-config-panel">Configurar sala</a>
+                            <form method="post" action="{{ url_for('admin_views.funciones') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                                <input type="hidden" name="accion" value="cambiar_estado_sala">
+                                <input type="hidden" name="sala_id" value="{{ sala.id }}">
+                                <input type="hidden" name="volver_a" value="room-list">
+                                <input type="hidden" name="activo" value="{{ 0 if sala.activo|default(true) else 1 }}">
+                                <button class="btn {{ 'btn-delete' if sala.activo|default(true) else '' }}" type="submit">{{ 'Deshabilitar por mantenimiento' if sala.activo|default(true) else 'Habilitar sala' }}</button>
+                            </form>
+                        </div>
                     </article>
                     {% endfor %}
                 </div>
