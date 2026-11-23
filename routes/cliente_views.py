@@ -3,6 +3,7 @@ from services.api_client import consumir_api
 from services import compra_service, auth_service
 from routes.auth_security import requiere_sesion, csrf_token
 from utils.butacas import etiquetas_butacas
+from services.pdf_service import generar_pdf
 
 cliente_views_bp = Blueprint("cliente_views", __name__)
 
@@ -363,9 +364,12 @@ def descargar_entradas(compra_id):
     datos = _obtener_compra_para_documento(compra_id)
     if datos is None:
         return redirect(url_for("cliente_views.mi_perfil"))
-    datos = compra_service.preparar_datos_documento(datos)
-    respuesta = make_response(render_template("cliente/entradas.html", **datos))
-    respuesta.headers["Content-Disposition"] = f"attachment; filename=entradas-CP-{compra_id}.html"
+    html_renderizado = render_template("cliente/entradas.html", **datos)
+    pdf = generar_pdf(html_renderizado)
+    respuesta = make_response(pdf)
+    respuesta.headers["Content-Type"] = "application/pdf"
+    respuesta.headers["Content-Disposition"] = (f'attachment; filename="entradas-CP-{compra_id}.pdf"')
+    respuesta.headers["Cache-Control"] = "no-store"
     return respuesta
 
 
@@ -375,8 +379,12 @@ def descargar_factura(compra_id):
     datos = _obtener_compra_para_documento(compra_id)
     if datos is None:
         return redirect(url_for("cliente_views.mi_perfil"))
-    respuesta = make_response(render_template("cliente/factura.html", **datos))
-    respuesta.headers["Content-Disposition"] = f"attachment; filename=factura-CP-{compra_id}.html"
+    html_renderizado = render_template("cliente/factura.html", **datos)
+    pdf = generar_pdf(html_renderizado)
+    respuesta = make_response(pdf)
+    respuesta.headers["Content-Type"] = "application/pdf"
+    respuesta.headers["Content-Disposition"] = (f'attachment; filename="factura-CP-{compra_id}.pdf"')
+    respuesta.headers["Cache-Control"] = "no-store"
     return respuesta
 
 @cliente_views_bp.route("/cancelar-compra")

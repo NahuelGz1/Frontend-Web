@@ -8,7 +8,7 @@
         header { border-bottom: 3px solid #20232a; margin-bottom: 28px; }
         h1 { margin-bottom: 6px; }
         .meta { color: #5d6470; }
-        .ticket { border: 1px solid #c9cdd3; padding: 24px; margin: 18px 0; border-radius: 8px; page-break-inside: avoid; }
+        .ticket { border: 1px solid #c9cdd3; padding: 24px; margin: 18px 0; border-radius: 8px;}
         .ticket h2 { margin-top: 0; margin-bottom: 18px; font-size: 1.3rem; border-bottom: 1px solid #e1e4e8; padding-bottom: 10px; }
         .ticket dl { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 9px 14px; margin: 0; }
         dt { font-weight: bold; }
@@ -24,6 +24,48 @@
         @media (max-width: 600px) {
             .ticket dl { grid-template-columns: 110px minmax(0, 1fr); }
         }
+        @page {size: A4; margin: 12mm;}
+        @media print {
+            body {
+                max-width: none;
+                margin: 0;
+                padding: 0;
+            }
+            header {
+                margin-bottom: 12px;
+            }
+
+            .ticket {
+                padding: 12px;
+                margin: 8px 0;
+            }
+
+            .ticket h2 {
+                margin-bottom: 10px;
+                padding-bottom: 6px;
+            }
+
+            .ticket dl {
+                gap: 5px 12px;
+            }
+
+            .ticket-services {
+                margin-top: 10px;
+                padding-top: 8px;
+            }
+
+            .ticket-qr {
+                margin-top: 10px;
+                padding: 8px;
+                break-inside: avoid;
+            }
+
+            .ticket-qr img {
+                width: 160px;
+                height: auto;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -34,14 +76,14 @@
     </header>
 
     <article class="ticket">
-        <h2>{{ reserva.entradas|length }} {{ 'entrada' if reserva.entradas|length == 1 else 'entradas' }} · {{ butacas_texto|default(reserva.butacas_texto) }}</h2>
+        <h2>{{ reserva.entradas|length }} {{ 'entrada' if reserva.entradas|length == 1 else 'entradas' }}</h2>
         <div class="ticket-content">
             <div class="ticket-details">
                 <dl>
                     <dt>Película</dt><dd><strong>{{ funcion.pelicula.titulo }}</strong></dd>
                     <dt>Función</dt><dd>{{ funcion.fecha_hora_proyeccion }}</dd>
                     <dt>Sala</dt><dd>{{ funcion.sala.local }} · {{ funcion.sala.nombre }}</dd>
-                    <dt>Butacas</dt><dd><strong>{{ butacas_listado }}</strong></dd>
+                    <dt>Butacas</dt><dd><strong>{{ reserva.entradas | map(attribute='codigo_butaca') | select | join(', ') }}</strong></dd>
                     <dt>Cantidad</dt><dd>{{ reserva.entradas|length }} {{ 'butaca' if reserva.entradas|length == 1 else 'butacas' }}</dd>
                     <dt>Estado</dt><dd>{{ reserva.estado|default('comprada') }}</dd>
                 </dl>
