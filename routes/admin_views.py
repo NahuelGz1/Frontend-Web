@@ -542,6 +542,29 @@ def funciones():
                 )
                 mensaje_tipo = "error"
 
+        elif accion == "cambiar_estado_sala":
+            sala_id = request.form.get("sala_id")
+            activo = request.form.get("activo") == "1"
+            status_code, respuesta = consumir_api(
+                "PATCH", f"/funciones/salas/{sala_id}", datos={"activo": activo}
+            )
+            if status_code == 200 and respuesta.get("ok"):
+                mensaje_estado = (
+                    "La sala quedó habilitada para nuevas funciones."
+                    if activo else "La sala quedó en mantenimiento y no acepta nuevas ventas."
+                )
+                mensaje_tipo = "success"
+            else:
+                mensaje = (respuesta.get("error") or {}).get(
+                    "message", "No se pudo cambiar el estado de la sala."
+                )
+                mensaje_tipo = "error"
+            if request.form.get("volver_a"):
+                session["mensaje_funciones"] = {
+                    "texto": mensaje_estado or mensaje,
+                    "tipo": mensaje_tipo or "error",
+                }
+                return _admin_anchor_redirect("admin_views.funciones", request.form.get("volver_a"))
         elif accion in ("cambiar_estado", "eliminar", "cancelar"):
             if accion == "cancelar":
                 status_code, respuesta = consumir_api(
@@ -623,7 +646,8 @@ def funciones():
         funcion["precio_formateado"] = f"$ {funcion.get('precio_entrada', 0)}"
         funcion["pelicula_activa"] = bool(funcion.get("pelicula_activa", funcion.get("pelicula", {}).get("activa", True)))
         funcion["pelicula_eliminada"] = bool(funcion.get("pelicula_eliminada", funcion.get("pelicula", {}).get("eliminada", False)))
-        funcion["activa"] = bool(funcion.get("activo", True)) and funcion["pelicula_activa"] and not funcion["pelicula_eliminada"]
+        sala_activa = bool(funcion.get("sala", {}).get("activo", funcion.get("sala_activa", True)))
+        funcion["activa"] = bool(funcion.get("activo", True)) and funcion["pelicula_activa"] and not funcion["pelicula_eliminada"] and sala_activa
         _preparar_estado_funcion(funcion)
 
     if estado_filtro == "activas":
