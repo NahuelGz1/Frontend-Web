@@ -239,8 +239,19 @@ def servicios_seleccionados():
 
 def guardar_servicios(formulario):
     compra = session.get(CLAVE_COMPRA) or {}
-    if not compra.get("id_funcion") or not compra.get("butacas"):
-        return "Primero elegí una función y tus butacas."
+    tiene_compra_nueva = bool(compra.get("id_funcion") and compra.get("butacas"))
+    id_compra_adjunta = compra.get("id_compra_adjunta")
+
+    entrada_adjunta = None
+    if id_compra_adjunta:
+        entrada_adjunta = next(
+            (e for e in obtener_entradas_disponibles_usuario() if e["id_compra"] == id_compra_adjunta),
+            None,
+        )
+        if not entrada_adjunta:
+            limpiar_seleccion_entrada()
+            return "La entrada seleccionada ya no está disponible. Elegí otra o continuá sin entrada."
+
     elegidos = []
     for campo in formulario:
         if not campo.startswith("cantidad_"):
@@ -253,11 +264,29 @@ def guardar_servicios(formulario):
         cantidad = int(valores[0])
         if cantidad:
             elegidos.append({"id_servicio": int(identificador), "cantidad": cantidad})
+
+    if not tiene_compra_nueva and not elegidos:
+        return "Elegí al menos un servicio para continuar al pago."
+
     if elegidos:
         codigo, respuesta = consumir_api("GET", "/servicios")
         if codigo != 200:
             return "No pudimos validar los servicios. Intentá nuevamente."
         catalogo = {s["id"]: s for s in respuesta.get("data") or []}
+
+        if tiene_compra_nueva:
+            max_est = len(compra["butacas"])
+            max_vip = len(compra["butacas"])
+            id_funcion_check = compra["id_funcion"]
+        elif entrada_adjunta:
+            max_est = max(0, entrada_adjunta["cantidad_entradas"] - entrada_adjunta["estacionamiento_previo"])
+            max_vip = max(0, entrada_adjunta["cantidad_entradas"] - entrada_adjunta["vip_previo"])
+            id_funcion_check = entrada_adjunta["id_funcion"]
+        else:
+            max_est = 0
+            max_vip = 0
+            id_funcion_check = None
+
         cantidad_estacionamiento = 0
         ids_elegidos = set()
         for elegido in elegidos:
@@ -268,18 +297,25 @@ def guardar_servicios(formulario):
                 return "Hay servicios repetidos. Revisá tu selección."
             ids_elegidos.add(elegido["id_servicio"])
             nombre = servicio["nombre"].lower()
-            if ("estacionamiento" in nombre or "vip" in nombre) and elegido["cantidad"] > len(compra["butacas"]):
-                return "Estacionamiento y VIP admiten como máximo una unidad por entrada."
             if "estacionamiento" in nombre:
+                if not id_funcion_check:
+                    return "Estacionamiento requiere una entrada asociada."
+                if elegido["cantidad"] > max_est:
+                    return f"Podés agregar como máximo {max_est} estacionamiento(s) a esta entrada."
                 cantidad_estacionamiento += elegido["cantidad"]
-        if cantidad_estacionamiento:
-            if cantidad_estacionamiento > len(compra["butacas"]):
-                return "Estacionamiento admite como máximo una unidad por entrada."
-            disponibles, error = disponibilidad_estacionamiento(compra["id_funcion"])
+            elif "vip" in nombre:
+                if not id_funcion_check:
+                    return "Acceso VIP requiere una entrada asociada."
+                if elegido["cantidad"] > max_vip:
+                    return f"Podés agregar como máximo {max_vip} acceso(s) VIP a esta entrada."
+
+        if cantidad_estacionamiento and id_funcion_check:
+            disponibles, error = disponibilidad_estacionamiento(id_funcion_check)
             if error:
                 return error
             if cantidad_estacionamiento > disponibles:
                 return f"No hay suficientes espacios de estacionamiento disponibles para esta función. Quedan {disponibles} lugares."
+
     compra["servicios"] = elegidos
     session[CLAVE_COMPRA] = compra
     return None
@@ -313,9 +349,98 @@ def guardar_email_contacto(email):
 
 def armar_resumen(incluir_servicios=True):
     compra = session.get(CLAVE_COMPRA) or {}
-    if not compra.get("id_funcion") or not compra.get("butacas"):
-        return None, "Primero elegí una función y tus butacas."
+    id_compra_adjunta = compra.get("id_compra_adjunta")
 
+    # MODO 2: Servicios adjuntos a una entrada ya comprada
+    if id_compra_adjunta:
+        entrada = next(
+            (e for e in obtener_entradas_disponibles_usuario() if e["id_compra"] == id_compra_adjunta),
+            None,
+        )
+        if not entrada:
+            limpiar_seleccion_entrada()
+            return None, "La entrada seleccionada ya no está disponible."
+
+        max_est = max(0, entrada["cantidad_entradas"] - entrada["estacionamiento_previo"])
+        servicios, aviso, error = [], None, None
+        if incluir_servicios:
+            servicios, aviso, error = _servicios_con_precio(
+                compra.get("servicios") or [], max_est, entrada["id_funcion"]
+            )
+            if error:
+                return None, error
+            if not servicios:
+                return None, "Elegí al menos un servicio para adjuntar a tu entrada."
+            compra["servicios"] = [{"id_servicio": s["id_servicio"], "cantidad": s["cantidad"]} for s in servicios]
+            session[CLAVE_COMPRA] = compra
+
+        subtotal_servicios = sum(s["precio"] * s["cantidad"] for s in servicios)
+        vista = {
+            "funcion": {
+                "pelicula": entrada["pelicula"],
+                "fecha": entrada["fecha"],
+                "horario": entrada["horario"],
+                "complejo": entrada["complejo"],
+                "sala": entrada["sala"],
+                "butacas": f"Butacas: {entrada['butacas']}",
+            },
+            "cantidad_entradas": entrada["cantidad_entradas"],
+            "precio_entrada": "$0",
+            "subtotal_entradas": "$0 (ya abonadas)",
+            "servicios_seleccionados": [
+                {"nombre": f"{s['nombre']} x{s['cantidad']}", "subtotal": formatear_precio(s["precio"] * s["cantidad"])}
+                for s in servicios
+            ],
+            "subtotal_servicios": formatear_precio(subtotal_servicios),
+            "total_compra": _numero_con_puntos(subtotal_servicios),
+            "resumen": {"modo": "compra_existente", "codigo_operacion": entrada["codigo_operacion"]},
+        }
+        return {
+            "modo": "compra_existente",
+            "id_compra_adjunta": id_compra_adjunta,
+            "id_funcion": entrada["id_funcion"],
+            "butacas": [],
+            "servicios": servicios,
+            "aviso": aviso,
+            "vista": vista,
+        }, None
+
+    # MODO 3: Compra de servicios solos (sin función ni entrada adjunta)
+    if not compra.get("id_funcion") or not compra.get("butacas"):
+        if not incluir_servicios or not compra.get("servicios"):
+            return None, "Primero elegí una función, una entrada disponible o algún servicio."
+        servicios, aviso, error = _servicios_con_precio(compra.get("servicios") or [], 0, None)
+        if error:
+            return None, error
+        if not servicios:
+            return None, "Elegí al menos un servicio para continuar."
+        compra["servicios"] = [{"id_servicio": s["id_servicio"], "cantidad": s["cantidad"]} for s in servicios]
+        session[CLAVE_COMPRA] = compra
+        subtotal_servicios = sum(s["precio"] * s["cantidad"] for s in servicios)
+        vista = {
+            "funcion": {"pelicula": {"titulo": "Compra solo servicios", "poster_url": ""}},
+            "cantidad_entradas": 0,
+            "precio_entrada": "$0",
+            "subtotal_entradas": "$0",
+            "servicios_seleccionados": [
+                {"nombre": f"{s['nombre']} x{s['cantidad']}", "subtotal": formatear_precio(s["precio"] * s["cantidad"])}
+                for s in servicios
+            ],
+            "subtotal_servicios": formatear_precio(subtotal_servicios),
+            "total_compra": _numero_con_puntos(subtotal_servicios),
+            "resumen": {"modo": "solo_servicios"},
+        }
+        return {
+            "modo": "solo_servicios",
+            "id_compra_adjunta": None,
+            "id_funcion": None,
+            "butacas": [],
+            "servicios": servicios,
+            "aviso": aviso,
+            "vista": vista,
+        }, None
+
+    # MODO 1: Compra nueva con entrada en curso
     funcion, error = _obtener_funcion(compra["id_funcion"])
     if error:
         return None, error
@@ -359,9 +484,17 @@ def armar_resumen(incluir_servicios=True):
         ],
         "subtotal_servicios": formatear_precio(subtotal_servicios),
         "total_compra": _numero_con_puntos(subtotal_entradas + subtotal_servicios),
+        "resumen": {"modo": "nueva_entrada"},
     }
-    return {"id_funcion": compra["id_funcion"], "butacas": butacas, "servicios": servicios,
-            "aviso": aviso, "vista": vista}, None
+    return {
+        "modo": "nueva_entrada",
+        "id_compra_adjunta": None,
+        "id_funcion": compra["id_funcion"],
+        "butacas": butacas,
+        "servicios": servicios,
+        "aviso": aviso,
+        "vista": vista,
+    }, None
 
 def _datos_compra_exitosa(vista, compra_api):
     entradas = []
@@ -387,22 +520,36 @@ def _datos_compra_exitosa(vista, compra_api):
 
 
 def confirmar_compra(resumen):
-    cuerpo = {
-        "id_funcion": resumen["id_funcion"],
-        "butacas": resumen["butacas"],
-        "servicios": [{"id_servicio": s["id_servicio"], "cantidad": s["cantidad"], "precio": s["precio"]}
-                      for s in resumen["servicios"]],
-        "email_contacto": email_de_contacto(),
-    }
-    status_code, respuesta = consumir_api("POST", "/compras", datos=cuerpo, headers=_cabecera_autorizacion())
+    servicios_payload = [
+        {"id_servicio": s["id_servicio"], "cantidad": s["cantidad"], "precio": s["precio"]}
+        for s in resumen["servicios"]
+    ]
+    id_compra_adjunta = resumen.get("id_compra_adjunta")
+
+    if id_compra_adjunta:
+        status_code, respuesta = consumir_api(
+            "POST",
+            f"/compras/{id_compra_adjunta}/servicios",
+            datos={"servicios": servicios_payload, "email_contacto": email_de_contacto()},
+            headers=_cabecera_autorizacion(),
+        )
+    else:
+        cuerpo = {
+            "id_funcion": resumen["id_funcion"],
+            "butacas": resumen["butacas"],
+            "servicios": servicios_payload,
+            "email_contacto": email_de_contacto(),
+        }
+        status_code, respuesta = consumir_api("POST", "/compras", datos=cuerpo, headers=_cabecera_autorizacion())
+
     if not 200 <= status_code < 300:
-        # Si el back rechaza los datos (por ejemplo una butaca ya vendida) hay que volver al mapa
         mensaje = _mensaje_de_error(status_code, respuesta, "No pudimos confirmar la compra. Intentá de nuevo en unos minutos.")
         if status_code in (400, 409) and (
-            "estacionamiento" in mensaje.lower() or "servicio" in mensaje.lower()
+            "estacionamiento" in mensaje.lower() or "servicio" in mensaje.lower() or "vip" in mensaje.lower()
         ):
             return False, mensaje, "servicios"
-        return False, mensaje, "butacas" if 400 <= status_code < 500 and status_code != 401 else None
+        return False, mensaje, "butacas" if (resumen.get("butacas") and 400 <= status_code < 500 and status_code != 401) else None
+
     session[CLAVE_COMPRA_CONFIRMADA] = _datos_compra_exitosa(resumen["vista"], respuesta.get("data") or {})
     session.pop(CLAVE_COMPRA, None)
     return True, None, False
@@ -496,4 +643,68 @@ def preparar_datos_documento(datos):
             "codigo_qr": codigo_qr,
             "entradas": entradas_formateadas,
         },
+    }
+
+
+def obtener_entradas_disponibles_usuario():
+    if not hay_sesion_iniciada():
+        return []
+    status_code, respuesta = consumir_api(
+        "GET", "/auth/usuarios/me/perfil-completo", headers=_cabecera_autorizacion()
+    )
+    if status_code != 200 or not isinstance(respuesta.get("data"), dict):
+        return []
+
+    proximas = respuesta["data"].get("entradas_proximas") or []
+    resultado = []
+    for ent in proximas:
+        if not ent.get("id_compra"):
+            continue
+        numeros = [int(n) for n in ent.get("numeros_butacas") or []]
+        butacas_txt = ent.get("butacas") or (etiquetas_butacas(numeros) if numeros else "")
+        cant_entradas = int(ent.get("cantidad_entradas") or len(numeros) or 1)
+        servicios_previos = ent.get("servicios") or []
+        est_previo = sum(
+            int(s.get("cantidad") or 1) for s in servicios_previos
+            if "estacionamiento" in str(s.get("nombre", "")).lower()
+        )
+        vip_previo = sum(
+            int(s.get("cantidad") or 1) for s in servicios_previos
+            if "vip" in str(s.get("nombre", "")).lower()
+        )
+        resultado.append({
+            "id_compra": int(ent["id_compra"]),
+            "id_funcion": ent.get("id_funcion"),
+            "codigo_operacion": ent.get("codigo_operacion") or f"CP-{ent['id_compra']}",
+            "pelicula": ent.get("pelicula") or {"titulo": "", "poster_url": ""},
+            "fecha": ent.get("fecha", ""),
+            "horario": ent.get("horario", ""),
+            "complejo": ent.get("complejo", ""),
+            "sala": ent.get("sala", ""),
+            "butacas": butacas_txt,
+            "cantidad_entradas": cant_entradas,
+            "estacionamiento_previo": est_previo,
+            "vip_previo": vip_previo,
+        })
+    return resultado
+
+
+def compra_adjunta_en_curso():
+    return (session.get(CLAVE_COMPRA) or {}).get("id_compra_adjunta")
+
+
+def seleccionar_compra_adjunta(compra_id):
+    anterior = session.get(CLAVE_COMPRA) or {}
+    session[CLAVE_COMPRA] = {
+        "id_compra_adjunta": int(compra_id),
+        "servicios": anterior.get("servicios", []),
+        "email_contacto": anterior.get("email_contacto"),
+    }
+
+
+def limpiar_seleccion_entrada():
+    anterior = session.get(CLAVE_COMPRA) or {}
+    session[CLAVE_COMPRA] = {
+        "servicios": anterior.get("servicios", []),
+        "email_contacto": anterior.get("email_contacto"),
     }
