@@ -481,6 +481,245 @@
     }
 }
 
+/* ===== pantalla de cambio de contrasena ===== */
+
+.cambiar-contrasena-page {
+    max-width: 1060px;
+    margin: 0 auto;
+}
+
+.cambiar-contrasena-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.cambiar-contrasena-volver:hover,
+.cambiar-contrasena-cancelar:hover {
+    color: var(--text-light);
+}
+
+.cambiar-contrasena-layout {
+    display: grid;
+    grid-template-columns: minmax(230px, 280px) minmax(0, 560px);
+    gap: 1.5rem;
+    align-items: start;
+    justify-content: center;
+}
+
+.cambiar-contrasena-sidebar,
+.cambiar-contrasena-card {
+    background-color: var(--cinema-900);
+    border: 1px solid var(--cinema-800);
+    border-radius: 0.55rem;
+}
+
+.cambiar-contrasena-sidebar {
+    padding: 1rem;
+}
+
+.cambiar-contrasena-usuario {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.cambiar-contrasena-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    flex: 0 0 2.2rem;
+    border-radius: 0.35rem;
+    background-color: var(--cinema-red);
+    color: var(--text-light);
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.cambiar-contrasena-usuario div {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.cambiar-contrasena-usuario strong {
+    overflow-wrap: anywhere;
+    font-size: 0.75rem;
+}
+
+.cambiar-contrasena-usuario div span {
+    color: var(--text-muted);
+    font-size: 0.65rem;
+}
+
+.cambiar-contrasena-separador {
+    height: 1px;
+    margin: 0.9rem 0;
+    background-color: var(--cinema-800);
+}
+
+.cambiar-contrasena-seguridad {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.cambiar-contrasena-seguridad h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+}
+
+.cambiar-contrasena-seguridad h2 span {
+    color: var(--cinema-red-light);
+    font-size: 0.9rem;
+}
+
+.cambiar-contrasena-seguridad p {
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    line-height: 1.5;
+}
+
+.cambiar-contrasena-card {
+    padding: 1.25rem;
+}
+
+.cambiar-contrasena-icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-bottom: 0.8rem;
+    border: 1px solid var(--cinema-700);
+    border-radius: 0.35rem;
+    background-color: var(--cinema-850);
+    color: var(--cinema-red-light);
+    font-size: 1.2rem;
+}
+
+.cambiar-contrasena-kicker {
+    margin-bottom: 0.45rem;
+    color: var(--cinema-red-light);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.cambiar-contrasena-card h1 {
+    margin-bottom: 0.4rem;
+    font-size: 1.5rem;
+    line-height: 1.2;
+}
+
+.cambiar-contrasena-descripcion {
+    margin-bottom: 1.2rem;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+}
+
+.cambiar-contrasena-form {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.form-password-group {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.form-password-group label {
+    font-size: 0.7rem;
+}
+
+.form-password-field {
+    position: relative;
+}
+
+.form-password-field input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.65rem 2.5rem 0.65rem 0.75rem;
+    border: 1px solid var(--cinema-700);
+    border-radius: 0.3rem;
+    background-color: var(--text-light);
+    color: var(--cinema-950);
+    font: inherit;
+    font-size: 0.75rem;
+}
+
+.form-password-field input::placeholder {
+    color: var(--text-muted);
+}
+
+.form-password-field input:focus {
+    outline: 2px solid var(--cinema-red-light);
+    outline-offset: 1px;
+}
+
+.form-password-eye {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    color: var(--cinema-700);
+    font-size: 0.72rem;
+    line-height: 1;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.cambiar-contrasena-submit {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 0.1rem;
+    padding: 0.65rem 0.8rem;
+    border: 0;
+    border-radius: 0.3rem;
+    background-color: var(--cinema-red);
+    color: var(--text-light);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cambiar-contrasena-submit:hover {
+    background-color: var(--cinema-red-light);
+}
+
+.cambiar-contrasena-cancelar {
+    display: flex;
+    justify-content: center;
+    gap: 0.35rem;
+    margin-top: 1rem;
+    color: var(--cinema-red-light);
+    font-size: 0.7rem;
+    text-decoration: underline;
+    text-underline-offset: 0.15rem;
+}
+
+@media (max-width: 768px) {
+    .cambiar-contrasena-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .cambiar-contrasena-sidebar,
+    .cambiar-contrasena-card {
+        width: 100%;
+    }
+
+    .cambiar-contrasena-card {
+        padding: 1rem;
+    }
+}
+
 /* ===== pantalla de cierre de sesion ===== */
 .logout-card {
     width: 100%;
