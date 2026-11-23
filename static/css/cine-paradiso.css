@@ -738,16 +738,6 @@
     margin-bottom: 0.5rem;
 }
 
-/* caja del selector de funcion */
-.selector-funcion {
-    padding: 1.25rem;
-}
-
-.selector-funcion h2 {
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-}
-
 /* complejo y fecha lado a lado */
 .form-row {
     display: grid;
@@ -803,28 +793,6 @@
     border: none;
     border-top: 1px solid var(--cinema-800);
     margin: 1rem 0;
-}
-
-/* tarjeta de cada funcion */
-.funcion-card {
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.4rem;
-    margin-bottom: 1rem;
-}
-
-.funcion-card p {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-/* la funcion elegida se marca con borde rojo */
-.funcion-card.seleccionada {
-    border: 1px solid var(--cinema-red);
-    border-radius: 10px;
-    background-color: var(--cinema-950);
 }
 
 /* los botones de tipo button se ven igual que los enlaces */
