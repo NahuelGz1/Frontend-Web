@@ -1,0 +1,527 @@
+/* ===== pantalla de perfil ===== */
+
+.profile-page {
+    max-width: 1060px;
+    margin: 0 auto;
+}
+
+.profile-heading {
+    margin-bottom: 1rem;
+}
+
+.profile-kicker {
+    margin-bottom: 0.3rem;
+    color: var(--cinema-red-light);
+    font-size: 0.62rem;
+    font-weight: 600;
+}
+
+.profile-heading h1 {
+    margin-bottom: 0.35rem;
+    font-size: 1.65rem;
+}
+
+.profile-heading > p:last-child {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+}
+
+.profile-layout {
+    display: grid;
+    grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.profile-sidebar {
+    position: sticky;
+    top: 1rem;
+}
+
+.profile-user-card,
+.profile-security-card,
+.profile-section {
+    padding: 1rem;
+    background-color: var(--cinema-900);
+    border: 1px solid var(--cinema-800);
+    border-radius: 0.55rem;
+}
+
+.profile-security-card,
+.profile-section {
+    margin-top: 1rem;
+}
+
+.profile-user-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+
+.profile-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    flex: 0 0 2.2rem;
+    border-radius: 0.35rem;
+    background-color: var(--cinema-red);
+    color: var(--text-light);
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.profile-user-heading h2 {
+    font-size: 0.78rem;
+}
+
+.profile-user-heading p,
+.profile-security-card p,
+.profile-details dt,
+.profile-details dd,
+.profile-section-heading p,
+.watched-details p,
+.watched-details small,
+.candy-item p,
+.candy-note {
+    color: var(--text-muted);
+    font-size: 0.67rem;
+}
+
+.profile-divider {
+    height: 1px;
+    margin: 0.9rem 0;
+    background-color: var(--cinema-800);
+}
+
+.profile-user-card h3,
+.profile-security-card h2 {
+    margin-bottom: 0.7rem;
+    font-size: 0.8rem;
+}
+
+.profile-details {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.profile-details dt {
+    margin-bottom: 0.15rem;
+}
+
+.profile-details dd {
+    color: var(--text-light);
+    font-size: 0.68rem;
+}
+
+.profile-secondary-button,
+.profile-primary-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.2rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.25rem;
+    font-size: 0.68rem;
+    text-align: center;
+}
+
+.profile-secondary-button {
+    border: 1px solid var(--cinema-700);
+    color: var(--text-light);
+}
+
+.profile-secondary-button:hover {
+    border-color: var(--cinema-red-light);
+}
+
+.profile-user-card > .profile-secondary-button {
+    margin-top: 0.8rem;
+}
+
+.profile-security-card p {
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.profile-security-card .profile-secondary-button {
+    margin-bottom: 0.65rem;
+}
+
+.profile-logout-link {
+    display: block;
+    color: var(--cinema-red-light);
+    font-size: 0.68rem;
+    text-align: center;
+}
+
+.profile-primary-button {
+    background-color: var(--cinema-red);
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+.profile-primary-button:hover {
+    background-color: var(--cinema-red-light);
+}
+
+.profile-section-heading {
+    margin-bottom: 0.8rem;
+}
+
+.profile-section-heading h2 {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.upcoming-ticket {
+    padding: 0.7rem 0;
+    border-top: 1px solid var(--cinema-800);
+}
+
+.upcoming-ticket:first-of-type {
+    padding-top: 0.1rem;
+    border-top: 0;
+}
+
+.upcoming-ticket-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.65rem;
+}
+
+.upcoming-ticket-heading h3,
+.watched-details h3,
+.candy-item h3 {
+    font-size: 0.75rem;
+}
+
+.profile-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.2rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.2rem;
+    font-size: 0.58rem;
+    white-space: nowrap;
+}
+
+.profile-status-confirmed {
+    background-color: var(--cinema-850);
+    color: var(--cinema-red-light);
+}
+
+.profile-status-used {
+    background-color: var(--cinema-850);
+    color: var(--text-muted);
+}
+
+.profile-status-cancelled {
+    background-color: var(--cinema-850);
+    color: var(--cinema-red-light);
+}
+
+.profile-status-partial,
+.profile-status-pending {
+    background-color: var(--cinema-850);
+    color: var(--text-muted);
+}
+
+.upcoming-ticket-main {
+    display: flex;
+    gap: 0.8rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--cinema-800);
+}
+
+.upcoming-poster,
+.watched-poster {
+    width: 3.2rem;
+    height: 4.5rem;
+    flex: 0 0 3.2rem;
+    border-radius: 0.2rem;
+    object-fit: cover;
+    background-color: var(--cinema-850);
+}
+
+.profile-poster-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cinema-red-light);
+    font-size: 1.3rem;
+}
+
+.upcoming-ticket-details {
+    color: var(--text-light);
+    font-size: 0.67rem;
+    line-height: 1.5;
+}
+
+.ticket-summary {
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.7rem 0;
+    color: var(--text-muted);
+    font-size: 0.65rem;
+}
+
+.ticket-total {
+    color: var(--text-light);
+}
+
+.ticket-actions {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.profile-cancel-button {
+    color: var(--cinema-red-light);
+}
+
+.cancellation-notice {
+    margin-top: 0.7rem;
+    padding: 0.7rem;
+    border: 1px solid var(--cinema-700);
+    border-radius: 0.3rem;
+    color: var(--text-muted);
+    font-size: 0.62rem;
+}
+
+.cancellation-notice strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--text-light);
+}
+
+.cancellation-notice p {
+    margin-bottom: 0.25rem;
+}
+
+.watched-list,
+.candy-list {
+    display: grid;
+}
+
+.watched-item {
+    display: grid;
+    grid-template-columns: 1.7rem 1fr auto;
+    gap: 0.65rem;
+    align-items: start;
+    padding: 0.7rem 0;
+    border-top: 1px solid var(--cinema-800);
+}
+
+.rating-item {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid var(--cinema-800);
+}
+
+.rating-movie {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.rating-form {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.rating-star {
+    padding: 0 2px;
+    border: 0;
+    background: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 1.3rem;
+}
+
+.rating-star-selected {
+    color: #f5c518;
+}
+
+.profile-ticket-icon,
+.candy-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.45rem;
+    height: 1.45rem;
+    border-radius: 0.2rem;
+    background-color: var(--cinema-850);
+    color: var(--cinema-red-light);
+    font-size: 0.75rem;
+}
+
+.watched-details {
+    min-width: 0;
+}
+
+.watched-details h3 {
+    margin-bottom: 0.25rem;
+}
+
+.watched-details p {
+    line-height: 1.45;
+}
+
+.watched-details small {
+    display: block;
+    margin-top: 0.2rem;
+}
+
+.watched-details .watched-total {
+    margin-top: 0.25rem;
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+.watched-invoice-link {
+    display: inline-flex;
+    width: auto;
+    min-height: 1.8rem;
+    margin-top: 0.4rem;
+    font-size: 0.6rem;
+}
+
+.candy-orders {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.candy-order {
+    padding: 0.65rem 0.7rem;
+    border: 1px solid var(--cinema-800);
+    border-radius: 0.35rem;
+    background-color: var(--cinema-850);
+}
+
+.candy-order-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.55rem;
+}
+
+.candy-order-heading h3,
+.candy-order-heading strong {
+    color: var(--text-light);
+    font-size: 0.68rem;
+}
+
+.candy-order-heading p {
+    margin-top: 0.15rem;
+    color: var(--text-muted);
+    font-size: 0.62rem;
+}
+
+.candy-order-heading strong {
+    white-space: nowrap;
+}
+
+.candy-item {
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.55rem 0;
+    border-top: 1px solid var(--cinema-800);
+}
+
+.candy-order .candy-item:first-child {
+    border-top: 1px solid var(--cinema-800);
+}
+
+.candy-item img {
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 0.2rem;
+    object-fit: cover;
+}
+
+.candy-item h3 {
+    margin-bottom: 0.15rem;
+}
+
+.candy-total {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--cinema-800);
+    color: var(--text-light);
+    font-size: 0.7rem;
+}
+
+.candy-note {
+    margin-top: 0.6rem;
+}
+
+.empty-state {
+    display: grid;
+    justify-items: center;
+    gap: 0.8rem;
+    padding: 2rem 1rem;
+    border: 1px dashed var(--cinema-700);
+    border-radius: 0.35rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.empty-state .profile-primary-button {
+    width: min(100%, 12rem);
+}
+
+@media (max-width: 768px) {
+    .profile-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-sidebar {
+        position: static;
+    }
+
+    .profile-secondary-button,
+    .profile-primary-button {
+        min-height: 2.75rem;
+    }
+
+    .upcoming-ticket-main {
+        flex-direction: column;
+    }
+
+    .upcoming-poster {
+        width: 100%;
+        height: 12rem;
+        flex-basis: auto;
+    }
+
+    .ticket-actions {
+        width: 100%;
+    }
+}
+
+@media (max-width: 420px) {
+    .watched-item {
+        grid-template-columns: 1.7rem 1fr;
+    }
+
+    .watched-item .profile-status {
+        grid-column: 2;
+        justify-self: start;
+    }
+}
+
