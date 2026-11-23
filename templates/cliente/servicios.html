@@ -3,11 +3,12 @@
 {% block title %}Servicios adicionales · Cine Paradiso{% endblock %}
 
 {% block content %}
+
 {% set lista_servicios = servicios|default([], true) %}
 {% set contexto = contexto_compra|default(none) %}
 {% set entrada = contexto.entrada|default(none) if contexto else none %}
-{% set entradas_asociadas = contexto.cantidad_entradas|default(entrada.cantidad|default(1, true), true)|int if entrada
-else 0 %}
+{% set entradas_asociadas = contexto.cantidad_entradas|default(entrada.cantidad|default(1, true), true)|int if entrada else 0 %}
+{% set modo_compra = contexto.modo|default('nueva_entrada' if entrada else 'sin_entrada') if contexto else 'sin_entrada' %}
 
 {% if not lista_servicios %}
 {% set lista_servicios = [
@@ -61,7 +62,7 @@ visita.'}
     <div class="services-promo" aria-live="polite" style="margin-bottom: 1.5rem;">
         <div class="services-promo-copy">
             <p class="services-promo-kicker">
-                {{ 'ENTRADA YA COMPRADA · ' ~ contexto.codigo_operacion if contexto.modo == 'compra_existente' else 'COMPRA EN CURSO' }}
+                {{ 'ENTRADA YA COMPRADA · ' ~ contexto.codigo_operacion if modo_compra == 'compra_existente' else 'COMPRA EN CURSO' }}
             </p>
             <h2>Película seleccionada: {{ entrada.pelicula }}</h2>
             <p>{{ entrada.fecha }} · {{ entrada.sala }} · {{ entrada.asientos }}</p>
@@ -70,21 +71,23 @@ visita.'}
             <button type="button" class="btn-primary" data-open-ticket-modal>
                 Cambiar entrada
             </button>
+            {% if modo_compra == 'compra_existente' %}
             <form method="POST" action="{{ url_for('cliente_views.seleccionar_entrada_servicios') }}" style="margin: 0;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" name="accion" value="limpiar">
                 <button type="submit" class="btn-secondary" title="Comprar servicios sin entrada">Quitar</button>
             </form>
+            {% endif %}
         </div>
     </div>
     {% else %}
     <div class="services-promo" aria-live="polite" style="margin-bottom: 1.5rem;">
         <div class="services-promo-copy">
-            <p class="services-promo-kicker">MODALIDAD · SERVICIOS ADICIONALES</p>
+            <p class="services-promo-kicker">ENTRADA REQUERIDA · SERVICIOS ADICIONALES</p>
             <h2>No tenés ninguna película seleccionada.</h2>
-            <p>Podés comprar servicios solos o seleccionar una entrada disponible para adjuntarlos bajo el mismo código QR.</p>
+            <p>Seleccioná una de tus próximas entradas o elegí una función en la cartelera para poder agregar servicios.</p>
         </div>
-        <div style="display: flex; align-items: center; justify-content: flex-end;">
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
             {% if usuario_logueado %}
             <button type="button" class="btn-primary" data-open-ticket-modal>
                 Seleccionar entrada
@@ -160,7 +163,7 @@ visita.'}
     </div>
 
     <input type="hidden" id="servicios-csrf-token" value="{{ csrf_token }}">
-    <div class="services-layout" id="servicios-contenedor">
+    <div class="services-layout" id="servicios-contenedor" data-ticket-mode="{{ modo_compra }}">
         <div class="services-catalog">
             {% for categoria in categorias %}
             <section class="service-category" aria-labelledby="category-{{ loop.index }}">
@@ -298,7 +301,8 @@ visita.'}
             </div>
             <p class="service-order-note">Precios en pesos argentinos. Retirá el pedido en el complejo de tu función.
             </p>
-            <button class="service-checkout-button" type="button" data-checkout disabled>Continuar al pago</button>
+            <p class="flash-alert error" data-checkout-warning style="display: none;"></p>
+            <button class="service-checkout-button" type="button" data-checkout>Continuar al pago</button>
             <p class="service-checkout-message" data-checkout-message role="status" aria-live="polite"></p>
             <div class="service-pickup-note">
                 <h3><span aria-hidden="true">⌖</span> Retiro en el complejo</h3>
@@ -327,14 +331,14 @@ visita.'}
         {% else %}
         <div class="service-context-ticket service-context-independent">
             <div>
-                <span>MODALIDAD</span>
-                <strong>Compra de servicios sin entrada</strong>
-                <small>No hace falta asociar una película ni una función.</small>
+                <span>ENTRADA</span>
+                <strong>Ninguna película seleccionada</strong>
+                <small>Seleccioná una entrada disponible arriba o elegí una función en cartelera.</small>
             </div>
             <div class="service-context-venue">
-                <span>RETIRO</span>
-                <strong>Complejo de tu elección</strong>
-                <small>Elegí el complejo al continuar con el pago.</small>
+                <span>ESTADO</span>
+                <strong>Pendiente de selección</strong>
+                <small>Necesitás una entrada asociada para continuar al pago.</small>
             </div>
         </div>
         {% endif %}
@@ -343,7 +347,7 @@ visita.'}
             <div>
                 <span>Entradas</span>
                 <strong data-ticket-total-display>
-                    {{ '$0 (ya abonadas)' if contexto and contexto.modo == 'compra_existente' else ('$ ' ~ (contexto.total_entradas|default(0, true)|int)) }}
+                    {{ '$0 (ya abonadas)' if modo_compra == 'compra_existente' else ('$ ' ~ (contexto.total_entradas|default(0, true)|int)) }}
                 </strong>
             </div>
             <div class="service-summary-lines" data-purchase-lines>
@@ -354,8 +358,8 @@ visita.'}
                     data-purchase-total>$0</strong></div>
             <p>El importe final se confirma antes de completar el pago.</p>
         </div>
-        <button class="service-context-checkout" type="button" data-checkout-secondary disabled>Continuar al
-            pago</button>
+        <p class="flash-alert error" data-checkout-warning-secondary style="display: none;"></p>
+        <button class="service-context-checkout" type="button" data-checkout-secondary>Continuar al pago</button>
         <a class="service-context-back" href="{{ url_for('cliente_views.cartelera') }}">Seguir explorando películas</a>
     </section>
 </section>
