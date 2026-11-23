@@ -28,8 +28,15 @@
                 <input class="form-control" id="admin-email" name="email" type="email"
                        value="{{ email }}" maxlength="100" required autocomplete="email">
             </div>
+            <div class="form-field">
+                <label for="admin-rol">Rol a asignar</label>
+                <select class="form-control" id="admin-rol" name="rol">
+                    <option value="administrador" {{ 'selected' if rol_seleccionado == 'administrador' else '' }}>Administrador</option>
+                    <option value="empleado" {{ 'selected' if rol_seleccionado == 'empleado' else '' }}>Empleado (solo Validar QR)</option> 
+                </select>
+            </div>
             <div class="form-actions">
-                <button class="btn btn-primary" type="submit">Habilitar administrador</button>
+                <button class="btn btn-primary" type="submit">Habilitar cuenta</button>
             </div>
         </form>
     </section>
@@ -46,6 +53,7 @@
             <form method="post" action="{{ url_for('admin_views.habilitar_admins') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" name="accion" value="dar_de_baja">
+                <input type="hidden" name="rol" value="administrador">
                 <input type="hidden" name="id_admin" value="{{ administrador.id }}">
                 <button class="btn btn-delete" type="submit">Dar de baja</button>
             </form>
@@ -57,5 +65,31 @@
         <p class="text-muted">No hay administradores habilitados.</p>
         {% endfor %}
     </section>
+    <section class="panel admin-permission-panel" style="margin-top: 1rem;">
+        <h2>Empleados habilitados</h2>
+        <p class="help-text">Sólo aparecen cuentas con permisos de empleado.</p>
+        {% for empleado in empleados|default([]) %}
+        <div class="list-item">
+            <div class="list-content">
+                <strong>{{ empleado.email }}</strong>
+                <p class="text-muted">{{ empleado.nombre }}</p>
+            </div>
+            {% if empleado.email|lower != config.SUPER_ADMIN_EMAIL %}
+            <form method="post" action="{{ url_for('admin_views.habilitar_admins') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="accion" value="dar_de_baja">
+                <input type="hidden" name="rol" value="empleado">
+                <input type="hidden" name="id_admin" value="{{ empleado.id }}">
+                <button class="btn btn-delete" type="submit">Dar de baja</button>
+            </form>
+            {% else %}
+            <span class="badge badge-success">Administrador principal</span>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="text-muted">No hay empleados habilitados.</p>
+        {% endfor %}
+    </section>
+
 </section>
 {% endblock %}
