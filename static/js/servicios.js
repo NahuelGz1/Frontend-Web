@@ -4,6 +4,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const contenedorServicios = document.getElementById('servicios-contenedor');
     if (!contenedorServicios) return;
 
+    const modalEntradas = document.querySelector('[data-ticket-modal]');
+    const abrirModalEntradas = (e) => {
+        if (e) e.preventDefault();
+        if (!modalEntradas) return;
+        modalEntradas.hidden = false;
+        document.body.classList.add('modal-open');
+    };
+    const cerrarModalEntradas = (e) => {
+        if (e) e.preventDefault();
+        if (!modalEntradas) return;
+        modalEntradas.hidden = true;
+        document.body.classList.remove('modal-open');
+    };
+
+    document.querySelectorAll('[data-open-ticket-modal]').forEach(btn => {
+        btn.addEventListener('click', abrirModalEntradas);
+    });
+    modalEntradas?.querySelectorAll('[data-close-ticket-modal]').forEach(btn => {
+        btn.addEventListener('click', cerrarModalEntradas);
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modalEntradas && !modalEntradas.hidden) {
+            cerrarModalEntradas();
+        }
+    });
+
     // panel de "Tu selección" (el aside de la derecha)
     const cartCountElem      = contenedorServicios.querySelector('[data-cart-count]');
     const cartItemsElem      = contenedorServicios.querySelector('[data-cart-items]');
@@ -35,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // re-dibuja el carrito lateral y el resumen de abajo con lo que hay en `carrito`
     function actualizarUI() {
+        
         let totalServicios = 0;
         let totalItems     = 0;
 

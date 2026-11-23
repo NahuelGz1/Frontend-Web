@@ -173,40 +173,78 @@ def servicios():
         if not servicio.get("precio_formateado") and "precio" in servicio:
             servicio["precio_formateado"] = f"${int(servicio['precio']):,}".replace(",", ".")
 
+    usuario_logueado = compra_service.hay_sesion_iniciada()
+    entradas_disponibles = compra_service.obtener_entradas_disponibles_usuario() if usuario_logueado else []
+
     contexto_compra = None
-    resumen, error = compra_service.armar_resumen(incluir_servicios=False)
-    if not error and resumen:
-        vista_funcion = resumen["vista"]["funcion"]
-        cant_entradas = resumen["vista"]["cantidad_entradas"]
-        precio_ent = resumen["vista"].get("subtotal_entradas", "0")
-        total_ent_int = int(''.join(filter(str.isdigit, str(precio_ent))) or 0)
-        contexto_compra = {
-            "cantidad_entradas": cant_entradas,
-            "total_entradas": total_ent_int,
-            "funcion_id": resumen["id_funcion"],
-            "entrada": {
-                "cantidad": cant_entradas,
-                "pelicula": vista_funcion["pelicula"].get("titulo", ""),
-                "fecha": vista_funcion.get("fecha", ""),
-                "sala": f"{vista_funcion.get('complejo', '')} - {vista_funcion.get('sala', '')}",
-                "asientos": vista_funcion.get("butacas", ""),
+    funcion_para_estacionamiento = None
+    estacionamiento_ya_comprado = 0
+    vip_ya_comprado = 0
+
+    id_compra_adjunta = compra_service.compra_adjunta_en_curso()
+    if id_compra_adjunta:
+        elegida = next((e for e in entradas_disponibles if e["id_compra"] == id_compra_adjunta), None)
+        if elegida:
+            funcion_para_estacionamiento = elegida.get("id_funcion")
+            estacionamiento_ya_comprado = elegida.get("estacionamiento_previo", 0)
+            vip_ya_comprado = elegida.get("vip_previo", 0)
+            contexto_compra = {
+                "modo": "compra_existente",
+                "id_compra_adjunta": elegida["id_compra"],
+                "codigo_operacion": elegida["codigo_operacion"],
+                "cantidad_entradas": elegida["cantidad_entradas"],
+                "total_entradas": 0,
+                "funcion_id": funcion_para_estacionamiento,
+                "entrada": {
+                    "cantidad": elegida["cantidad_entradas"],
+                    "pelicula": elegida["pelicula"].get("titulo", ""),
+                    "fecha": f"{elegida['fecha']} · {elegida['horario']}",
+                    "sala": f"{elegida['complejo']} · {elegida['sala']}".strip(" ·"),
+                    "asientos": f"Butacas: {elegida['butacas']}",
+                },
             }
-        }
-    elif compra_service.funcion_en_curso() and error:
-        flash(error, "warning")
+        else:
+            compra_service.limpiar_seleccion_entrada()
+    elif compra_service.funcion_en_curso():
+        resumen, error = compra_service.armar_resumen(incluir_servicios=False)
+        if not error and resumen:
+            vista_funcion = resumen["vista"]["funcion"]
+            cant_entradas = resumen["vista"]["cantidad_entradas"]
+            precio_ent = resumen["vista"].get("subtotal_entradas", "0")
+            total_ent_int = int("".join(filter(str.isdigit, str(precio_ent))) or 0)
+            funcion_para_estacionamiento = resumen["id_funcion"]
+            contexto_compra = {
+                "modo": "nueva_entrada",
+                "cantidad_entradas": cant_entradas,
+                "total_entradas": total_ent_int,
+                "funcion_id": funcion_para_estacionamiento,
+                "entrada": {
+                    "cantidad": cant_entradas,
+                    "pelicula": vista_funcion["pelicula"].get("titulo", ""),
+                    "fecha": vista_funcion.get("fecha", ""),
+                    "sala": f"{vista_funcion.get('complejo', '')} - {vista_funcion.get('sala', '')}",
+                    "asientos": vista_funcion.get("butacas", ""),
+                },
+            }
+        elif error:
+            flash(error, "warning")
 
     estacionamiento_disponible = None
     error_estacionamiento = None
-    if compra_service.funcion_en_curso():
+    if funcion_para_estacionamiento:
         estacionamiento_disponible, error_estacionamiento = compra_service.disponibilidad_estacionamiento(
-            compra_service.funcion_en_curso()
+            funcion_para_estacionamiento
         )
 
     return render_template(
         "cliente/servicios.html",
         servicios=lista_servicios,
         contexto_compra=contexto_compra,
+        entradas_disponibles=entradas_disponibles,
+        usuario_logueado=usuario_logueado,
         estacionamiento_disponible=estacionamiento_disponible,
+        estacionamiento_ya_comprado=estacionamiento_ya_comprado,
+        vip_ya_comprado=vip_ya_comprado,
         error_estacionamiento=error_estacionamiento,
         error_servicios=error_servicios,
         cantidades_servicios=compra_service.servicios_seleccionados(),
@@ -469,3 +507,23 @@ def terminos_y_condiciones():
 @cliente_views_bp.route("/privacidad")
 def privacidad():
     return render_template("cliente/privacidad.html")
+
+
+@cliente_views_bp.route("/servicios/seleccionar-entrada", methods=["POST"])
+def seleccionar_entrada_servicios():
+    if not compra_service.hay_sesion_iniciada():
+        return _pedir_inicio_de_sesion()
+    if not compra_service.csrf_valido(request.form.get("csrf_token")):
+        abort(400, description="El formulario venció. Volvé a intentarlo.")
+
+    if request.form.get("accion") == "limpiar":
+        compra_service.limpiar_seleccion_entrada()
+        return redirect(url_for("cliente_views.servicios"), code=303)
+
+    compra_id = request.form.get("compra_id", type=int)
+    disponibles = compra_service.obtener_entradas_disponibles_usuario()
+    if compra_id and any(e["id_compra"] == compra_id for e in disponibles):
+        compra_service.seleccionar_compra_adjunta(compra_id)
+    else:
+        flash("La entrada seleccionada no está disponible.", "warning")
+    return redirect(url_for("cliente_views.servicios"), code=303)
