@@ -89,7 +89,7 @@
             {% for category, message in messages %}
             <div class="flash-alert alert {{ category }}">
                 <span>{{ message }}</span>
-                <button class="alert-close" style="background:none; border:none; color:inherit; cursor:pointer;">✕</button>
+                <button type="button" class="alert-close" aria-label="Cerrar mensaje">✕</button>
             </div>
             {% endfor %}
             {% endif %}
