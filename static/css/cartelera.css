@@ -115,3 +115,20 @@
         width: 100%;
     }
 }
+
+/* Alineacion de proximos estrenos en computadora */
+@media (min-width: 769px) {
+    .estrenos-page .cartelera-grid {
+        align-items: stretch;
+    }
+
+    .estrenos-page .poster-card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .estrenos-page .poster-card h3 {
+        flex: 1;
+    }
+}
