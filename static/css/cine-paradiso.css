@@ -4179,10 +4179,11 @@ button.btn-secondary:disabled {
     padding: 0.85rem 1rem;
 }
 
-.services-promo-image {
-    min-width: 0;
-    min-height: 6rem;
-    background: #202020;
+.services-promo.services-food-promo {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 9rem;
+    background: linear-gradient(90deg, rgba(23, 25, 25, 0.95), rgba(23, 25, 25, 0.15)),
+        url("../images/servicios/banner-servicios.png") center / cover no-repeat;
 }
 
 .services-layout {
@@ -4689,8 +4690,9 @@ button.btn-secondary:disabled {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .services-promo-image {
-        min-height: 5rem;
+    .services-promo.services-food-promo {
+        min-height: 10rem;
+        background-position: center, right center;
     }
 
     .services-ticket-promo-actions {
