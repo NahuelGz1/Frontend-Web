@@ -53,12 +53,81 @@
     font-size: 2rem;
 }
 
+.home-services-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.home-services-grid .home-service-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+    color: var(--text-light);
+    text-decoration: none;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.home-services-grid .home-service-card:hover,
+.home-services-grid .home-service-card:focus-visible {
+    border-color: var(--cinema-red-light);
+    transform: translateY(-2px);
+}
+
+.home-service-card img {
+    width: 100%;
+    height: 7rem;
+    object-fit: cover;
+    background: var(--cinema-800);
+}
+
+.home-service-copy {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.85rem;
+}
+
+.home-service-copy h3,
+.home-service-copy p {
+    margin: 0;
+}
+
+.home-service-copy p {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.home-service-copy > span {
+    margin-top: auto;
+    padding-top: 0.35rem;
+    color: var(--cinema-red-light);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+@media (max-width: 1000px) {
+    .home-services-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
 /* ===== adaptacion de inicio a celulares ===== */
 
 @media (max-width: 768px) {
+    .home-services-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 /* el afiche pasa arriba y el texto abajo */
     .hero {
         flex-direction: column-reverse;
+    }
+
+    @media (max-width: 480px) {
+        .home-services-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     .hero-poster {
@@ -82,6 +151,19 @@
 
     .hero h1 {
         font-size: 1.75rem;
+    }
+
+    .hero-desc {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 4;
+        overflow: hidden;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .hero-actions {
+        margin-top: 0.5rem;
     }
 
     /* botones apilados a todo el ancho */

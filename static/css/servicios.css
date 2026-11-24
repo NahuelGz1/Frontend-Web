@@ -78,10 +78,11 @@
     line-height: 1.45;
 }
 
-.services-promo-image {
-    min-width: 0;
-    min-height: 6rem;
-    background: #202020;
+.services-promo.services-food-promo {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 9rem;
+    background: linear-gradient(90deg, rgba(23, 25, 25, 0.95), rgba(23, 25, 25, 0.15)),
+        url("../images/servicios/banner-servicios.png") center / cover no-repeat;
 }
 
 .services-layout {
@@ -572,8 +573,9 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .services-promo-image {
-        min-height: 5rem;
+    .services-promo.services-food-promo {
+        min-height: 10rem;
+        background-position: center, right center;
     }
 
     .service-products {
@@ -624,6 +626,21 @@
 
 .service-checkout-warning[hidden] {
     display: none;
+}
+
+.service-warning-link:not([hidden]) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.45rem;
+    color: var(--cinema-red-light);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.service-warning-link:hover,
+.service-warning-link:focus-visible {
+    text-decoration: underline;
 }
 
 @media (max-width: 480px) {

@@ -1,4 +1,5 @@
 {% extends "layouts/base.html" %}
+{% from "components/imagen-servicio.html" import imagen_servicio as obtener_imagen_servicio %}
 
 {% block title %}Servicios adicionales · Cine Paradiso{% endblock %}
 
@@ -159,20 +160,19 @@ visita.'}
         </section>
     </div>
 
-    <div class="services-promo" aria-label="Promoción del cine">
+    <div class="services-promo services-food-promo" aria-label="Promoción del cine">
         <div class="services-promo-copy">
             <p class="services-promo-kicker">DISFRUTÁ · SUMÁ COMIDA Y BEBIDA</p>
             <h2>Agregá comida y bebida a tu compra.</h2>
             <p>Elegí tus favoritos y retiralos en el candy bar del complejo antes de entrar a la sala.</p>
         </div>
-        <div class="services-promo-image" role="img" aria-label="Espacio reservado para la imagen promocional"></div>
     </div>
 
     <input type="hidden" id="servicios-csrf-token" value="{{ csrf_token }}">
     <div class="services-layout" id="servicios-contenedor" data-ticket-mode="{{ modo_compra }}">
         <div class="services-catalog">
             {% for categoria in categorias %}
-            <section class="service-category" aria-labelledby="category-{{ loop.index }}">
+            <section class="service-category" id="servicios-{{ categoria.slug|replace(' ', '-') }}" aria-labelledby="category-{{ loop.index }}">
                 <header class="service-category-heading">
                     <span class="service-category-icon" aria-hidden="true">
                         {% if categoria.slug == 'bebidas' %}
@@ -222,22 +222,7 @@ visita.'}
                     {% set limite_cantidad = cupo_vip_entrada if 'vip' in nombre_normalizado else 9999 %}
                     {% endif %}
 
-                    {% set imagen_servicio = servicio.imagen_url|default('', true) %}
-                    {% if not imagen_servicio and 'agua' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/agua-mineral.png') %}
-                    {% elif not imagen_servicio and 'combo' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/combo-duo.png') %}
-                    {% elif not imagen_servicio and 'nacho' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/machos-cheddar.png') %}
-                    {% elif not imagen_servicio and 'pancho' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/pancho-clasico.png') %}
-                    {% elif not imagen_servicio and 'pochoclo' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/balde-pochoclos.png') %}
-                    {% elif not imagen_servicio and 'estacionamiento' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/estacionamiento.png') %}
-                    {% elif not imagen_servicio and 'vip' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/acceso-vip.png') %}
-                    {% endif %}
+                    {% set imagen_servicio = obtener_imagen_servicio(servicio) %}
                     <article class="service-product servicio-card" data-precio="{{ precio }}" data-service-card
                         data-service-id="{{ servicio.id|default(servicio.nombre|lower|replace(' ', '-'), true) }}"
                         data-service-name="{{ servicio.nombre }}"
@@ -308,7 +293,10 @@ visita.'}
             <p class="service-order-note">Precios en pesos argentinos. Retirá el pedido en el complejo de tu función.
             </p>
             <button class="service-checkout-button" type="button" data-checkout>Continuar al pago</button>
-            <p class="service-checkout-warning" data-checkout-warning role="status" aria-live="polite" hidden></p>
+            <div class="service-checkout-warning" data-checkout-warning role="status" aria-live="polite" hidden>
+                <span data-warning-message></span>
+                <a class="service-warning-link" href="{{ url_for('cliente_views.cartelera') }}" data-warning-cartelera hidden>Ir a la cartelera <span aria-hidden="true">→</span></a>
+            </div>
             <p class="service-checkout-message" data-checkout-message role="status" aria-live="polite"></p>
             <div class="service-pickup-note">
                 <h3><span aria-hidden="true">⌖</span> Retiro en el complejo</h3>
@@ -365,7 +353,10 @@ visita.'}
             <p>El importe final se confirma antes de completar el pago.</p>
         </div>
         <button class="service-context-checkout" type="button" data-checkout-secondary>Continuar al pago</button>
-        <p class="service-checkout-warning" data-checkout-warning-secondary role="status" aria-live="polite" hidden></p>
+        <div class="service-checkout-warning" data-checkout-warning-secondary role="status" aria-live="polite" hidden>
+            <span data-warning-message></span>
+            <a class="service-warning-link" href="{{ url_for('cliente_views.cartelera') }}" data-warning-cartelera hidden>Ir a la cartelera <span aria-hidden="true">→</span></a>
+        </div>
         <a class="service-context-back" href="{{ url_for('cliente_views.cartelera') }}">Seguir explorando películas</a>
     </section>
 </section>

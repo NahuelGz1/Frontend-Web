@@ -49,10 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkoutBtnSec     = document.querySelector('[data-checkout-secondary]');
     const warningInferior    = document.querySelector('[data-checkout-warning-secondary]');
 
-    const mostrarAdvertencia = (mensaje, origen = 'lateral') => {
+    const mostrarAdvertencia = (mensaje, origen = 'lateral', irACartelera = false) => {
         [warningLateral, warningInferior].forEach(box => {
             if (!box) return;
-            box.textContent = mensaje;
+            box.querySelector('[data-warning-message]').textContent = mensaje;
+            box.querySelector('[data-warning-cartelera]').hidden = !irACartelera;
             box.hidden = false;
         });
         const destino = origen === 'inferior' ? warningInferior : warningLateral;
@@ -62,7 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const limpiarAdvertencia = () => {
         [warningLateral, warningInferior].forEach(box => {
             if (!box) return;
-            box.textContent = '';
+            box.querySelector('[data-warning-message]').textContent = '';
+            box.querySelector('[data-warning-cartelera]').hidden = true;
             box.hidden = true;
         });
     };
@@ -245,7 +247,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modoEntrada === 'sin_entrada') {
             mostrarAdvertencia(
                 'Seleccioná una de tus próximas entradas o elegí una función en la cartelera antes de continuar al pago.',
-                origen
+                origen,
+                true
             );
             return;
         }
