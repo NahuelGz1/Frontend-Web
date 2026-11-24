@@ -59,7 +59,7 @@ visita.'}
     </header>
 
     {% if entrada %}
-    <div class="services-promo" aria-live="polite" style="margin-bottom: 1.5rem;">
+    <div class="services-promo services-ticket-promo" aria-live="polite">
         <div class="services-promo-copy">
             <p class="services-promo-kicker">
                 {{ 'ENTRADA YA COMPRADA · ' ~ contexto.codigo_operacion if modo_compra == 'compra_existente' else 'COMPRA EN CURSO' }}
@@ -67,7 +67,7 @@ visita.'}
             <h2>Película seleccionada: {{ entrada.pelicula }}</h2>
             <p>{{ entrada.fecha }} · {{ entrada.sala }} · {{ entrada.asientos }}</p>
         </div>
-        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
+        <div class="services-ticket-promo-actions">
             <button type="button" class="btn-primary" data-open-ticket-modal>
                 Cambiar entrada
             </button>
@@ -81,13 +81,13 @@ visita.'}
         </div>
     </div>
     {% else %}
-    <div class="services-promo" aria-live="polite" style="margin-bottom: 1.5rem;">
+    <div class="services-promo services-ticket-promo" aria-live="polite">
         <div class="services-promo-copy">
             <p class="services-promo-kicker">ENTRADA REQUERIDA · SERVICIOS ADICIONALES</p>
             <h2>No tenés ninguna película seleccionada.</h2>
             <p>Seleccioná una de tus próximas entradas o elegí una función en la cartelera para poder agregar servicios.</p>
         </div>
-        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
+        <div class="services-ticket-promo-actions">
             {% if usuario_logueado %}
             <button type="button" class="btn-primary" data-open-ticket-modal>
                 Seleccionar entrada
@@ -103,7 +103,7 @@ visita.'}
 
     <div class="profile-modal" id="modal-entradas-disponibles" data-ticket-modal hidden>
         <div class="profile-modal-backdrop" data-close-ticket-modal></div>
-        <section class="profile-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-entradas-titulo">
+        <section class="profile-modal-dialog service-ticket-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-entradas-titulo">
             <button class="profile-modal-close" type="button" aria-label="Cerrar" data-close-ticket-modal>×</button>
             <p class="login-kicker">TU CUENTA PARADISO</p>
             <h2 id="modal-entradas-titulo">Próximas entradas disponibles</h2>
@@ -112,9 +112,9 @@ visita.'}
             </p>
 
             {% if entradas_disponibles %}
-            <div style="display: flex; flex-direction: column; gap: 1rem; max-height: 55vh; overflow-y: auto; margin-top: 1rem;">
+            <div class="service-ticket-list">
                 {% for item in entradas_disponibles %}
-                <article class="upcoming-ticket" style="margin: 0;">
+                <article class="upcoming-ticket service-ticket-item">
                     <div class="upcoming-ticket-heading">
                         <h3>{{ item.pelicula.titulo }}</h3>
                         <span class="profile-status profile-status-confirmed">{{ item.codigo_operacion }}</span>
@@ -132,7 +132,7 @@ visita.'}
                             <p>Butacas: {{ item.butacas }} ({{ item.cantidad_entradas }} {{ 'entrada' if item.cantidad_entradas == 1 else 'entradas' }})</p>
                         </div>
                     </div>
-                    <div class="ticket-actions">
+                    <div class="ticket-actions service-ticket-actions">
                         <form method="POST" action="{{ url_for('cliente_views.seleccionar_entrada_servicios') }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                             <input type="hidden" name="compra_id" value="{{ item.id_compra }}">
@@ -301,8 +301,8 @@ visita.'}
             </div>
             <p class="service-order-note">Precios en pesos argentinos. Retirá el pedido en el complejo de tu función.
             </p>
-            <p class="flash-alert error" data-checkout-warning style="display: none;"></p>
             <button class="service-checkout-button" type="button" data-checkout>Continuar al pago</button>
+            <p class="service-checkout-warning" data-checkout-warning role="status" aria-live="polite" hidden></p>
             <p class="service-checkout-message" data-checkout-message role="status" aria-live="polite"></p>
             <div class="service-pickup-note">
                 <h3><span aria-hidden="true">⌖</span> Retiro en el complejo</h3>
@@ -358,8 +358,8 @@ visita.'}
                     data-purchase-total>$0</strong></div>
             <p>El importe final se confirma antes de completar el pago.</p>
         </div>
-        <p class="flash-alert error" data-checkout-warning-secondary style="display: none;"></p>
         <button class="service-context-checkout" type="button" data-checkout-secondary>Continuar al pago</button>
+        <p class="service-checkout-warning" data-checkout-warning-secondary role="status" aria-live="polite" hidden></p>
         <a class="service-context-back" href="{{ url_for('cliente_views.cartelera') }}">Seguir explorando películas</a>
     </section>
 </section>

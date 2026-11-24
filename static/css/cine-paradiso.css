@@ -4166,6 +4166,19 @@ button.btn-secondary:disabled {
     line-height: 1.45;
 }
 
+.services-ticket-promo {
+    margin-bottom: 1.5rem;
+}
+
+.services-ticket-promo-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+}
+
 .services-promo-image {
     min-width: 0;
     min-height: 6rem;
@@ -4454,6 +4467,22 @@ button.btn-secondary:disabled {
     line-height: 1.45;
 }
 
+.service-checkout-warning {
+    margin-top: 0.65rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--cinema-700);
+    border-left: 3px solid var(--cinema-red-light);
+    border-radius: 4px;
+    background: var(--cinema-900);
+    color: var(--text-light);
+    font-size: 0.65rem;
+    line-height: 1.5;
+}
+
+.service-checkout-warning[hidden] {
+    display: none;
+}
+
 .service-checkout-button,
 .service-context-checkout {
     width: 100%;
@@ -4662,6 +4691,11 @@ button.btn-secondary:disabled {
 
     .services-promo-image {
         min-height: 5rem;
+    }
+
+    .services-ticket-promo-actions {
+        justify-content: flex-start;
+        padding-top: 0;
     }
 
     .service-products {
@@ -4877,13 +4911,56 @@ body.modal-open {
 
 .profile-modal-dialog {
     position: relative;
-    width: min(100%,  thirtyrem);
+    width: min(100%, 32rem);
     max-width: 32rem;
     padding: 2rem;
     border: 1px solid var(--border-color, #333);
     border-radius: 0.75rem;
     background: var(--surface-color, #1d1d1d);
     box-shadow: 0 1rem 3rem rgb(0 0 0 / 45%);
+}
+
+.service-ticket-dialog {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 2rem);
+}
+
+.service-ticket-list {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    margin-top: 1rem;
+    padding-right: 0.75rem;
+    scrollbar-color: var(--cinema-700) var(--cinema-900);
+}
+
+.service-ticket-item {
+    margin: 0;
+    padding: 1rem 0;
+}
+
+.service-ticket-item:first-of-type {
+    padding-top: 0;
+}
+
+.service-ticket-item .upcoming-ticket-main {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.service-ticket-actions {
+    margin-top: 0.75rem;
+}
+
+.service-ticket-actions .btn-primary {
+    max-width: 100%;
+}
+
+@media (max-width: 480px) {
+    .service-ticket-dialog {
+        padding: 1.5rem;
+    }
 }
 
 .profile-modal-dialog label {

@@ -38,7 +38,6 @@
             <div class="list-content">
                 <h3>{{ pelicula.titulo }}</h3>
                 <p class="text-muted">{{ pelicula.anio }} · {{ pelicula.duracion_minutos }} min · {{ pelicula.clasificacion }} · {{ pelicula.genero }}</p>
-                <p class="text-muted">Disponible: {{ pelicula.disponible_desde }} → {{ pelicula.disponible_hasta }}</p>
                 <span class="badge {{ 'badge-success' if pelicula.activa else 'badge-danger' }}">{{ 'Activa' if pelicula.activa else 'Inactiva' }}</span>
                 <div class="list-actions">
                     <a class="btn" href="{{ url_for('admin_views.peliculas', editar=pelicula.id) }}#edit-panel">Editar</a>
@@ -123,14 +122,6 @@
                         <textarea class="form-control" id="movie-synopsis" name="sinopsis" maxlength="3000">{{ pelicula_actual.sinopsis|default('') if pelicula_actual else '' }}</textarea>
                     </div>
                     <div class="form-field form-wide">
-                        <label for="movie-available-from">Disponible desde</label>
-                        <input class="form-control" id="movie-available-from" name="disponible_desde" type="date" value="{{ pelicula_actual.disponible_desde|default('') if pelicula_actual else '' }}" required>
-                    </div>
-                    <div class="form-field form-wide">
-                        <label for="movie-available-until">Disponible hasta</label>
-                        <input class="form-control" id="movie-available-until" name="disponible_hasta" type="date" value="{{ pelicula_actual.disponible_hasta|default('') if pelicula_actual else '' }}" required>
-                    </div>
-                    <div class="form-field form-wide">
                         <label for="movie-status">Estado en cartelera</label>
                         <select class="form-control" id="movie-status" name="activa" required>
                             <option value="" {% if not pelicula_actual %}selected{% endif %}>Seleccioná un estado</option>
@@ -140,7 +131,6 @@
                     </div>
                 </div>
 
-                <p class="help-text">El período es de programación; no cambia el año de estreno original.</p>
                 <div class="form-actions">
                     {% if pelicula_actual %}<a class="btn" href="{{ url_for('admin_views.peliculas') }}">Cancelar</a>{% endif %}
                     <button class="btn btn-primary" type="submit">{{ 'Guardar cambios' if pelicula_actual else 'Agregar película' }}</button>

@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         [warningLateral, warningInferior].forEach(box => {
             if (!box) return;
             box.textContent = mensaje;
-            box.style.display = 'flex';
+            box.hidden = false;
         });
         const destino = origen === 'inferior' ? warningInferior : warningLateral;
         destino?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         [warningLateral, warningInferior].forEach(box => {
             if (!box) return;
             box.textContent = '';
-            box.style.display = 'none';
+            box.hidden = true;
         });
     };
 
