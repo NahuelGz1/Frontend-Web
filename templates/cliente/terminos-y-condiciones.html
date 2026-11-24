@@ -2,6 +2,11 @@
 
 {% block title %}Términos y condiciones · Cine Paradiso{% endblock %}
 
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+{% endblock %}
+
 {% block content %}
 <section class="payment-page" aria-labelledby="terminos-titulo">
 
