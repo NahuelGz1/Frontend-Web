@@ -1,0 +1,93 @@
+/* ===== pantalla de inicio ===== */
+
+/* pelicula destacada: texto a la izquierda, afiche a la derecha */
+.hero {
+    background-color: var(--cinema-900);
+    border: 1px solid var(--cinema-800);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+}
+
+.hero-text {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.hero-label {
+    font-size: 0.7rem;
+    color: var(--cinema-red-light);
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+}
+
+.hero-meta,
+.hero-desc {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.hero-poster {
+    width: 260px;
+    object-fit: cover;
+}
+
+.hero-poster-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--cinema-800);
+    color: var(--text-muted);
+    font-size: 2rem;
+}
+
+/* ===== adaptacion de inicio a celulares ===== */
+
+@media (max-width: 768px) {
+/* el afiche pasa arriba y el texto abajo */
+    .hero {
+        flex-direction: column-reverse;
+    }
+
+    .hero-poster {
+        width: auto;
+        max-width: 200px;
+        height: auto;
+        max-height: 300px;
+        aspect-ratio: 2 / 3;
+        object-fit: cover;
+        object-position: center;
+        border-radius: 8px;
+        margin: 1.5rem auto 0.25rem;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+        align-self: center;
+    }
+
+    .hero-text {
+        width: 100%;
+        padding: 1.25rem;
+    }
+
+    .hero h1 {
+        font-size: 1.75rem;
+    }
+
+    /* botones apilados a todo el ancho */
+    .hero-actions {
+        flex-direction: column;
+        width: 100%;
+        text-align: center;
+    }
+}
