@@ -407,3 +407,48 @@ textarea.form-control { min-height: 150px; resize: vertical; }
         grid-column: 1 / -1;
     }
 }
+
+/* Alineacion de botones de gestion de servicios */
+.list-actions.service-list-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.service-list-actions > form {
+    display: flex;
+    margin: 0;
+    min-width: 0;
+}
+
+.service-list-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    min-height: 2.4rem;
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+    margin: 0;
+}
+
+/* Adaptacion de botones de servicios a celulares */
+@media (max-width: 600px) {
+    .list-actions.service-list-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .service-list-actions .btn {
+        width: 100%;
+        min-height: 2.75rem;
+    }
+
+    .service-list-actions > form:has(.btn-delete) {
+        grid-column: 1 / -1;
+    }
+}
