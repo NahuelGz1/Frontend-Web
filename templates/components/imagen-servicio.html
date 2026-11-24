@@ -1,0 +1,19 @@
+{% macro imagen_servicio(servicio) -%}
+    {%- set imagenes = {
+        'balde de pochoclos': 'balde-pochoclos.png',
+        'combo mega recargado': 'combo-recargado.png',
+        'combo mega individual': 'combo-mega-individual.png',
+        'agua': 'agua.png',
+        'estacionamiento': 'estacionamiento.png',
+        'acceso vip': 'acceso-vip.png',
+        'combo familia': 'combo-familia.png',
+        'gaseosa': 'gaseosa.png',
+        'combo nachos': 'combo-nachos.png',
+        'combo pancho': 'combo-pancho.png',
+        'nachos': 'nachos.png',
+        'pancho': 'pancho.png'
+    } -%}
+    {%- set imagen = servicio.imagen_url|default('', true) -%}
+    {%- set archivo = imagenes.get(servicio.nombre|default('', true)|trim|lower) -%}
+    {{- imagen if imagen else url_for('static', filename='images/servicios/' ~ archivo) if archivo else '' -}}
+{%- endmacro %}

@@ -17,9 +17,9 @@
         <p class="hero-label">DESTACADA DE LA SEMANA</p>
         <h1>{{ destacada.titulo }}</h1>
         <p class="hero-meta">{{ destacada.genero }} · {{ destacada.duracion_minutos }} min</p>
-        <p class="hero-desc">{{ destacada.sinopsis }}</p>
+        <p class="hero-desc">{{ destacada.sinopsis|default('Sin sinopsis disponible.', true) }}</p>
         <div class="hero-actions">
-            <a href="{{ url_for('cliente_views.detalle_pelicula', pelicula_id=destacada.id) }}" class="btn btn-primary">Comprar entradas →</a>
+            <a href="{{ url_for('cliente_views.detalle_pelicula', pelicula_id=destacada.id) }}" class="btn btn-primary">Ver película y funciones →</a>
             <a href="{{ url_for('cliente_views.cartelera') }}" class="btn btn-secondary">Ver cartelera</a>
         </div>
     </div>
@@ -37,42 +37,23 @@
         <h2>Servicios</h2>
         <a href="{{ url_for('cliente_views.servicios') }}" class="section-link">Ver servicios →</a>
     </div>
-    <div class="services-grid">
-        <article class="card">
-            <span class="card-icon" aria-hidden="true">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>
-            </span>
-            <h3>Bebidas</h3>
-            <p>Refrescos, jugos y bebidas calientes para acompañar tu función.</p>
-        </article>
-        <article class="card">
-            <span class="card-icon" aria-hidden="true">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a2 2 0 0 0 0-4 2 2 0 0 0-4 0 2 2 0 0 0-4 0 2 2 0 0 0 0 4"/><path d="M6 8v11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"/></svg>
-            </span>
-            <h3>Pochoclos</h3>
-            <p>Pochoclos clásicos y especiales para disfrutar en sala.</p>
-        </article>
-        <article class="card">
-            <span class="card-icon" aria-hidden="true">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 14a4 4 0 1 1 4-4 4 4 0 0 1-4 4Z"/></svg>
-            </span>
-            <h3>Snacks</h3>
-            <p>Snacks y acompañamientos para una experiencia más completa.</p>
-        </article>
-        <article class="card">
-            <span class="card-icon" aria-hidden="true">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>
-            </span>
-            <h3>Estacionamiento</h3>
-            <p>Zona de estacionamiento.</p>
-        </article>
-        <article class="card">
-            <span class="card-icon" aria-hidden="true">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            </span>
-            <h3>Acceso VIP</h3>
-            <p>Zona de espera previa a la película con souvenir temático de regalo.</p>
-        </article>
+    <div class="services-grid home-services-grid">
+        {% for nombre, descripcion, imagen, categoria in [
+            ('Bebidas', 'Acompañá tu función con algo fresco.', 'gaseosa.png', 'bebidas'),
+            ('Pochoclos', 'El clásico para disfrutar en sala.', 'balde-pochoclos.png', 'pochoclos'),
+            ('Snacks', 'Elegí algo rico para completar el plan.', 'nachos.png', 'snacks'),
+            ('Estacionamiento', 'Sumá una cochera para tu visita.', 'estacionamiento.png', 'mejoras-de-experiencia'),
+            ('Acceso VIP', 'Disfrutá una experiencia especial.', 'acceso-vip.png', 'mejoras-de-experiencia')
+        ] %}
+        <a class="card home-service-card" href="{{ url_for('cliente_views.servicios', _anchor='servicios-' ~ categoria) }}">
+            <img src="{{ url_for('static', filename='images/servicios/' ~ imagen) }}" alt="" loading="lazy">
+            <div class="home-service-copy">
+                <h3>{{ nombre }}</h3>
+                <p>{{ descripcion }}</p>
+                <span>Explorar <span aria-hidden="true">→</span></span>
+            </div>
+        </a>
+        {% endfor %}
     </div>
 </section>
 
