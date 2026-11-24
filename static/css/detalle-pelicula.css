@@ -45,6 +45,25 @@
     color: var(--text-muted);
 }
 
+/* celulares */
+@media (max-width: 768px) {
+    .detalle-pelicula {
+        gap: 1rem;
+    }
+
+    .detalle-pelicula > img {
+        width: 110px;
+    }
+
+    .detalle-info h2 {
+        font-size: 1.5rem;
+    }
+
+    /* las variantes quedan una debajo de la otra */
+    .estados-grid {
+        grid-template-columns: 1fr;
+    }
+}
 
 /* ===== detalle de pelicula en celulares ===== */
 @media (max-width: 600px) {
