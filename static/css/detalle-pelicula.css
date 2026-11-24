@@ -25,6 +25,22 @@
     font-size: 2rem;
 }
 
+.detalle-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.detalle-estrella-activa {
+    color: #f5c518;
+}
+
+.detalle-estrella-inactiva {
+    color: #555;
+}
+
 /* duracion, clasificacion y año */
 .tags {
     display: flex;

@@ -1,6 +1,5 @@
 import secrets
 import re
-import math
 import base64
 from datetime import datetime
 from urllib.parse import quote
@@ -25,6 +24,7 @@ from services.admin_service import (
     obtener_empleados
 )
 from services.gestion_peliculas_service import (
+    actualizar_pelicula,
     buscar_peliculas_tmdb,
     cambiar_estado_pelicula,
     crear_pelicula,
@@ -248,6 +248,7 @@ def peliculas():
     resultados_tmdb = []
     error_tmdb = None
     pelicula_editar = None
+    formulario_pelicula = None
     csrf_actual = obtener_csrf_token()
 
     if request.method == "POST":
@@ -314,6 +315,52 @@ def peliculas():
                     "No se pudo crear la película."
                 )
 
+        elif accion == "guardar":
+            pelicula_id = request.form.get("pelicula_id", "")
+            if not pelicula_id.isascii() or not pelicula_id.isdigit() or int(pelicula_id) < 1:
+                mensaje = "La película seleccionada no es válida."
+            else:
+                id_editar = int(pelicula_id)
+                duracion_texto = request.form.get("duracion_minutos", "").strip()
+                estado_texto = request.form.get("activa", "")
+                formulario_pelicula = {
+                    "titulo": request.form.get("titulo", "").strip(),
+                    "sinopsis": request.form.get("sinopsis", "").strip(),
+                    "duracion_minutos": duracion_texto,
+                    "clasificacion": request.form.get("clasificacion", ""),
+                    "genero": request.form.get("genero", "").strip(),
+                    "activa": estado_texto == "1",
+                }
+                imagen_url, error_imagen = _imagen_servicio_desde_formulario(request.files.get("afiche"))
+                if not duracion_texto.isascii() or not duracion_texto.isdigit() or not 1 <= int(duracion_texto) <= 999:
+                    mensaje = "La duración debe estar entre 1 y 999 minutos."
+                elif estado_texto not in ("0", "1"):
+                    mensaje = "Seleccioná un estado válido."
+                elif error_imagen:
+                    mensaje = error_imagen
+                else:
+                    datos = {
+                        "titulo": formulario_pelicula["titulo"],
+                        "sinopsis": formulario_pelicula["sinopsis"],
+                        "duracion": int(duracion_texto),
+                        "clasificacion": formulario_pelicula["clasificacion"],
+                        "genero": formulario_pelicula["genero"],
+                        "activo": estado_texto == "1",
+                    }
+                    if imagen_url is not None:
+                        datos["poster"] = imagen_url
+                    estado, respuesta = actualizar_pelicula(session.get("access_token"), pelicula_id, datos)
+                    if estado == 200 and respuesta.get("ok"):
+                        session["mensaje_peliculas"] = "Película actualizada correctamente."
+                        return _admin_anchor_redirect("admin_views.peliculas", f"pelicula-{pelicula_id}")
+                    error = respuesta.get("error") or {}
+                    detalles = error.get("details")
+                    mensaje = error.get("message") or "No se pudo actualizar la película."
+                    if isinstance(detalles, dict) and detalles:
+                        mensaje += " " + " ".join(f"{campo}: {detalle}." for campo, detalle in detalles.items())
+                if request.files.get("afiche") and request.files["afiche"].filename:
+                    mensaje += " Volvé a seleccionar el afiche antes de guardar."
+
         elif accion in ("cambiar_estado", "eliminar"):
             pelicula_id = request.form.get("pelicula_id")
             token = session.get("access_token")
@@ -374,7 +421,6 @@ def peliculas():
         datos = pelicula.copy()
         datos["duracion_minutos"] = pelicula.get("duracion")
         datos["afiche_url"] = pelicula.get("poster")
-        datos["anio"] = "—"
         datos["activa"] = bool(pelicula.get("activo", True))
         peliculas_preparadas.append(datos)
 
@@ -389,6 +435,8 @@ def peliculas():
         )
         if pelicula_editar is None:
             mensaje = "No se encontró la película seleccionada."
+        elif formulario_pelicula is not None:
+            pelicula_editar.update(formulario_pelicula)
 
     if buscar:
         peliculas_preparadas = [
@@ -415,12 +463,17 @@ def peliculas():
 def salas():
     if request.method == "POST":
         sala_id = request.form.get("sala_id")
-        filas = int(request.form.get("filas", 0))
-        butacas_por_fila = int(request.form.get("butacas_por_fila", 0))
+        capacidad = request.form.get("capacidad", "").strip()
+        if not capacidad.isdigit() or int(capacidad) <= 0:
+            session["mensaje_sala"] = {
+                "texto": "La capacidad debe ser un número entero mayor a cero.",
+                "tipo": "error",
+            }
+            return redirect(url_for("admin_views.funciones", editar_sala=sala_id))
 
         datos = {
             "nombre": request.form.get("nombre"),
-            "capacidad": filas * butacas_por_fila,
+            "capacidad": int(capacidad),
             "local": request.form.get("complejo_id"),
         }
 
@@ -430,11 +483,15 @@ def salas():
             datos=datos,
         )
         if status_sala == 200 and respuesta_sala.get("ok"):
+            session["mensaje_sala"] = {"texto": "La configuración de la sala se guardó correctamente.", "tipo": "success"}
             return redirect(url_for("admin_views.funciones", editar_sala=sala_id))
-        return redirect(url_for("admin_views.funciones", editar_sala=sala_id,
-                                sala_error=(respuesta_sala.get("error") or {}).get(
-                                    "message", "No se pudo guardar la configuración de la sala."
-                                )))
+        session["mensaje_sala"] = {
+            "texto": (respuesta_sala.get("error") or {}).get(
+                "message", "No se pudo guardar la configuración de la sala."
+            ),
+            "tipo": "error",
+        }
+        return redirect(url_for("admin_views.funciones", editar_sala=sala_id))
 
     return redirect(url_for(
         "admin_views.funciones",
@@ -516,7 +573,8 @@ def _preparar_estado_funcion(funcion):
 
 @admin_views.route("/funciones", methods=["GET", "POST"])
 def funciones():
-    mensaje = request.args.get("sala_error")
+    aviso_sala = session.pop("mensaje_sala", None)
+    mensaje = None
     mensaje_guardado = session.pop("mensaje_funciones", None)
     if isinstance(mensaje_guardado, dict):
         mensaje_estado = mensaje_guardado.get("texto")
@@ -598,12 +656,11 @@ def funciones():
                     "message", "No se pudo cambiar el estado de la sala."
                 )
                 mensaje_tipo = "error"
-            if request.form.get("volver_a"):
-                session["mensaje_funciones"] = {
-                    "texto": mensaje_estado or mensaje,
-                    "tipo": mensaje_tipo or "error",
-                }
-                return _admin_anchor_redirect("admin_views.funciones", request.form.get("volver_a"))
+            session["mensaje_sala"] = {
+                "texto": mensaje_estado or mensaje,
+                "tipo": mensaje_tipo or "error",
+            }
+            return redirect(url_for("admin_views.funciones"))
         elif accion in ("cambiar_estado", "eliminar", "cancelar", "destacar"):
             if accion == "destacar":
                 status_code, respuesta = consumir_api(
@@ -734,12 +791,6 @@ def funciones():
         else []
     )
     for sala in salas:
-        capacidad = int(sala.get("capacidad") or 0)
-        filas = int(sala.get("filas") or max(1, round(math.sqrt(capacidad or 1))))
-        sala["filas"] = filas
-        sala["butacas_por_fila"] = int(
-            sala.get("butacas_por_fila") or math.ceil(capacidad / filas)
-        )
         sala["complejo_nombre"] = sala.get("local", "")
 
     editar_sala = request.args.get("editar_sala")
@@ -828,6 +879,7 @@ def funciones():
         mensaje=mensaje,
         mensaje_estado=mensaje_estado,
         mensaje_tipo=mensaje_tipo,
+        aviso_sala=aviso_sala,
     )
 
 

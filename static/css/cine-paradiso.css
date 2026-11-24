@@ -265,6 +265,7 @@
 /* menu lateral del panel de admin */
 .admin-sidebar {
     width: 240px;
+    flex: 0 0 240px;
     background-color: var(--cinema-900);
     border-right: 1px solid var(--cinema-800);
     padding: 1.5rem 1rem;
@@ -320,6 +321,7 @@
 /* area central del admin donde van las tablas y formularios */
 .admin-main {
     flex: 1;
+    min-width: 0;
     padding: 1.5rem 2rem;
     background-color: var(--cinema-950);
 }
@@ -376,6 +378,7 @@
     /* vuelve horizontal el menu lateral en celulares */
     .admin-sidebar {
         width: 100%;
+        flex: 0 0 auto;
         border-right: none;
         border-bottom: 1px solid var(--cinema-800);
         padding: 1rem;

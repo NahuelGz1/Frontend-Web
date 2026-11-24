@@ -263,8 +263,8 @@ textarea.form-control { min-height: 150px; resize: vertical; }
 .stats-progress { height: 4px; margin-top: 0.35rem; overflow: hidden; border-radius: 4px; background: var(--cinema-700); }
 .stats-progress span { display: block; width: var(--progress); height: 100%; background: var(--cinema-red); }
 .stats-total { display: flex; justify-content: space-between; gap: 1rem; margin-top: 0.55rem; padding-top: 0.7rem; border-top: 1px solid var(--cinema-700); font-size: 0.78rem; }
-.stats-movie-rings { display: flex; justify-content: space-around; gap: 1rem; margin: 0.9rem 0 0.7rem; }
-.stats-movie-ring { display: grid; justify-items: center; gap: 0.35rem; text-align: center; }
+.stats-movie-rings { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 1rem; margin: 0.9rem 0 0.7rem; }
+.stats-movie-ring { display: grid; width: 110px; max-width: 100%; justify-items: center; gap: 0.35rem; text-align: center; overflow-wrap: anywhere; }
 .stats-ring { display: grid; width: 82px; aspect-ratio: 1; place-items: center; border-radius: 50%; background: conic-gradient(var(--ring-color) var(--progress), var(--cinema-700) 0); }
 .stats-ring::before { position: absolute; width: 64px; aspect-ratio: 1; border-radius: 50%; background: var(--cinema-850); content: ""; }
 .stats-ring { position: relative; }

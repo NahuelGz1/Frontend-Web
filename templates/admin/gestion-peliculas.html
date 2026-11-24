@@ -15,6 +15,10 @@
         </div>
     </header>
 
+    {% if mensaje %}
+    <div class="flash-alert movie-notice {{ 'success' if 'correctamente' in mensaje or 'actualizado.' in mensaje or 'retirada del catálogo.' in mensaje else 'error' }}" role="status" aria-live="polite">{{ mensaje }}</div>
+    {% endif %}
+
     <div class="movie-searches">
         <form class="form-field search-field" method="get" action="{{ url_for('admin_views.peliculas') }}">
             <label class="search-title" for="movie-filter">Buscar por título</label>
@@ -37,7 +41,7 @@
             {% endif %}
             <div class="list-content">
                 <h3>{{ pelicula.titulo }}</h3>
-                <p class="text-muted">{{ pelicula.anio }} · {{ pelicula.duracion_minutos }} min · {{ pelicula.clasificacion }} · {{ pelicula.genero }}</p>
+                <p class="text-muted">{{ pelicula.duracion_minutos }} min · {{ pelicula.clasificacion }} · {{ pelicula.genero }}</p>
                 <span class="badge {{ 'badge-success' if pelicula.activa else 'badge-danger' }}">{{ 'Activa' if pelicula.activa else 'Inactiva' }}</span>
                 <div class="list-actions">
                     <a class="btn" href="{{ url_for('admin_views.peliculas', editar=pelicula.id) }}#edit-panel">Editar</a>
@@ -67,7 +71,7 @@
     <div class="workspace-grid">
         <section class="panel" id="edit-panel" aria-labelledby="edit-panel-title" {% if not pelicula_actual %}hidden{% endif %}>
             <h2 id="edit-panel-title">{{ 'Editar película' if pelicula_actual else 'Agregar película' }}</h2>
-            <p class="help-text">Los datos se guardan desde el servidor.</p>
+            <p class="help-text">Para cambiar la duración, la película no debe tener funciones futuras o en curso.</p>
 
             <form method="post" action="{{ url_for('admin_views.peliculas') }}" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
@@ -96,10 +100,6 @@
 
                 <div class="form-grid">
                     <div class="form-field">
-                        <label for="movie-year">Año original</label>
-                        <input class="form-control" id="movie-year" name="anio" type="number" min="1888" max="2100" value="{{ pelicula_actual.anio|default('') if pelicula_actual else '' }}" required>
-                    </div>
-                    <div class="form-field">
                         <label for="movie-duration">Duración (min)</label>
                         <input class="form-control" id="movie-duration" name="duracion_minutos" type="number" min="1" max="999" value="{{ pelicula_actual.duracion_minutos|default('') if pelicula_actual else '' }}" required>
                     </div>
@@ -119,7 +119,7 @@
                     </div>
                     <div class="form-field form-wide">
                         <label for="movie-synopsis">Sinopsis</label>
-                        <textarea class="form-control" id="movie-synopsis" name="sinopsis" maxlength="3000">{{ pelicula_actual.sinopsis|default('') if pelicula_actual else '' }}</textarea>
+                        <textarea class="form-control" id="movie-synopsis" name="sinopsis" maxlength="3000">{{ pelicula_actual.sinopsis|default('', true) if pelicula_actual else '' }}</textarea>
                     </div>
                     <div class="form-field form-wide">
                         <label for="movie-status">Estado en cartelera</label>
@@ -201,7 +201,6 @@
             {% endfor %}
         </section>
     </div>
-    <div class="flash-alert movie-notice {% if mensaje and ('No se pudo' not in mensaje and 'inválida' not in mensaje) %}success{% else %}error{% endif %}" role="status" aria-live="polite" {% if not mensaje %}hidden{% endif %}>{{ mensaje|default('') }}</div>
 </section>
 {% endblock %}
 
