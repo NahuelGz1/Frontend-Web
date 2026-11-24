@@ -2,6 +2,11 @@
 
 {% block title %}Cartelera · Cine Paradiso{% endblock %}
 
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cartelera.css') }}">
+{% endblock %}
+
 {% block content %}
 {% set peliculas_cartelera = peliculas|default([], true) %}
 
@@ -38,7 +43,7 @@
             <div class="pelicula-rating" style="display: flex; align-items: center; justify-content: center; gap: 4px; margin: 6px 0 10px 0;">
                 {% set promedio = pelicula.promedio_estrellas|default(0)|int %}
                 {% for i in range(1, 6) %}
-                    <span style="color: {% if i <= promedio %}#f5c518{% else %}#555{% endif %}; font-size: 1rem;">★</span>
+                    <span class="pelicula-estrella {{ 'pelicula-estrella--activa' if i <= promedio else 'pelicula-estrella--inactiva' }}">★</span>
                 {% endfor %}
                 <small style="color: #aaa; margin-left: 4px;">({{ pelicula.total_votos|default(0) }})</small>
             </div>

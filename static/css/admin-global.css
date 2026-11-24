@@ -348,3 +348,117 @@ textarea.form-control { min-height: 150px; resize: vertical; }
     object-fit: cover;
     border-radius: 12px;
 }
+
+/* Distribucion de filtros de funciones en celulares */
+@media (max-width: 600px) {
+    .room-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .room-tabs .btn {
+        min-width: 0;
+        min-height: 44px;
+        text-align: center;
+        white-space: normal;
+    }
+
+    .room-tabs .function-create-link {
+        grid-column: 1 / -1;
+        margin-left: 0;
+    }
+
+    section[aria-labelledby="schedule-title"] > .panel-heading {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+}
+
+/* Alineacion de acciones administrativas en celulares */
+@media (max-width: 600px) {
+    .function-row > div {
+        min-width: 0;
+    }
+
+    .function-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+
+    .function-actions > .badge {
+        grid-column: 1 / -1;
+        justify-self: start;
+    }
+
+    .function-actions > form {
+        min-width: 0;
+        margin: 0;
+    }
+
+    .function-actions .btn {
+        width: 100%;
+        min-height: 44px;
+        margin-left: 0;
+        text-align: center;
+        font-size: 0.8rem;
+    }
+
+    .function-actions > .btn-delete,
+    .function-actions > form:has(> .btn-delete) {
+        grid-column: 1 / -1;
+    }
+
+    .function-actions:not(:has(> a.btn:not(.btn-delete))) > form {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Alineacion de botones de gestion de servicios */
+.list-actions.service-list-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.service-list-actions > form {
+    display: flex;
+    margin: 0;
+    min-width: 0;
+}
+
+.service-list-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    min-height: 2.4rem;
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+    margin: 0;
+}
+
+/* Adaptacion de botones de servicios a celulares */
+@media (max-width: 600px) {
+    .list-actions.service-list-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .service-list-actions .btn {
+        width: 100%;
+        min-height: 2.75rem;
+    }
+
+    .service-list-actions > form:has(.btn-delete) {
+        grid-column: 1 / -1;
+    }
+}

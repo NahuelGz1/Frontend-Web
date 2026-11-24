@@ -6,6 +6,12 @@
     <title>{% block title %}Cine Paradiso{% endblock %}</title>
 
     <!-- traemos el css nativo de la carpeta static -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/servicios-opcionales.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pago.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/butacas.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/cine-paradiso.css') }}">
     {% block head %}{% endblock %}
 </head>
@@ -62,7 +68,7 @@
     {% for category, message in messages %}
     <div class="flash-alert alert {{ category }}">
         <span>{{ message }}</span>
-        <button class="alert-close" style="background:none; border:none; color:inherit; cursor:pointer;">✕</button>
+        <button type="button" class="alert-close" aria-label="Cerrar mensaje">✕</button>
     </div>
     {% endfor %}
     {% endif %}
@@ -76,32 +82,55 @@
 
 <!-- pie de pagina publico -->
 {% block footer %}
-<footer class="site-footer" style="display: flex; flex-direction: column; gap: 1.5rem; padding: 2rem 1rem; background-color: #1a1a1a; border-top: 1px solid #2a2a2a;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <a href="{{ url_for('cliente_views.inicio') }}" class="brand" style="display: flex; align-items: center; gap: 0.5rem; font-weight: bold; font-size: 1.2rem; text-decoration: none; color: white;">
-                <span class="brand-icon" style="background: #a83232; padding: 0.4rem; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;" aria-hidden="true">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+<footer class="site-footer public-footer">
+    <div class="public-footer__top">
+        <div class="public-footer__branding">
+            <a href="{{ url_for('cliente_views.inicio') }}"
+               class="brand public-footer__brand">
+                <span class="brand-icon public-footer__brand-icon"
+                      aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+                        <path d="M13 5v2"/>
+                        <path d="M13 17v2"/>
+                        <path d="M13 11v2"/>
+                    </svg>
                 </span>
                 <span>Cine Paradiso</span>
             </a>
-            <span style="color: #888; font-size: 0.9rem;">Grandes historias. Tu lugar para vivirlas.</span>
+            <span class="public-footer__tagline">
+                Grandes historias. Tu lugar para vivirlas.
+            </span>
         </div>
 
-        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem;">
-            <span style="font-weight: bold; color: white; font-size: 0.95rem;">¿Necesitás ayuda?</span>
-            <a href="mailto:Asistenciacine@gmail.com" style="color: #aaa; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        <div class="public-footer__help">
+            <span class="public-footer__help-title">
+                ¿Necesitás ayuda?
+            </span>
+            <a href="mailto:Asistenciacine@gmail.com"
+               class="public-footer__email">
+                <svg width="16" height="16" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2"/>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
                 Asistenciacine@gmail.com
             </a>
         </div>
     </div>
 
-    <div style="border-top: 1px solid #2a2a2a; padding-top: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; color: #777; font-size: 0.85rem;">
+    <div class="public-footer__bottom">
         <p>© 2026 Cine Paradiso. Todos los derechos reservados.</p>
-        <div style="display: flex; gap: 1.5rem;">
-            <a href="{{ url_for('cliente_views.terminos_y_condiciones') }}" style="color: #777; text-decoration: none;">Términos y condiciones</a>
-            <a href="{{ url_for('cliente_views.privacidad') }}" style="color: #777; text-decoration: none;">Privacidad</a>
+        <div class="public-footer__links">
+            <a href="{{ url_for('cliente_views.terminos_y_condiciones') }}">
+                Términos y condiciones
+            </a>
+            <a href="{{ url_for('cliente_views.privacidad') }}">
+                Privacidad
+            </a>
         </div>
     </div>
 </footer>

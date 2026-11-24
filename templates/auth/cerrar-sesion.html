@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 {% block title %}Cerrar sesión · Cine Paradiso{% endblock %}
 {% block content %}
-<section class="login-card" aria-labelledby="cerrar-titulo">
+<section class="login-card logout-card" aria-labelledby="cerrar-titulo">
     <h1 id="cerrar-titulo">Cerrar sesión</h1>
     <p>¿Querés cerrar tu sesión en este dispositivo?</p>
     <form class="login-form" method="POST" action="{{ url_for('auth_views.cerrar_sesion') }}">

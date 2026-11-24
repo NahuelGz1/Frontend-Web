@@ -1,0 +1,103 @@
+/* barra superior fija de la pantalla */
+.site-header {
+    background-color: var(--cinema-900);
+    border-bottom: 1px solid var(--cinema-800);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+/* texto y logo de cine paradiso */
+.brand {
+    font-size: 1.25rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.brand-icon {
+    display: inline-grid;
+    width: 1.5rem;
+    height: 1.5rem;
+    place-items: center;
+    border-radius: 4px;
+    background: var(--cinema-red);
+    color: white;
+    font-size: 0.8rem;
+}
+
+/* menu del header para inicio, cartelera y servicios */
+.nav-links {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    align-items: center;
+}
+
+.admin-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-user-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.nav-links a:hover {
+    color: var(--cinema-red);
+}
+
+/* ===== encabezado de administradores en celulares ===== */
+
+@media (max-width: 600px) {
+
+    .site-header > .header-user-actions:has(.header-admin-link) {
+        width: 100%;
+        margin-left: 0;
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr) 36px;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .header-user-actions .header-admin-link {
+        grid-column: 2;
+        margin-right: 0;
+        text-align: center;
+        font-size: 0.8rem;
+    }
+
+    .site-header > .admin-header-actions {
+        width: 100%;
+        margin-left: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) 36px;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .admin-header-actions .nav-links {
+        justify-content: center;
+        gap: 0;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    .admin-header-actions .header-admin-link {
+        margin-right: 0;
+        font-size: 0.75rem;
+        text-align: center;
+    }
+
+    .site-header .user-avatar {
+        flex-shrink: 0;
+    }
+}

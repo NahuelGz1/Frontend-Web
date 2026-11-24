@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Administración · Cine Paradiso{% endblock %}</title>
 
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/servicios-opcionales.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/butacas.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/cine-paradiso.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-global.css') }}">
     {% block head %}{% endblock %}
@@ -89,7 +93,7 @@
             {% for category, message in messages %}
             <div class="flash-alert alert {{ category }}">
                 <span>{{ message }}</span>
-                <button class="alert-close" style="background:none; border:none; color:inherit; cursor:pointer;">✕</button>
+                <button type="button" class="alert-close" aria-label="Cerrar mensaje">✕</button>
             </div>
             {% endfor %}
             {% endif %}

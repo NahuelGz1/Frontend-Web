@@ -2,6 +2,12 @@
 
 {% block title %}Servicios adicionales · Cine Paradiso{% endblock %}
 
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/servicios.css') }}">
+{% endblock %}
+
 {% block content %}
 
 {% set lista_servicios = servicios|default([], true) %}

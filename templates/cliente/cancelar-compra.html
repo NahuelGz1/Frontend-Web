@@ -2,6 +2,11 @@
 
 {% block title %}Cancelar compra · Cine Paradiso{% endblock %}
 
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cancelacion.css') }}">
+{% endblock %}
+
 {% block content %}
 {% set funcion_mostrada = funcion|default({}, true) %}
 {% set poster = funcion_mostrada.pelicula.poster_url|default('', true) %}

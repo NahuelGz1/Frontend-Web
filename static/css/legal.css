@@ -1,0 +1,27 @@
+/*terminos y condiciones*/
+[data-acordeon-btn] {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--text-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+[data-acordeon-flecha] {
+    display: inline-flex;
+    color: var(--cinema-red-light);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+[data-acordeon-contenido][hidden] {
+    display: none;
+}
