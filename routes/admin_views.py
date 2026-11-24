@@ -375,8 +375,6 @@ def peliculas():
         datos["duracion_minutos"] = pelicula.get("duracion")
         datos["afiche_url"] = pelicula.get("poster")
         datos["anio"] = "—"
-        datos["disponible_desde"] = "—"
-        datos["disponible_hasta"] = "—"
         datos["activa"] = bool(pelicula.get("activo", True))
         peliculas_preparadas.append(datos)
 
@@ -493,21 +491,24 @@ def _preparar_estado_funcion(funcion):
     funcion["puede_editar"] = not cerrada and vendidas == 0
     funcion["puede_eliminar"] = funcion["puede_editar"]
     funcion["puede_cambiar_estado"] = not cerrada
-    funcion["puede_activar"] = funcion["pelicula_activa"] and not funcion["pelicula_eliminada"]
+    funcion["puede_activar"] = (
+        funcion["pelicula_activa"] and not funcion["pelicula_eliminada"]
+        and funcion["sala_activa"]
+    )
     # con ventas no se puede eliminar, pero si cancelar devolviendo el dinero
     funcion["puede_cancelar"] = not cerrada and vendidas > 0
 
     if funcion["cancelada"]:
         funcion["motivo_bloqueo"] = (
             f"Función cancelada ({funcion.get('motivo_cancelacion') or 'sin motivo'}). "
-            "Se devolvió el dinero y se avisó por mail a los compradores."
+            "La función permanece en el historial."
         )
     elif funcion["finalizada"]:
         funcion["motivo_bloqueo"] = "La función ya se proyectó: queda en el historial y no se puede modificar."
     elif vendidas:
         funcion["motivo_bloqueo"] = (
-            "Tiene entradas vendidas: no se puede editar ni eliminar. "
-            "Podés desactivarla para cerrar la venta o cancelarla para devolver el dinero."
+            "Tiene entradas vendidas: no se puede editar ni eliminar para preservar las compras. "
+            "Podés cancelar la función para devolver el dinero."
         )
     else:
         funcion["motivo_bloqueo"] = None
@@ -603,8 +604,21 @@ def funciones():
                     "tipo": mensaje_tipo or "error",
                 }
                 return _admin_anchor_redirect("admin_views.funciones", request.form.get("volver_a"))
-        elif accion in ("cambiar_estado", "eliminar", "cancelar"):
-            if accion == "cancelar":
+        elif accion in ("cambiar_estado", "eliminar", "cancelar", "destacar"):
+            if accion == "destacar":
+                status_code, respuesta = consumir_api(
+                    "PUT", f"/funciones/{funcion_id}/destacar"
+                )
+                if status_code == 200 and respuesta.get("ok"):
+                    mensaje_estado = "La película se seleccionó como destacada de la semana."
+                    mensaje_tipo = "success"
+                else:
+                    mensaje_estado = None
+                    mensaje = (respuesta.get("error") or {}).get(
+                        "message", "No se pudo destacar la película."
+                    )
+                    mensaje_tipo = "error"
+            elif accion == "cancelar":
                 status_code, respuesta = consumir_api(
                     "PUT",
                     f"/funciones/{funcion_id}/cancelar",
@@ -638,12 +652,24 @@ def funciones():
                     datos={"activo": activo},
                 )
                 if status_code == 200 and respuesta.get("ok"):
-                    mensaje_estado = (
-                        "La función volvió a estar a la venta."
-                        if activo else "Se cerró la venta de la función. Las entradas vendidas siguen siendo válidas."
-                    )
+                    resultado = respuesta.get("data") or {}
+                    pelicula = (resultado.get("pelicula") or {}).get("titulo")
+                    fecha = resultado.get("fecha_hora_proyeccion")
+                    identificacion = f" ({pelicula}, {fecha})" if pelicula and fecha else f" (ID {funcion_id})"
+                    estado_resultado = resultado.get("estado")
+                    if estado_resultado == "en_venta":
+                        mensaje_estado = f"La función{identificacion} está a la venta."
+                    elif estado_resultado == "agotada":
+                        mensaje_estado = f"La función{identificacion} está activa, pero agotada."
+                    elif estado_resultado == "venta_cerrada":
+                        mensaje_estado = f"La venta de la función{identificacion} está cerrada."
+                        if not activo:
+                            mensaje_estado += " Las entradas vendidas siguen siendo válidas."
+                    else:
+                        mensaje_estado = f"Se actualizó el estado de la función{identificacion}."
                     mensaje_tipo = "success"
                 else:
+                    mensaje_estado = None
                     mensaje = (respuesta.get("error") or {}).get(
                         "message", "No se pudo cambiar el estado de la función."
                     )
@@ -661,6 +687,11 @@ def funciones():
     status_salas, respuesta_salas = consumir_api("GET", "/funciones/salas")
     status_locales, respuesta_locales = consumir_api("GET", "/funciones/locales")
     status_peliculas, respuesta_peliculas = consumir_api("GET", "/peliculas/admin")
+
+    if any(status != 200 for status in (status_funciones, status_salas, status_locales, status_peliculas)):
+        current_app.logger.error("No se pudieron cargar todos los datos de gestión de funciones")
+        mensaje = mensaje or "No se pudieron cargar todos los datos de funciones, salas o películas. Intentá nuevamente."
+        mensaje_tipo = "error"
 
     funciones = respuesta_funciones.get("data", []) if status_funciones == 200 else []
     complejo_filtro = request.args.get("complejo", "").strip()
@@ -684,14 +715,14 @@ def funciones():
         funcion["precio_formateado"] = f"$ {funcion.get('precio_entrada', 0)}"
         funcion["pelicula_activa"] = bool(funcion.get("pelicula_activa", funcion.get("pelicula", {}).get("activa", True)))
         funcion["pelicula_eliminada"] = bool(funcion.get("pelicula_eliminada", funcion.get("pelicula", {}).get("eliminada", False)))
-        sala_activa = bool(funcion.get("sala", {}).get("activo", funcion.get("sala_activa", True)))
-        funcion["activa"] = bool(funcion.get("activo", True)) and funcion["pelicula_activa"] and not funcion["pelicula_eliminada"] and sala_activa
+        funcion["sala_activa"] = bool(funcion.get("sala", {}).get("activo", funcion.get("sala_activa", True)))
+        funcion["activa"] = bool(funcion.get("activo", True)) and funcion["pelicula_activa"] and not funcion["pelicula_eliminada"] and funcion["sala_activa"]
         _preparar_estado_funcion(funcion)
 
     if estado_filtro == "activas":
-        funciones = [funcion for funcion in funciones if funcion["activa"] and not funcion["finalizada"]]
+        funciones = [funcion for funcion in funciones if funcion["estado"] in ("en_venta", "agotada")]
     elif estado_filtro == "inactivas":
-        funciones = [funcion for funcion in funciones if not funcion["activa"] and not funcion["finalizada"]]
+        funciones = [funcion for funcion in funciones if funcion["estado"] in ("venta_cerrada", "cancelada")]
     elif estado_filtro == "finalizadas":
         funciones = [funcion for funcion in funciones if funcion["finalizada"]]
     # primero las proximas (activas antes que inactivas) y al final las que ya pasaron
@@ -743,9 +774,6 @@ def funciones():
                 )
             except ValueError:
                 funcion_editar["fecha_hora_form"] = ""
-            funcion_editar["venta_desde_form"] = funcion_editar["fecha_hora_form"]
-            funcion_editar["venta_hasta_form"] = funcion_editar["fecha_hora_form"]
-            funcion_editar["precio"] = funcion_editar.get("precio_entrada", 0)
             funcion_editar["pelicula_id"] = funcion_editar.get(
                 "pelicula", {}
             ).get("id")

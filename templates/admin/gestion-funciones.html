@@ -40,7 +40,7 @@
                 <h3 id="complex-{{ loop.index }}">{{ complejo.nombre }}</h3>
                 <div class="room-grid">
                     {% for sala in salas_complejo %}
-                    <article class="room-card">
+                    <article class="room-card" id="sala-{{ sala.id }}">
                         <h4>{{ sala.nombre }}</h4>
                         <p class="text-muted">Estado: {{ 'Disponible' if sala.activo|default(true) else 'En mantenimiento' }}</p>
                         <p class="text-muted">{{ sala.filas|default('—') }} filas · {{ sala.butacas_por_fila|default('—') }} butacas por fila · {{ sala.capacidad }} butacas</p>
@@ -87,6 +87,8 @@
                 <p class="text-muted">{{ funcion.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</p>
                 <p class="text-muted">{{ funcion.complejo_nombre }} · {{ funcion.sala_nombre }}</p>
                 {% if not funcion.finalizada and (not funcion.pelicula_activa or funcion.pelicula_eliminada) %}<p class="help-text">Película inactiva o retirada: la función no está disponible para nuevas ventas.</p>{% endif %}
+                {% if not funcion.finalizada and not funcion.cancelada and not funcion.sala_activa %}<p class="help-text">Sala en mantenimiento: la función no está disponible para nuevas ventas. <a href="#sala-{{ funcion.sala.id }}">Ir a la sala para habilitarla</a>.</p>{% endif %}
+                {% if not funcion.finalizada and not funcion.cancelada and not funcion.activo %}<p class="help-text">La función está desactivada. Activala para abrir la venta cuando la película y la sala estén habilitadas.</p>{% endif %}
                 {% if funcion.estado == 'en_venta' %}<p class="help-text">A la venta hasta el inicio de la función · {{ funcion.butacas_libres|default('—') }} butacas libres.</p>{% endif %}
                 {% if funcion.estado == 'agotada' %}<p class="help-text">Sala llena: no quedan butacas libres para vender.</p>{% endif %}
                 {% if funcion.motivo_bloqueo %}<p class="help-text">{{ funcion.motivo_bloqueo }}</p>{% endif %}
@@ -95,18 +97,33 @@
                 <p class="text-muted">{{ funcion.precio_formateado }} por entrada</p>
                 <div class="function-actions">
                     <span class="badge {{ funcion.estado_clase }}">{{ funcion.estado_texto }}</span>
+                    {% if funcion.pelicula.destacada and funcion.estado in ('en_venta', 'agotada') %}
+                    <span class="badge badge-success">Película destacada</span>
+                    {% elif funcion.estado in ('en_venta', 'agotada') %}
+                    <form method="post" action="{{ url_for('admin_views.funciones') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                        <input type="hidden" name="accion" value="destacar">
+                        <input type="hidden" name="funcion_id" value="{{ funcion.id }}">
+                        <input type="hidden" name="volver_a" value="funcion-{{ funcion.id }}">
+                        <button class="btn" type="submit">Destacar película</button>
+                    </form>
+                    {% endif %}
                     {% if funcion.puede_editar %}
                     <a class="btn" href="{{ url_for('admin_views.funciones', editar=funcion.id) }}#workspace-grid">Editar</a>
+                    {% else %}
+                    <button class="btn" type="button" disabled title="{{ 'No se puede editar una función con entradas vendidas' if funcion.entradas_vendidas and not funcion.finalizada and not funcion.cancelada else 'No se puede editar una función finalizada o cancelada' }}">Editar</button>
                     {% endif %}
-                    {% if funcion.puede_cambiar_estado and (funcion.activa or funcion.puede_activar) %}
+                    {% if funcion.puede_cambiar_estado and (funcion.activo or funcion.puede_activar) %}
                     <form method="post" action="{{ url_for('admin_views.funciones') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                         <input type="hidden" name="accion" value="cambiar_estado">
                         <input type="hidden" name="funcion_id" value="{{ funcion.id }}">
                         <input type="hidden" name="volver_a" value="funcion-{{ funcion.id }}">
-                        <input type="hidden" name="activo" value="{{ 0 if funcion.activa else 1 }}">
-                        <button class="btn" type="submit">{{ 'Desactivar función' if funcion.activa else 'Activar función' }}</button>
+                        <input type="hidden" name="activo" value="{{ 0 if funcion.activo else 1 }}">
+                        <button class="btn" type="submit">{{ 'Desactivar función' if funcion.activo else 'Activar función' }}</button>
                     </form>
+                    {% elif funcion.puede_cambiar_estado %}
+                    <button class="btn" type="button" disabled title="Activá la película y habilitá la sala antes de activar la función">Activar función</button>
                     {% endif %}
                     {% if funcion.puede_eliminar %}
                     <form method="post" action="{{ url_for('admin_views.funciones') }}" data-confirm-delete="¿Eliminar esta función?" data-item-name="{{ funcion.pelicula_titulo }}" data-item-kind="función">
@@ -180,7 +197,7 @@
             <select class="form-control" id="function-room" name="sala_id" required {% if not complejo_form %}disabled{% endif %}>
                 <option value="">Seleccioná una sala</option>
                 {% for sala in lista_salas_formulario %}
-                <option value="{{ sala.id }}" data-complejo="{{ sala.local }}" {% if funcion_actual and funcion_actual.sala.id|string == sala.id|string %}selected{% endif %}>{{ sala.complejo_nombre }} · {{ sala.nombre }}</option>
+                <option value="{{ sala.id }}" data-complejo="{{ sala.local }}" {% if not sala.activo|default(true) %}disabled{% endif %} {% if funcion_actual and sala.activo|default(true) and funcion_actual.sala.id|string == sala.id|string %}selected{% endif %}>{{ sala.complejo_nombre }} · {{ sala.nombre }}{{ ' (en mantenimiento)' if not sala.activo|default(true) else '' }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -188,28 +205,7 @@
             <label for="function-start">Fecha y hora completas</label>
             <input class="form-control" id="function-start" name="fecha_hora" type="datetime-local" value="{{ funcion_actual.fecha_hora_form|default('') if funcion_actual else '' }}" required>
         </div>
-        <div class="form-grid">
-            <div class="form-field">
-                <label for="function-from">Disponible desde</label>
-                <input class="form-control" id="function-from" name="venta_desde" type="datetime-local" value="{{ funcion_actual.venta_desde_form|default('') if funcion_actual else '' }}" required>
-            </div>
-            <div class="form-field">
-                <label for="function-until">Disponible hasta</label>
-                <input class="form-control" id="function-until" name="venta_hasta" type="datetime-local" value="{{ funcion_actual.venta_hasta_form|default('') if funcion_actual else '' }}" required>
-            </div>
-        </div>
-        <div class="form-field">
-            <label for="function-price">Precio de entrada - ARS</label>
-            <input class="form-control" id="function-price" name="precio" type="number" min="0" step="1" value="{{ funcion_actual.precio|default('') if funcion_actual else '' }}" required>
-        </div>
-        <div class="form-field">
-            <label for="function-status">Estado</label>
-            <select class="form-control" id="function-status" name="activa">
-                <option value="" {% if not funcion_actual %}selected{% endif %}>Seleccioná un estado</option>
-                <option value="1" {% if funcion_actual and funcion_actual.activa %}selected{% endif %}>Activa</option>
-                <option value="0" {% if funcion_actual and not funcion_actual.activa %}selected{% endif %}>Inactiva</option>
-            </select>
-        </div>
+        <p class="help-text">La venta está disponible hasta el inicio de la función. El precio es fijo y el estado se cambia desde el listado.</p>
         <p class="help-text">La capacidad de la sala no se modifica desde una función.</p>
         <div class="form-actions">
             {% if funcion_actual %}<a class="btn" href="{{ url_for('admin_views.funciones') }}">Cancelar</a>{% endif %}
