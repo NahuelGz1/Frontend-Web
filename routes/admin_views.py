@@ -20,6 +20,9 @@ from services.admin_service import (
     dar_de_baja_administrador,
     habilitar_administrador,
     obtener_administradores,
+    dar_de_baja_empleado,
+    habilitar_empleado,
+    obtener_empleados
 )
 from services.gestion_peliculas_service import (
     buscar_peliculas_tmdb,
@@ -62,6 +65,8 @@ def _imagen_servicio_desde_formulario(archivo):
 def proteger_admin():
     if request.method == "POST":
         validar_csrf()
+    if request.endpoint == "admin_views.validar_qr":
+        return verificar_sesion(("administrador", "empleado"))
     return verificar_sesion("administrador")
 
 @admin_views.route("/estadisticas")
@@ -143,15 +148,25 @@ def habilitar_admins():
     mensaje = None
     error = None
     email = ""
+    rol_seleccionado = "administrador"
     administrador_creado = None
+    empleado_creado = None
     if request.method == "POST":
         accion = request.form.get("accion")
         if accion == "dar_de_baja":
-            id_admin = request.form.get("id_admin", "")
-            if not id_admin.isdigit():
-                error = "El administrador seleccionado no es válido."
+            id_usuario = request.form.get("id_admin", "")
+            rol_baja = request.form.get("rol", "administrador")
+            if not id_usuario.isdigit():
+                error = "El cuenta seleccionado no es válido."
+            elif rol_baja == "empleado":
+                estado, respuesta = dar_de_baja_empleado(id_usuario)
+                if estado == 200 and respuesta.get("ok"):
+                    mensaje = "La cuenta dejó de tener permisos de empleado"
+                else:
+                    error = (respuesta.get("error") or {}).get(
+                        "message", "No se pudo dar de baja al empleado.")
             else:
-                estado, respuesta = dar_de_baja_administrador(id_admin)
+                estado, respuesta = dar_de_baja_administrador(id_usuario)
                 if estado == 200 and respuesta.get("ok"):
                     mensaje = "La cuenta dejó de tener permisos de administración."
                 else:
@@ -160,14 +175,25 @@ def habilitar_admins():
                     )
         else:
             email = request.form.get("email", "").strip().lower()
+            rol_seleccionado = request.form.get("rol", "administrador")
             if not email or len(email) > 100 or "@" not in email:
                 error = "Ingresá un correo electrónico válido."
+            elif rol_seleccionado not in ("administrador", "empleado"):
+                error = "Selecciona un rol valido"
+            elif rol_seleccionado == "empleado":
+                estado, respuesta = habilitar_empleado(email)
+                if estado == 200 and respuesta.get("ok"):
+                    mensaje = "La cuenta fue habilitada como empleada."
+                    empleado_creado = respuesta.get("data")
+                    email = ""
+                else:
+                    error = (respuesta.get("error") or {}).get("message", "No se pudo habilitar la cuenta.")
             else:
                 estado, respuesta = habilitar_administrador(email)
                 if estado == 200 and respuesta.get("ok"):
                     mensaje = "La cuenta fue habilitada como administradora."
                     administrador_creado = respuesta.get("data")
-                    email = ""
+                    email = ""    
                 else:
                     error = (
                         respuesta.get("error") or {}
@@ -175,6 +201,8 @@ def habilitar_admins():
 
     estado_admins, respuesta_admins = obtener_administradores()
     administradores = respuesta_admins.get("data", []) if estado_admins == 200 else []
+    estado_empls, respuesta_empls = obtener_empleados()
+    empleados = respuesta_empls.get("data", []) if estado_empls == 200 else []
     if administrador_creado and not any(
         str(item.get("id")) == str(administrador_creado.get("id"))
         for item in administradores
@@ -183,14 +211,24 @@ def habilitar_admins():
     if estado_admins != 200:
         api_error = respuesta_admins.get("error") or {}
         error = error or api_error.get("message", "No se pudo cargar la lista de administradores.")
+    if empleado_creado and not any(
+        str(item.get("id")) == str(empleado_creado.get("id"))
+        for item in empleados
+    ):
+        empleados.append(empleado_creado)
+    if estado_empls != 200:
+        api_error = respuesta_empls.get("error") or {}
+        error = error or api_error.get("message", "No se pudo cargar la lista de empleados.")
 
     return render_template(
         "admin/habilitar-admins.html",
         email=email,
+        rol=rol_seleccionado,
         mensaje=mensaje,
         error=error,
         csrf_token=obtener_csrf_token(),
         administradores=administradores,
+        empleados=empleados,
     )
 
 
@@ -337,8 +375,6 @@ def peliculas():
         datos["duracion_minutos"] = pelicula.get("duracion")
         datos["afiche_url"] = pelicula.get("poster")
         datos["anio"] = "—"
-        datos["disponible_desde"] = "—"
-        datos["disponible_hasta"] = "—"
         datos["activa"] = bool(pelicula.get("activo", True))
         peliculas_preparadas.append(datos)
 
@@ -455,21 +491,24 @@ def _preparar_estado_funcion(funcion):
     funcion["puede_editar"] = not cerrada and vendidas == 0
     funcion["puede_eliminar"] = funcion["puede_editar"]
     funcion["puede_cambiar_estado"] = not cerrada
-    funcion["puede_activar"] = funcion["pelicula_activa"] and not funcion["pelicula_eliminada"]
+    funcion["puede_activar"] = (
+        funcion["pelicula_activa"] and not funcion["pelicula_eliminada"]
+        and funcion["sala_activa"]
+    )
     # con ventas no se puede eliminar, pero si cancelar devolviendo el dinero
     funcion["puede_cancelar"] = not cerrada and vendidas > 0
 
     if funcion["cancelada"]:
         funcion["motivo_bloqueo"] = (
             f"Función cancelada ({funcion.get('motivo_cancelacion') or 'sin motivo'}). "
-            "Se devolvió el dinero y se avisó por mail a los compradores."
+            "La función permanece en el historial."
         )
     elif funcion["finalizada"]:
         funcion["motivo_bloqueo"] = "La función ya se proyectó: queda en el historial y no se puede modificar."
     elif vendidas:
         funcion["motivo_bloqueo"] = (
-            "Tiene entradas vendidas: no se puede editar ni eliminar. "
-            "Podés desactivarla para cerrar la venta o cancelarla para devolver el dinero."
+            "Tiene entradas vendidas: no se puede editar ni eliminar para preservar las compras. "
+            "Podés cancelar la función para devolver el dinero."
         )
     else:
         funcion["motivo_bloqueo"] = None
@@ -542,8 +581,44 @@ def funciones():
                 )
                 mensaje_tipo = "error"
 
-        elif accion in ("cambiar_estado", "eliminar", "cancelar"):
-            if accion == "cancelar":
+        elif accion == "cambiar_estado_sala":
+            sala_id = request.form.get("sala_id")
+            activo = request.form.get("activo") == "1"
+            status_code, respuesta = consumir_api(
+                "PATCH", f"/funciones/salas/{sala_id}", datos={"activo": activo}
+            )
+            if status_code == 200 and respuesta.get("ok"):
+                mensaje_estado = (
+                    "La sala quedó habilitada para nuevas funciones."
+                    if activo else "La sala quedó en mantenimiento y no acepta nuevas ventas."
+                )
+                mensaje_tipo = "success"
+            else:
+                mensaje = (respuesta.get("error") or {}).get(
+                    "message", "No se pudo cambiar el estado de la sala."
+                )
+                mensaje_tipo = "error"
+            if request.form.get("volver_a"):
+                session["mensaje_funciones"] = {
+                    "texto": mensaje_estado or mensaje,
+                    "tipo": mensaje_tipo or "error",
+                }
+                return _admin_anchor_redirect("admin_views.funciones", request.form.get("volver_a"))
+        elif accion in ("cambiar_estado", "eliminar", "cancelar", "destacar"):
+            if accion == "destacar":
+                status_code, respuesta = consumir_api(
+                    "PUT", f"/funciones/{funcion_id}/destacar"
+                )
+                if status_code == 200 and respuesta.get("ok"):
+                    mensaje_estado = "La película se seleccionó como destacada de la semana."
+                    mensaje_tipo = "success"
+                else:
+                    mensaje_estado = None
+                    mensaje = (respuesta.get("error") or {}).get(
+                        "message", "No se pudo destacar la película."
+                    )
+                    mensaje_tipo = "error"
+            elif accion == "cancelar":
                 status_code, respuesta = consumir_api(
                     "PUT",
                     f"/funciones/{funcion_id}/cancelar",
@@ -577,12 +652,24 @@ def funciones():
                     datos={"activo": activo},
                 )
                 if status_code == 200 and respuesta.get("ok"):
-                    mensaje_estado = (
-                        "La función volvió a estar a la venta."
-                        if activo else "Se cerró la venta de la función. Las entradas vendidas siguen siendo válidas."
-                    )
+                    resultado = respuesta.get("data") or {}
+                    pelicula = (resultado.get("pelicula") or {}).get("titulo")
+                    fecha = resultado.get("fecha_hora_proyeccion")
+                    identificacion = f" ({pelicula}, {fecha})" if pelicula and fecha else f" (ID {funcion_id})"
+                    estado_resultado = resultado.get("estado")
+                    if estado_resultado == "en_venta":
+                        mensaje_estado = f"La función{identificacion} está a la venta."
+                    elif estado_resultado == "agotada":
+                        mensaje_estado = f"La función{identificacion} está activa, pero agotada."
+                    elif estado_resultado == "venta_cerrada":
+                        mensaje_estado = f"La venta de la función{identificacion} está cerrada."
+                        if not activo:
+                            mensaje_estado += " Las entradas vendidas siguen siendo válidas."
+                    else:
+                        mensaje_estado = f"Se actualizó el estado de la función{identificacion}."
                     mensaje_tipo = "success"
                 else:
+                    mensaje_estado = None
                     mensaje = (respuesta.get("error") or {}).get(
                         "message", "No se pudo cambiar el estado de la función."
                     )
@@ -600,6 +687,11 @@ def funciones():
     status_salas, respuesta_salas = consumir_api("GET", "/funciones/salas")
     status_locales, respuesta_locales = consumir_api("GET", "/funciones/locales")
     status_peliculas, respuesta_peliculas = consumir_api("GET", "/peliculas/admin")
+
+    if any(status != 200 for status in (status_funciones, status_salas, status_locales, status_peliculas)):
+        current_app.logger.error("No se pudieron cargar todos los datos de gestión de funciones")
+        mensaje = mensaje or "No se pudieron cargar todos los datos de funciones, salas o películas. Intentá nuevamente."
+        mensaje_tipo = "error"
 
     funciones = respuesta_funciones.get("data", []) if status_funciones == 200 else []
     complejo_filtro = request.args.get("complejo", "").strip()
@@ -623,13 +715,14 @@ def funciones():
         funcion["precio_formateado"] = f"$ {funcion.get('precio_entrada', 0)}"
         funcion["pelicula_activa"] = bool(funcion.get("pelicula_activa", funcion.get("pelicula", {}).get("activa", True)))
         funcion["pelicula_eliminada"] = bool(funcion.get("pelicula_eliminada", funcion.get("pelicula", {}).get("eliminada", False)))
-        funcion["activa"] = bool(funcion.get("activo", True)) and funcion["pelicula_activa"] and not funcion["pelicula_eliminada"]
+        funcion["sala_activa"] = bool(funcion.get("sala", {}).get("activo", funcion.get("sala_activa", True)))
+        funcion["activa"] = bool(funcion.get("activo", True)) and funcion["pelicula_activa"] and not funcion["pelicula_eliminada"] and funcion["sala_activa"]
         _preparar_estado_funcion(funcion)
 
     if estado_filtro == "activas":
-        funciones = [funcion for funcion in funciones if funcion["activa"] and not funcion["finalizada"]]
+        funciones = [funcion for funcion in funciones if funcion["estado"] in ("en_venta", "agotada")]
     elif estado_filtro == "inactivas":
-        funciones = [funcion for funcion in funciones if not funcion["activa"] and not funcion["finalizada"]]
+        funciones = [funcion for funcion in funciones if funcion["estado"] in ("venta_cerrada", "cancelada")]
     elif estado_filtro == "finalizadas":
         funciones = [funcion for funcion in funciones if funcion["finalizada"]]
     # primero las proximas (activas antes que inactivas) y al final las que ya pasaron
@@ -681,9 +774,6 @@ def funciones():
                 )
             except ValueError:
                 funcion_editar["fecha_hora_form"] = ""
-            funcion_editar["venta_desde_form"] = funcion_editar["fecha_hora_form"]
-            funcion_editar["venta_hasta_form"] = funcion_editar["fecha_hora_form"]
-            funcion_editar["precio"] = funcion_editar.get("precio_entrada", 0)
             funcion_editar["pelicula_id"] = funcion_editar.get(
                 "pelicula", {}
             ).get("id")

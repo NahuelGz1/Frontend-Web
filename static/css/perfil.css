@@ -552,7 +552,7 @@ body.modal-open {
 
 .profile-modal-dialog {
     position: relative;
-    width: min(100%, 30rem);
+    width: min(100%, 32rem);
     max-width: 32rem;
     padding: 2rem;
     border: 1px solid var(--border-color, #333);

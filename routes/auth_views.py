@@ -68,7 +68,13 @@ def iniciar_sesion():
         session["usuario"] = datos["usuario"]
         session.permanent = True
         current_app.session_interface.regenerate(session)
-        destino = "admin_views.estadisticas" if datos["usuario"]["rol"] == "administrador" else "cliente_views.inicio"
+        rol = datos["usuario"]["rol"]
+        if rol == "administrador":
+            destino = "admin_views.estadisticas"
+        elif rol == "empleado":
+            destino = "admin_views.validar_qr"
+        else:
+            destino = "cliente_views.inicio"
         return redirect(url_for(destino), code=303)
     return mostrar("iniciar-sesion")
 

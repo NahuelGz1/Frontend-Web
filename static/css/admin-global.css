@@ -174,8 +174,13 @@ textarea.form-control { min-height: 150px; resize: vertical; }
 .room-complex-group > h3 { margin-bottom: 0.55rem; color: var(--text-light); font-size: 1rem; }
 .room-complex-group .room-grid { display: flex; gap: 0.75rem; overflow-x: auto; padding: 0.1rem 0.1rem 0.65rem; scroll-snap-type: x proximity; }
 .room-card { min-width: 240px; padding: 0.8rem; border: 1px solid var(--cinema-700); border-radius: 7px; background: var(--cinema-900); scroll-snap-align: start; }
+.room-card { display: flex; flex-direction: column; }
 .room-card h4 { margin-bottom: 0.3rem; font-size: 0.95rem; }
 .room-card p { margin-bottom: 0.65rem; }
+.room-card-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-top: auto; padding-top: 0.25rem; }
+.room-card-actions form { min-width: 0; margin: 0; }
+.room-card-actions > .btn,
+.room-card-actions form .btn { width: 100%; min-height: 2.75rem; margin-left: 0; text-align: center; }
 .status-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .status-tabs .btn { padding: 0.38rem 0.6rem; font-size: 0.78rem; }
 .status-tabs .active { border-color: var(--cinema-red); background: var(--cinema-red); }
@@ -186,6 +191,7 @@ textarea.form-control { min-height: 150px; resize: vertical; }
 .function-row h3 { margin-bottom: 0.4rem; }
 .function-row p { margin: 0.2rem 0; }
 .function-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.function-actions .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .seat-map { display: grid; gap: 0.2rem; justify-content: center; overflow-x: auto; padding: 0.5rem 0; }
 .seat-row { display: flex; align-items: center; gap: 0.2rem; }
 .seat-row > span { width: 1rem; color: var(--text-muted); font-size: 0.65rem; }
@@ -233,6 +239,10 @@ textarea.form-control { min-height: 150px; resize: vertical; }
     .qr-service-item-controls { justify-content: space-between; }
     .confirmation-slot { width: 100%; }
     .confirmation-card { width: 100%; }
+}
+
+@media (max-width: 360px) {
+    .room-card-actions { grid-template-columns: 1fr; }
 }
 .stats-page > .help-text { margin: 0.5rem 0 0.8rem; }
 .stats-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-bottom: 0.8rem; }
