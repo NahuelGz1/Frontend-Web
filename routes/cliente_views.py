@@ -393,7 +393,7 @@ def _obtener_compra_para_documento(compra_id):
         mensaje = respuesta.get("error", {}).get("message", "Compra no encontrada.")
         flash(mensaje, "danger")
         return None
-    return respuesta.get("data") or {}
+    return compra_service.preparar_datos_documento(respuesta.get("data") or {})
 
 
 @cliente_views_bp.route("/compras/<int:compra_id>/entradas")
@@ -441,11 +441,16 @@ def cancelar_compra(compra_id):
         return redirect(url_for("cliente_views.cartelera"))
 
     datos = respuesta.get("data") or {}
+    resumen = datos.get("resumen") or {}
+    resumen = {
+        **resumen,
+        "servicios": compra_service.agrupar_servicios(resumen.get("servicios")),
+    }
 
     return render_template("cliente/cancelar-compra.html",
                             funcion=datos.get("funcion", {}),
                             reserva=datos.get("reserva", {}),
-                            resumen=datos.get("resumen", {}),
+                            resumen=resumen,
                             estado=request.args.get("estado", "pendiente"),
                             csrf_token=compra_service.token_csrf())
 

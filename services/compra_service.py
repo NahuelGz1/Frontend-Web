@@ -558,13 +558,13 @@ def confirmar_compra(resumen):
 def id_compra_confirmada():
     return ((session.get(CLAVE_COMPRA_CONFIRMADA) or {}).get("reserva") or {}).get("id_compra")
 
-def _agrupar_servicios(servicios):
+def agrupar_servicios(servicios):
     agrupados = {}
     for s in servicios or []:
         nombre = s.get("nombre", "")
         precio = float(s.get("precio") or 0)
         cantidad = int(s.get("cantidad") or 1)
-        clave = (nombre, precio)
+        clave = (s.get("id_servicio"), nombre, precio)
         if clave not in agrupados:
             agrupados[clave] = {**s, "nombre": nombre, "precio": precio, "cantidad": 0}
         agrupados[clave]["cantidad"] += cantidad
@@ -603,7 +603,7 @@ def datos_confirmacion(datos):
             "servicios": [
                 {"nombre": f"{s['nombre']} x{s['cantidad']}",
                  "subtotal": formatear_precio(s["precio"] * s["cantidad"])}
-                for s in _agrupar_servicios(resumen.get("servicios"))
+                for s in agrupar_servicios(resumen.get("servicios"))
             ],
         },
     }
@@ -645,7 +645,7 @@ def preparar_datos_documento(datos):
     if isinstance(resumen_doc, dict) and "servicios" in resumen_doc:
         resumen_doc = {
             **resumen_doc,
-            "servicios": _agrupar_servicios(resumen_doc.get("servicios")),
+            "servicios": agrupar_servicios(resumen_doc.get("servicios")),
         }
     return {
         **datos,
