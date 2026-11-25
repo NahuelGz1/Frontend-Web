@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Administración · Cine Paradiso{% endblock %}</title>
 
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/servicios-opcionales.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/butacas.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/cine-paradiso.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-global.css') }}">
     {% block head %}{% endblock %}
@@ -13,7 +17,8 @@
 <div class="admin-shell">
 
     <header class="site-header">
-        <a href="{{ url_for('admin_views.estadisticas') }}" class="brand">
+        {% set es_admin = current_user is defined and current_user and current_user.rol == 'administrador' %}
+        <a href="{{ url_for('admin_views.estadisticas' if es_admin else 'admin_views.validar_qr') }}" class="brand">
             <span class="brand-icon" aria-hidden="true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
             </span>
@@ -25,9 +30,9 @@
                 <a href="{{ url_for('cliente_views.inicio') }}" target="_blank">Ver sitio público ↗</a>
             </nav>
 
-            <a href="{{ url_for('admin_views.estadisticas') }}" class="header-admin-link">Panel de Administrador</a>
+            <a href="{{ url_for('admin_views.estadisticas' if es_admin else 'admin_views.validar_qr') }}" class="header-admin-link">{{ 'Panel de Administrador' if es_admin else 'Panel de Empleado' }}</a>
             <a href="{{ url_for('cliente_views.mi_perfil') }}" class="user-avatar" aria-label="Mi perfil" title="Mi perfil">
-                {{ current_user.nombre[:2]|upper if current_user is defined and current_user and current_user.nombre else "AD" }}
+                {{ current_user.nombre[:2]|upper if current_user is defined and current_user and current_user.nombre else ("AD" if es_admin else "EM") }}
             </a>
         </div>
     </header>
@@ -36,7 +41,7 @@
 
         <aside class="admin-sidebar" aria-label="Navegación de Administración">
             <p class="admin-sidebar-label">Gestión del cine</p>
-
+            {% if es_admin %}
             <a href="{{ url_for('admin_views.peliculas') }}" class="{% if request.path == '/admin/peliculas' %}active{% endif %}">
                 <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16v13H4zM4 7l2-4h14l-2 4M8 3l2 4m3-4 2 4m3-4 2 4"/></svg></span>
                 <span>Películas</span>
@@ -51,17 +56,17 @@
                 <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 10h16l-2 11H6L4 10Zm3 0 2-7m8 7-2-7M8 14v3m4-3v3m4-3v3M3 7l2 3m16-3-2 3"/></svg></span>
                 <span>Servicios</span>
             </a>
-
+            {% endif %}
             <a href="{{ url_for('admin_views.validar_qr') }}" class="{% if request.path == '/admin/validar-qr' %}active{% endif %}">
                 <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 9V4h5m6 0h5v5M20 15v5h-5m-6 0H4v-5"/><path d="M7 7h3v3H7zm7 0h3v3h-3zm-7 7h3v3H7zm7 0h3v3h-3z"/></svg></span>
                 <span>Validar QR</span>
             </a>
-
+            {% if es_admin %}
             <a href="{{ url_for('admin_views.estadisticas') }}" class="{% if request.path == '/admin/estadisticas' %}active{% endif %}">
                 <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V4m0 16h17"/><rect x="7" y="12" width="3" height="6" rx=".5"/><rect x="13" y="8" width="3" height="10" rx=".5"/><rect x="19" y="5" width="2" height="13" rx=".5"/></svg></span>
                 <span>Estadísticas</span>
             </a>
-
+            {% endif %}
             {% if current_user is defined and current_user and current_user.email|lower == config.SUPER_ADMIN_EMAIL %}
             <a href="{{ url_for('admin_views.habilitar_admins') }}" class="{% if request.path == '/admin/habilitar-admins' %}active{% endif %}">
                 <span aria-hidden="true">⚙</span>
@@ -88,7 +93,7 @@
             {% for category, message in messages %}
             <div class="flash-alert alert {{ category }}">
                 <span>{{ message }}</span>
-                <button class="alert-close" style="background:none; border:none; color:inherit; cursor:pointer;">✕</button>
+                <button type="button" class="alert-close" aria-label="Cerrar mensaje">✕</button>
             </div>
             {% endfor %}
             {% endif %}

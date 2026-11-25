@@ -65,15 +65,89 @@ actualizá también `FRONTEND_URL`.
 
 ## Datos y servicios externos
 
+Para cargar el catálogo de demostración compartido y generar funciones,
+reconstruí el backend y ejecutá desde `Frontend-Web`:
+
+```bash
+docker compose --env-file .env.docker up -d --build backend
+docker compose --env-file .env.docker exec -T backend python -m scripts.cargar_peliculas_demo
+```
+
+El catálogo contiene 22 películas de ejemplo: 17 seleccionadas para programar
+y cinco para próximos estrenos. Se agregan las que no existen, sin borrar datos
+ni modificar las películas existentes, salvo completar un afiche faltante.
+Se identifican por título y duración; si hay más de una coincidencia, difiere
+la duración o la película está inactiva o eliminada, se informa y se omite.
+Las cinco películas para estrenos solo aparecerán como tales si no tienen
+funciones previas en esa base. Sus datos y las valoraciones no se copian desde
+la base de otra persona. El catálogo no incluye sinopsis; con `TMDB_API_KEY`
+configurada, la aplicación puede completarlas desde TMDB.
+
+El comando intenta programar las películas seleccionadas, incluso si todavía
+no tienen funciones en esa base, y las demás películas activas con funciones
+previas. Busca turnos a las 14, 17, 20 y 23 horas de hoy y los dos días
+siguientes, en horario argentino. Omite horarios pasados y conflictos,
+incluyendo 15 minutos de limpieza, y no modifica las funciones existentes.
+La disponibilidad depende de los horarios y salas de cada base: no garantiza
+que todas las películas reciban una función. Puede repetirse sin duplicar
+esos turnos. La carga del catálogo se guarda antes de programar; si falla la
+programación, corregí el error y repetí el comando.
+
+Para generar más turnos otro día sin volver a cargar el catálogo, usá
+`docker compose --env-file .env.docker exec -T backend python -m scripts.generar_funciones_demo`.
+Este comando solo programa películas con funciones previas y deja sin
+funciones las demás. Ambos comandos son solo para desarrollo.
+
+Para agregar hasta dos **funciones agotadas de prueba**, ejecutá después:
+
+```bash
+docker compose --env-file .env.docker exec -T backend python -m scripts.generar_agotadas_demo
+```
+
+El comando crea funciones nuevas en horarios libres y ocupa todas sus butacas
+con compras y usuarios de demostración. No modifica funciones ni compras
+existentes y conserva las películas sin funciones como próximos estrenos.
+Mientras existan dos funciones de prueba futuras y activas no crea más;
+no repone entradas que se hayan cancelado. Si faltan horarios o salas
+disponibles, cancela toda la operación. Estas ventas ficticias afectan la
+ocupación, los ingresos y otras estadísticas: usalo únicamente en una base de
+desarrollo, nunca en producción.
+
 - MySQL usa el volumen `mysql_data`: los datos sobreviven a reinicios,
   reconstrucciones y `docker compose down`. El volumen es independiente de
   cualquier MySQL instalado en la computadora.
-- Solo cuando el volumen está vacío, MySQL ejecuta `init_db.sql` y `seed.sql`
+- Solo cuando el volumen está vacío, MySQL ejecuta `init_db.sql`, `catalogo_servicios.sql` y `seed.sql`
   del backend. El seed actual incluye películas, funciones, la cuenta
   administradora inicial y una compra de prueba para validar QR. Esos datos son
   de desarrollo; **no uses esta configuración ni esa cuenta de prueba como
   instalación de producción**. Los cambios posteriores a los scripts no se
   cargan automáticamente sobre un volumen existente.
+- Las películas importadas posteriormente desde TMDB, las valoraciones y las
+  funciones particulares de una computadora no se comparten automáticamente
+  por Git ni Docker. Cada integrante debe ejecutar el comando de catálogo para
+  cargar la selección compartida en su propia base.
+- Para **restablecer** los servicios en una base de desarrollo existente, hacé
+  primero un respaldo y, sin otras operaciones de administración en curso,
+  ejecutá desde `Frontend-Web`:
+
+  ```bash
+  docker compose --env-file .env.docker up -d db
+  docker compose --env-file .env.docker exec -T db sh -c '(echo SET @restablecer_catalogo=1\;; cat /docker-entrypoint-initdb.d/02-servicios.sql) | MYSQL_PWD=$MYSQL_PASSWORD mysql --default-character-set=utf8mb4 --protocol=tcp -h 127.0.0.1 -u $MYSQL_USER $MYSQL_DATABASE'
+  ```
+
+  El primer comando actualiza el montaje del archivo sin borrar el volumen. El
+  segundo restaura nombres, precios, descripciones, categorías y estado de los
+  doce servicios, y elimina sus imágenes personalizadas para mostrar las del
+  repositorio. Desactiva los demás servicios, incluidos duplicados, sin borrar
+  sus registros ni el historial de compras. La coincidencia se hace por nombre
+  según la intercalación de la base y, ante duplicados, se conserva activo el
+  de menor ID. Un servicio renombrado no se puede reconocer por su nombre
+  anterior: quedará inactivo y se creará uno nuevo. El restablecimiento no
+  actualiza los importes históricos de las compras. Los cambios posteriores
+  desde administración se conservan hasta volver a ejecutar el comando.
+  Reconstruí el frontend con
+  `docker compose --env-file .env.docker up -d --build frontend` para obtener
+  las plantillas y las imágenes nuevas.
 - El backend aplica al arrancar sus migraciones automáticas con el usuario de
   aplicación. El script de creación ya no borra una base existente; ejecutarlo
   manualmente sobre tablas existentes puede fallar en lugar de reemplazarlas.

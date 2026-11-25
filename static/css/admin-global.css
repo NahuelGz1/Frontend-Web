@@ -174,8 +174,13 @@ textarea.form-control { min-height: 150px; resize: vertical; }
 .room-complex-group > h3 { margin-bottom: 0.55rem; color: var(--text-light); font-size: 1rem; }
 .room-complex-group .room-grid { display: flex; gap: 0.75rem; overflow-x: auto; padding: 0.1rem 0.1rem 0.65rem; scroll-snap-type: x proximity; }
 .room-card { min-width: 240px; padding: 0.8rem; border: 1px solid var(--cinema-700); border-radius: 7px; background: var(--cinema-900); scroll-snap-align: start; }
+.room-card { display: flex; flex-direction: column; }
 .room-card h4 { margin-bottom: 0.3rem; font-size: 0.95rem; }
 .room-card p { margin-bottom: 0.65rem; }
+.room-card-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-top: auto; padding-top: 0.25rem; }
+.room-card-actions form { min-width: 0; margin: 0; }
+.room-card-actions > .btn,
+.room-card-actions form .btn { width: 100%; min-height: 2.75rem; margin-left: 0; text-align: center; }
 .status-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .status-tabs .btn { padding: 0.38rem 0.6rem; font-size: 0.78rem; }
 .status-tabs .active { border-color: var(--cinema-red); background: var(--cinema-red); }
@@ -186,6 +191,7 @@ textarea.form-control { min-height: 150px; resize: vertical; }
 .function-row h3 { margin-bottom: 0.4rem; }
 .function-row p { margin: 0.2rem 0; }
 .function-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.function-actions .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .seat-map { display: grid; gap: 0.2rem; justify-content: center; overflow-x: auto; padding: 0.5rem 0; }
 .seat-row { display: flex; align-items: center; gap: 0.2rem; }
 .seat-row > span { width: 1rem; color: var(--text-muted); font-size: 0.65rem; }
@@ -234,6 +240,10 @@ textarea.form-control { min-height: 150px; resize: vertical; }
     .confirmation-slot { width: 100%; }
     .confirmation-card { width: 100%; }
 }
+
+@media (max-width: 360px) {
+    .room-card-actions { grid-template-columns: 1fr; }
+}
 .stats-page > .help-text { margin: 0.5rem 0 0.8rem; }
 .stats-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-bottom: 0.8rem; }
 .stats-sample-label { display: inline-flex; margin-top: 0.3rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(169, 67, 73, 0.16); color: #e4a4a8; font-size: 0.68rem; font-weight: 700; }
@@ -253,8 +263,8 @@ textarea.form-control { min-height: 150px; resize: vertical; }
 .stats-progress { height: 4px; margin-top: 0.35rem; overflow: hidden; border-radius: 4px; background: var(--cinema-700); }
 .stats-progress span { display: block; width: var(--progress); height: 100%; background: var(--cinema-red); }
 .stats-total { display: flex; justify-content: space-between; gap: 1rem; margin-top: 0.55rem; padding-top: 0.7rem; border-top: 1px solid var(--cinema-700); font-size: 0.78rem; }
-.stats-movie-rings { display: flex; justify-content: space-around; gap: 1rem; margin: 0.9rem 0 0.7rem; }
-.stats-movie-ring { display: grid; justify-items: center; gap: 0.35rem; text-align: center; }
+.stats-movie-rings { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 1rem; margin: 0.9rem 0 0.7rem; }
+.stats-movie-ring { display: grid; width: 110px; max-width: 100%; justify-items: center; gap: 0.35rem; text-align: center; overflow-wrap: anywhere; }
 .stats-ring { display: grid; width: 82px; aspect-ratio: 1; place-items: center; border-radius: 50%; background: conic-gradient(var(--ring-color) var(--progress), var(--cinema-700) 0); }
 .stats-ring::before { position: absolute; width: 64px; aspect-ratio: 1; border-radius: 50%; background: var(--cinema-850); content: ""; }
 .stats-ring { position: relative; }
@@ -337,4 +347,118 @@ textarea.form-control { min-height: 150px; resize: vertical; }
     height: 100px;
     object-fit: cover;
     border-radius: 12px;
+}
+
+/* Distribucion de filtros de funciones en celulares */
+@media (max-width: 600px) {
+    .room-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .room-tabs .btn {
+        min-width: 0;
+        min-height: 44px;
+        text-align: center;
+        white-space: normal;
+    }
+
+    .room-tabs .function-create-link {
+        grid-column: 1 / -1;
+        margin-left: 0;
+    }
+
+    section[aria-labelledby="schedule-title"] > .panel-heading {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+}
+
+/* Alineacion de acciones administrativas en celulares */
+@media (max-width: 600px) {
+    .function-row > div {
+        min-width: 0;
+    }
+
+    .function-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+
+    .function-actions > .badge {
+        grid-column: 1 / -1;
+        justify-self: start;
+    }
+
+    .function-actions > form {
+        min-width: 0;
+        margin: 0;
+    }
+
+    .function-actions .btn {
+        width: 100%;
+        min-height: 44px;
+        margin-left: 0;
+        text-align: center;
+        font-size: 0.8rem;
+    }
+
+    .function-actions > .btn-delete,
+    .function-actions > form:has(> .btn-delete) {
+        grid-column: 1 / -1;
+    }
+
+    .function-actions:not(:has(> a.btn:not(.btn-delete))) > form {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Alineacion de botones de gestion de servicios */
+.list-actions.service-list-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.service-list-actions > form {
+    display: flex;
+    margin: 0;
+    min-width: 0;
+}
+
+.service-list-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    min-height: 2.4rem;
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+    margin: 0;
+}
+
+/* Adaptacion de botones de servicios a celulares */
+@media (max-width: 600px) {
+    .list-actions.service-list-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .service-list-actions .btn {
+        width: 100%;
+        min-height: 2.75rem;
+    }
+
+    .service-list-actions > form:has(.btn-delete) {
+        grid-column: 1 / -1;
+    }
 }

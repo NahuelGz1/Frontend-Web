@@ -1,4 +1,5 @@
 {% extends "layouts/base-admin.html" %}
+{% from "components/imagen-servicio.html" import imagen_servicio as obtener_imagen_servicio %}
 
 {% block title %}Gestión de servicios · Cine Paradiso{% endblock %}
 {% block breadcrumb %}Servicios{% endblock %}
@@ -27,23 +28,7 @@
             <h2 id="service-catalog-title">Catálogo de servicios · ARS · {{ lista_servicios|length }}</h2>
         </div>
         {% for servicio in lista_servicios %}
-        {% set nombre_servicio = servicio.nombre|lower %}
-        {% set imagen_servicio = servicio.imagen_url|default('', true) %}
-        {% if not imagen_servicio and 'agua' in nombre_servicio %}
-        {% set imagen_servicio = url_for('static', filename='images/servicios/agua-mineral.png') %}
-        {% elif not imagen_servicio and 'combo' in nombre_servicio %}
-        {% set imagen_servicio = url_for('static', filename='images/servicios/combo-duo.png') %}
-        {% elif not imagen_servicio and 'nacho' in nombre_servicio %}
-        {% set imagen_servicio = url_for('static', filename='images/servicios/machos-cheddar.png') %}
-        {% elif not imagen_servicio and 'pancho' in nombre_servicio %}
-        {% set imagen_servicio = url_for('static', filename='images/servicios/pancho-clasico.png') %}
-        {% elif not imagen_servicio and 'pochoclo' in nombre_servicio %}
-        {% set imagen_servicio = url_for('static', filename='images/servicios/balde-pochoclos.png') %}
-        {% elif not imagen_servicio and 'estacionamiento' in nombre_servicio %}
-        {% set imagen_servicio = url_for('static', filename='images/servicios/estacionamiento.png') %}
-        {% elif not imagen_servicio and 'vip' in nombre_servicio %}
-        {% set imagen_servicio = url_for('static', filename='images/servicios/acceso-vip.png') %}
-        {% endif %}
+        {% set imagen_servicio = obtener_imagen_servicio(servicio) %}
         <article class="list-item" id="servicio-{{ servicio.id }}">
             {% if imagen_servicio %}
             <img class="service-image" src="{{ imagen_servicio }}" alt="Imagen de {{ servicio.nombre }}">
@@ -56,7 +41,7 @@
                 <p class="text-muted">{{ servicio.descripcion }}</p>
                 <p class="service-price">{{ servicio.precio_formateado }}</p>
                 <span class="badge {% if servicio.activo is sameas true %}badge-success{% elif servicio.activo is sameas false %}badge-danger{% endif %}">{{ 'Activo' if servicio.activo is sameas true else 'Inactivo' if servicio.activo is sameas false else 'Estado no informado' }}</span>
-                <div class="list-actions">
+                <div class="list-actions service-list-actions">
                     <a class="btn" href="{{ url_for('admin_views.servicios', editar=servicio.id) }}#formulario-servicio">Editar</a>
                     <form method="post" action="{{ url_for('admin_views.servicios') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
@@ -93,25 +78,7 @@
                 <input class="form-control" id="service-name" name="nombre" type="text" maxlength="80" value="{{ servicio_actual.nombre|default('') if servicio_actual else '' }}" required>
             </div>
             <div class="service-image-field">
-                {% set imagen_actual = servicio_actual.imagen_url|default('', true) if servicio_actual else '' %}
-                {% if servicio_actual and not imagen_actual %}
-                {% set nombre_actual = servicio_actual.nombre|lower %}
-                {% if 'agua' in nombre_actual %}
-                {% set imagen_actual = url_for('static', filename='images/servicios/agua-mineral.png') %}
-                {% elif 'combo' in nombre_actual %}
-                {% set imagen_actual = url_for('static', filename='images/servicios/combo-duo.png') %}
-                {% elif 'nacho' in nombre_actual %}
-                {% set imagen_actual = url_for('static', filename='images/servicios/machos-cheddar.png') %}
-                {% elif 'pancho' in nombre_actual %}
-                {% set imagen_actual = url_for('static', filename='images/servicios/pancho-clasico.png') %}
-                {% elif 'pochoclo' in nombre_actual %}
-                {% set imagen_actual = url_for('static', filename='images/servicios/balde-pochoclos.png') %}
-                {% elif 'estacionamiento' in nombre_actual %}
-                {% set imagen_actual = url_for('static', filename='images/servicios/estacionamiento.png') %}
-                {% elif 'vip' in nombre_actual %}
-                {% set imagen_actual = url_for('static', filename='images/servicios/acceso-vip.png') %}
-                {% endif %}
-                {% endif %}
+                {% set imagen_actual = obtener_imagen_servicio(servicio_actual) if servicio_actual else '' %}
                 {% if imagen_actual %}
                 <img class="service-image service-image-preview" id="service-preview-img" src="{{ imagen_actual }}" alt="Imagen de {{ servicio_actual.nombre }}">
                 {% else %}

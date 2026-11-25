@@ -1,0 +1,139 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Política de privacidad · Cine Paradiso{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="payment-page" aria-labelledby="privacidad-titulo">
+
+    <h1 id="privacidad-titulo">Política de privacidad</h1>
+
+    <div class="payment-form">
+        <!-- Bloque 1: Alcance y uso de datos -->
+        <article class="card">
+            <button type="button" data-acordeon-btn aria-expanded="false">
+                <span>1. Responsable y uso de los datos personales</span>
+                <span data-acordeon-flecha aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </span>
+            </button>
+
+            <div data-acordeon-contenido hidden>
+                <hr class="separador">
+                <div class="payment-form">
+                    <p>La presente Política de Privacidad regula el tratamiento de los datos personales recopilados a través de la plataforma web de <strong>Cine Paradiso</strong>, quien actúa como responsable de su resguardo y administración. Al registrarse o utilizar los servicios del sitio, el usuario acepta las condiciones aquí detalladas.</p>
+
+                    <div>
+                        <h3>Marco normativo y seguridad</h3>
+                        <p>Todos los datos personales son tratados conforme a lo establecido por la Ley Nacional N.º 25.326 de Protección de Datos Personales, su Decreto Reglamentario N.º 1558/2001 y las disposiciones complementarias vigentes en la República Argentina. Cine Paradiso aplica medidas técnicas y organizativas destinadas a garantizar la integridad, confidencialidad y seguridad de la información.</p>
+                    </div>
+
+                    <div>
+                        <h3>Veracidad de la información suministrada</h3>
+                        <p>Para crear una cuenta, adquirir entradas o contratar servicios adicionales es necesario proporcionar datos personales exactos, completos y actualizados. El usuario garantiza ser el titular de los datos ingresados y asume la responsabilidad por su veracidad. Por seguridad, Cine Paradiso nunca solicita contraseñas ni datos financieros completos por correo electrónico.</p>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Bloque 2: Finalidades del tratamiento -->
+        <article class="card">
+            <button type="button" data-acordeon-btn aria-expanded="false">
+                <span>2. Finalidades del tratamiento</span>
+                <span data-acordeon-flecha aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </span>
+            </button>
+
+            <div data-acordeon-contenido hidden>
+                <hr class="separador">
+                <div class="payment-form">
+                    <p>Los datos personales proporcionados por los usuarios son utilizados exclusivamente para los siguientes fines vinculados a la operatoria de <strong>Cine Paradiso</strong>:</p>
+
+                    <div>
+                        <h3>Gestión de cuenta y operaciones</h3>
+                        <p>Administrar el registro y acceso al perfil del usuario, procesar la compra de entradas y servicios adicionales, emitir comprobantes y códigos QR de ingreso a sala, y gestionar eventuales cancelaciones o reintegros conforme a los términos del servicio.</p>
+                    </div>
+
+                    <div>
+                        <h3>Comunicaciones y mejoras del servicio</h3>
+                        <p>Enviar notificaciones operativas por correo electrónico vinculadas a las compras realizadas o al estado de las funciones, elaborar estadísticas internas sobre ocupación y preferencias de consumo para optimizar nuestros complejos, y remitir novedades o promociones únicamente cuando el usuario haya prestado su consentimiento previo.</p>
+                    </div>
+
+                    <div>
+                        <h3>Cumplimiento legal y confidencialidad</h3>
+                        <p>Dar cumplimiento a obligaciones legales vigentes, prevenir operaciones fraudulentas y atender requerimientos de autoridades competentes. Los datos personales de los usuarios no son comercializados, cedidos ni difundidos a terceros para fines ajenos a los aquí enumerados.</p>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Bloque 3: Conservación y derechos del usuario -->
+        <article class="card">
+            <button type="button" data-acordeon-btn aria-expanded="false">
+                <span>3. Conservación y derechos del usuario</span>
+                <span data-acordeon-flecha aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </span>
+            </button>
+
+            <div data-acordeon-contenido hidden>
+                <hr class="separador">
+                <div class="payment-form">
+                    <p>Los datos obtenidos se almacenan en bases de datos administradas por <strong>Cine Paradiso</strong> bajo estándares adecuados de protección y se conservan únicamente durante el plazo necesario para cumplir con las finalidades del servicio y las obligaciones legales aplicables.</p>
+
+                    <div>
+                        <h3>Acceso, rectificación y supresión</h3>
+                        <p>De acuerdo con el artículo 14, inciso 3 de la Ley N.º 25.326 y la Resolución 14/2018, el titular de los datos personales puede ejercer el derecho de acceso de forma gratuita a intervalos no inferiores a seis meses, salvo que acredite un interés legítimo al efecto. Asimismo, puede actualizar sus datos desde su perfil o solicitar la rectificación, bloqueo o eliminación de su registro a través de nuestros canales de atención.</p>
+                    </div>
+
+                    <div>
+                        <h3>Órgano de control</h3>
+                        <p>La Agencia de Acceso a la Información Pública (AAIP), en su carácter de Órgano de Control de la Ley N.º 25.326, tiene la atribución de atender las denuncias y reclamos que interpongan quienes resulten afectados en sus derechos por el incumplimiento de las normas vigentes en materia de protección de datos personales.</p>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Bloque 4: Seguridad y proveedores -->
+        <article class="card">
+            <button type="button" data-acordeon-btn aria-expanded="false">
+                <span>4. Seguridad, almacenamiento y proveedores de servicios</span>
+                <span data-acordeon-flecha aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </span>
+            </button>
+
+            <div data-acordeon-contenido hidden>
+                <hr class="separador">
+                <div class="payment-form">
+                    <p>La plataforma web de <strong>Cine Paradiso</strong> implementa protocolos y medidas técnicas de resguardo para proteger la información registrada por los usuarios frente a accesos no autorizados, pérdida o alteración.</p>
+
+                    <div>
+                        <h3>Almacenamiento y encargados del tratamiento</h3>
+                        <p>Los datos personales se conservan en bases de datos administradas bajo estándares de seguridad acordes a la normativa vigente. Cuando intervienen proveedores tecnológicos o medios de pago electrónicos necesarios para procesar operaciones o alojar el sitio, estos actúan únicamente como encargados del tratamiento bajo estrictas obligaciones de confidencialidad.</p>
+                    </div>
+
+                    <div>
+                        <h3>Protección de cuenta y prevención de fraudes</h3>
+                        <p>El acceso al perfil del usuario y a los comprobantes o códigos QR de entradas y servicios se encuentra protegido mediante credenciales personales. Cine Paradiso nunca solicita contraseñas, claves de seguridad ni datos completos de tarjetas por correo electrónico o mensajería.</p>
+                    </div>
+
+                    <div>
+                        <h3>Actualizaciones de esta política</h3>
+                        <p>Cine Paradiso podrá actualizar la presente Política de Privacidad para adaptarla a mejoras operativas de la plataforma o a modificaciones en la legislación aplicable. Cualquier cambio entrará en vigencia a partir de su publicación en este mismo apartado.</p>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/terminos-y-condiciones.js') }}"></script>
+{% endblock %}

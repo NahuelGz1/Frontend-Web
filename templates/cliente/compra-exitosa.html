@@ -2,6 +2,11 @@
 
 {% block title %}Compra exitosa · Cine Paradiso{% endblock %}
 
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/compra-exitosa.css') }}">
+{% endblock %}
+
 {% block content %}
 {% set datos_funcion = funcion|default({}, true) %}
 {% set pelicula = datos_funcion.pelicula|default({}, true) %}

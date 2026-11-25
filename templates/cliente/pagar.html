@@ -46,6 +46,9 @@
 
         <aside class="payment-summary" aria-labelledby="summary-title">
             <h2 id="summary-title">Resumen de compra</h2>
+            {% set modo_compra = datos_resumen.modo|default('nueva_entrada') %}
+
+            {% if modo_compra != 'solo_servicios' %}
             <div class="payment-movie">
                 {% if pelicula.poster_url|default('') %}
                 <img src="{{ pelicula.poster_url }}" alt="Póster de {{ pelicula.titulo }}">
@@ -53,15 +56,17 @@
                 <div class="payment-poster-placeholder" aria-hidden="true">▧</div>
                 {% endif %}
                 <div>
-                    <h3>{{ pelicula.titulo|default('Volver al Futuro') }}</h3>
-                    <p>{{ datos_funcion.fecha|default('Viernes, 30 de octubre de 2026') }}</p>
-                    <p>{{ datos_funcion.horario|default('19:30') }} ·
-                        {{ datos_funcion.complejo|default('Paradiso Centro') }} ·
-                        {{ datos_funcion.sala|default('Sala 1') }}</p>
-                    <p>{{ datos_funcion.butacas|default('Fila D · Butacas 5 y 6') }}</p>
+                    <h3>{{ pelicula.titulo }}</h3>
+                    <p>{{ datos_funcion.fecha }}</p>
+                    <p>{{ datos_funcion.horario }} ·
+                        {{ datos_funcion.complejo }} ·
+                        {{ datos_funcion.sala }}</p>
+                    <p>{{ datos_funcion.butacas }}</p>
                 </div>
             </div>
+            {% endif %}
 
+            {% if modo_compra == 'nueva_entrada' %}
             <dl class="payment-breakdown">
                 <div>
                     <dt>{{ entradas }} entradas</dt>
@@ -71,6 +76,14 @@
                     <dt>{{ precio_entrada|default('$10.000') }} por entrada</dt>
                 </div>
             </dl>
+            {% elif modo_compra == 'compra_existente' %}
+            <dl class="payment-breakdown">
+                <div>
+                    <dt>{{ entradas }} entradas (ya abonadas)</dt>
+                    <dd>$0</dd>
+                </div>
+            </dl>
+            {% endif %}
 
             {% if servicios %}
             <section class="payment-services" aria-labelledby="payment-services-title">

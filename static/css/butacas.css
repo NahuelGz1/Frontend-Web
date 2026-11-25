@@ -1,0 +1,400 @@
+/* ===== pantalla de seleccion de butacas ===== */
+
+.seat-page {
+    max-width: 950px;
+    margin: 0 auto;
+}
+
+.seat-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 2rem;
+    color: var(--text-muted);
+    font-size: .75rem;
+}
+
+.seat-back-link:hover {
+    color: var(--text-light);
+}
+
+.seat-page > h1 {
+    margin: .25rem 0 1.1rem;
+    font-size: 1.35rem;
+}
+
+.seat-function-bar {
+    display: flex;
+    align-items: center;
+    gap: .2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--cinema-800);
+    font-size: .75rem;
+}
+
+.seat-function-bar strong {
+    font-size: .85rem;
+}
+
+.seat-function-bar span {
+    color: var(--text-light);
+}
+
+.seat-function-bar nav {
+    display: flex;
+    gap: .5rem;
+    margin-left: .8rem;
+}
+
+.seat-function-bar nav a {
+    display: grid;
+    place-items: center;
+    min-width: 3.3rem;
+    min-height: 2.2rem;
+    padding: .3rem .6rem;
+    border-radius: .25rem;
+    background: var(--text-light);
+    color: var(--cinema-950);
+}
+
+.seat-function-bar nav a.is-active {
+    background: var(--cinema-red);
+    color: var(--text-light);
+}
+
+.seat-form {
+    margin-top: 1rem;
+}
+
+.seat-main-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.seat-map-card,
+.seat-selection-card,
+.seat-alternative,
+.seat-error {
+    padding: 1rem;
+    border: 1px solid var(--cinema-800);
+    border-radius: .55rem;
+    background: var(--cinema-900);
+}
+
+.seat-map-scroll {
+    overflow-x: auto;
+    padding: .2rem 0 .7rem;
+    scrollbar-color: var(--cinema-700) var(--cinema-900);
+}
+
+.seat-map {
+    width: max-content;
+    min-width: 100%;
+    padding: 0 2rem;
+}
+
+.seat-screen {
+    width: min(100%, 22rem);
+    margin: 0 auto 1rem;
+    padding-top: .35rem;
+    border-top: .25rem solid var(--text-light);
+    color: var(--text-muted);
+    font-size: .62rem;
+    text-align: center;
+}
+
+.seat-grid {
+    display: grid;
+    gap: .35rem;
+}
+
+.seat-row {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.seat-row-name {
+    width: 1rem;
+    margin-right: .25rem;
+    color: var(--text-muted);
+    font-size: .68rem;
+    text-align: center;
+}
+
+.seat {
+    flex: 0 0 1.75rem;
+}
+
+.seat input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.seat label {
+    display: grid;
+    place-items: center;
+    min-height: 1.75rem;
+    border: 1px solid var(--cinema-700);
+    border-radius: .25rem;
+    background: var(--text-light);
+    color: var(--cinema-950);
+    font-size: .65rem;
+    cursor: pointer;
+}
+
+.seat input:checked + label {
+    border-color: var(--cinema-red);
+    background: var(--cinema-red);
+    color: var(--text-light);
+}
+
+.seat input:disabled + label {
+    border-color: var(--cinema-700);
+    background: var(--cinema-700);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.seat input:focus-visible + label {
+    outline: 2px solid var(--text-light);
+    outline-offset: 2px;
+}
+
+.seat-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin: .7rem 0 1rem;
+    padding: 0;
+    list-style: none;
+    color: var(--text-muted);
+    font-size: .68rem;
+}
+
+.seat-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.seat-swatch {
+    width: .8rem;
+    height: .8rem;
+    border-radius: .15rem;
+    background: var(--text-light);
+}
+
+.seat-swatch.is-occupied {
+    background: var(--cinema-700);
+}
+
+.seat-swatch.is-selected {
+    background: var(--cinema-red);
+}
+
+.seat-counters {
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
+    margin: 0;
+    padding-top: .8rem;
+    border-top: 1px solid var(--cinema-800);
+    text-align: center;
+}
+
+.seat-counters dt {
+    color: var(--text-muted);
+    font-size: .65rem;
+}
+
+.seat-counters dd {
+    margin-top: .2rem;
+    font-size: .8rem;
+}
+
+.seat-selection-card {
+    position: sticky;
+    top: 1rem;
+}
+
+.seat-selection-card h2 {
+    margin-bottom: .8rem;
+    font-size: .95rem;
+}
+
+.seat-selection-card p {
+    margin-bottom: .55rem;
+    color: var(--text-muted);
+    font-size: .72rem;
+}
+
+.seat-total {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 1rem 0;
+    padding-top: .8rem;
+    border-top: 1px solid var(--cinema-800);
+}
+
+.seat-total strong {
+    font-size: 1.05rem;
+}
+
+.seat-primary-button,
+.seat-secondary-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    width: 100%;
+    padding: .6rem .75rem;
+    border-radius: .3rem;
+    font: inherit;
+    font-size: .72rem;
+    text-align: center;
+}
+
+.seat-primary-button {
+    border: 1px solid var(--cinema-red);
+    background: var(--cinema-red);
+    color: var(--text-light);
+    cursor: pointer;
+}
+
+.seat-primary-button:hover {
+    background: var(--cinema-red-light);
+}
+
+.seat-alternative {
+    margin-top: 1rem;
+    color: var(--text-muted);
+    font-size: .7rem;
+}
+
+.seat-alternative-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: .75rem;
+}
+
+.seat-alternative h2 {
+    font-size: .85rem;
+}
+
+.seat-alternative-heading span {
+    padding: .25rem .55rem;
+    border-radius: 1rem;
+    background: var(--cinema-red);
+    color: var(--text-light);
+    font-size: .62rem;
+}
+
+.seat-alternative h3 {
+    margin-top: .9rem;
+    color: var(--text-light);
+    font-size: .72rem;
+}
+
+.seat-alternative-details {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: .4rem 0;
+}
+
+.seat-alternative p {
+    margin-bottom: .45rem;
+}
+
+.seat-alternative p strong {
+    float: right;
+    color: var(--text-light);
+}
+
+.seat-secondary-button {
+    width: fit-content;
+    min-width: 7rem;
+    margin-left: auto;
+    border: 1px solid var(--cinema-700);
+    color: var(--text-light);
+}
+
+.seat-secondary-button:hover {
+    border-color: var(--cinema-red-light);
+}
+
+.seat-error h2 {
+    margin-bottom: .4rem;
+    font-size: .9rem;
+}
+
+.seat-error p {
+    color: var(--text-muted);
+    font-size: .72rem;
+}
+
+.seat-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 768px) {
+    .seat-main-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .seat-selection-card {
+        position: static;
+    }
+
+    .seat-function-bar {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .seat-function-bar nav {
+        width: 100%;
+        margin: .5rem 0 0;
+    }
+
+    .seat-primary-button,
+    .seat-secondary-button {
+        min-height: 2.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .seat-map {
+        padding-inline: 1rem;
+    }
+
+    .seat-alternative-details {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .seat-alternative p strong {
+        float: none;
+        display: block;
+        margin-top: .25rem;
+    }
+}

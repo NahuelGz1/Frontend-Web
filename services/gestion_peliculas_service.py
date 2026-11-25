@@ -22,6 +22,15 @@ def eliminar_pelicula(token, pelicula_id):
     )
 
 
+def actualizar_pelicula(token, pelicula_id, datos):
+    if not token:
+        return 401, {"ok": False, "error": {"code": 401, "message": "Debés iniciar sesión como administrador."}}
+    return consumir_api(
+        "PATCH", f"/peliculas/{pelicula_id}", datos=datos,
+        headers={"Authorization": "Bearer " + token},
+    )
+
+
 def obtener_pelicula(pelicula_id):
     return consumir_api("GET", f"/peliculas/{pelicula_id}")
 

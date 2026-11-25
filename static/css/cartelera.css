@@ -1,0 +1,123 @@
+/* ===== pantalla de cartelera ===== */
+
+.cartelera-page {
+    width: 100%;
+    max-width: 890px;
+    margin: -0.5rem auto 0;
+}
+
+.cartelera-page > .section-head {
+    margin-bottom: 0.75rem;
+}
+
+.cartelera-page h1 {
+    font-size: 1.5rem;
+    line-height: 1.25;
+}
+
+.cartelera-page .home-section h2 {
+    font-size: 1.05rem;
+    line-height: 1.3;
+}
+
+.cartelera-page .cartelera-grid {
+    gap: 1.25rem;
+}
+
+.cartelera-page .poster-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.cartelera-page .poster-card img {
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    background-color: transparent;
+    border-radius: 10px;
+}
+
+.cartelera-page .poster-card .poster-placeholder {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    margin-bottom: 0.5rem;
+    border-radius: 10px;
+    background: var(--cinema-800);
+}
+
+.cartelera-page .poster-card h3 {
+    min-height: 2.5em;
+    line-height: 1.25;
+    margin-bottom: 0.2rem;
+}
+
+.cartelera-page .poster-card p {
+    margin-bottom: 0.55rem;
+}
+
+.cartelera-page .poster-card .btn-block {
+    margin-top: auto;
+}
+
+.cartelera-page .home-section {
+    margin-top: 0.5rem;
+}
+
+.cartelera-page .home-section > .section-head {
+    margin-bottom: 0.5rem;
+}
+
+.cartelera-page .upcoming-grid .movie-item.card {
+    min-height: 4.9rem;
+    padding: 0.45rem;
+    gap: 0.65rem;
+}
+
+.cartelera-page .upcoming-grid .movie-item img {
+    width: 5.9rem;
+    height: 3.8rem;
+    border-radius: 6px;
+    background: #000;
+    object-fit: contain;
+}
+
+.cartelera-page .upcoming-grid .poster-placeholder {
+    width: 5.9rem;
+    height: 3.8rem;
+    flex: 0 0 5.9rem;
+    border-radius: 6px;
+    background: #000;
+}
+
+/* ===== estrellas de calificacion de peliculas ===== */
+
+.cartelera-page .pelicula-estrella {
+    font-size: 1rem;
+}
+
+.cartelera-page .pelicula-estrella--activa {
+    color: #f5c518;
+}
+
+.cartelera-page .pelicula-estrella--inactiva {
+    color: #555;
+}
+
+/* Alineacion de tarjetas en dispositivos moviles */
+@media (max-width: 768px) {
+    .cartelera-page .cartelera-grid {
+        align-items: stretch;
+    }
+
+    .cartelera-page .poster-card h3 {
+        overflow-wrap: break-word;
+    }
+
+    .cartelera-page .pelicula-rating {
+        width: 100%;
+    }
+
+    .cartelera-page .poster-card .btn-block {
+        width: 100%;
+    }
+}

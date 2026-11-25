@@ -2,6 +2,11 @@
 
 {% block title %}Mi Perfil · Cine Paradiso{% endblock %}
 
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
+{% endblock %}
+
 {% block content %}
 {% set usuario = current_user if current_user is defined and current_user and current_user.is_authenticated else none %}
 {% set usr_nombre = usuario.nombre if usuario else '' %}

@@ -1,23 +1,40 @@
 {% extends "layouts/base.html" %}
+{% from "components/imagen-servicio.html" import imagen_servicio as obtener_imagen_servicio %}
 
 {% block title %}Servicios adicionales · Cine Paradiso{% endblock %}
 
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/servicios.css') }}">
+{% endblock %}
+
 {% block content %}
+
 {% set lista_servicios = servicios|default([], true) %}
 {% set contexto = contexto_compra|default(none) %}
 {% set entrada = contexto.entrada|default(none) if contexto else none %}
 {% set entradas_asociadas = contexto.cantidad_entradas|default(entrada.cantidad|default(1, true), true)|int if entrada else 0 %}
+{% set modo_compra = contexto.modo|default('nueva_entrada' if entrada else 'sin_entrada') if contexto else 'sin_entrada' %}
 
 {% if not lista_servicios %}
 {% set lista_servicios = [
-{'id': 'gaseosa-grande', 'categoria': 'Bebidas', 'nombre': 'Gaseosa grande', 'descripcion': 'Vaso de 750 ml · Cola o lima limón', 'precio': 2500, 'precio_formateado': '$2.500'},
-{'id': 'agua-mineral', 'categoria': 'Bebidas', 'nombre': 'Agua mineral', 'descripcion': 'Botella de 500 ml · Sin gas', 'precio': 1800, 'precio_formateado': '$1.800'},
-{'id': 'pochoclos-medianos', 'categoria': 'Pochoclos', 'nombre': 'Pochoclos medianos', 'descripcion': 'Balde de 1,5 l · Dulce o salado', 'precio': 3600, 'precio_formateado': '$3.600'},
-{'id': 'combo-duo', 'categoria': 'Pochoclos', 'nombre': 'Combo dúo', 'descripcion': 'Pochoclos grandes + 2 gaseosas', 'precio': 8500, 'precio_formateado': '$8.500'},
-{'id': 'nachos-cheddar', 'categoria': 'Snacks', 'nombre': 'Nachos con cheddar', 'descripcion': 'Porción de 150 g · Salsa', 'precio': 4000, 'precio_formateado': '$4.000'},
-{'id': 'pancho-clasico', 'categoria': 'Snacks', 'nombre': 'Pancho clásico', 'descripcion': 'Pan suave · Aderezos a elección', 'precio': 3000, 'precio_formateado': '$3.000'},
-{'id': 'estacionamiento', 'categoria': 'Mejoras de experiencia', 'nombre': 'Estacionamiento', 'descripcion': 'Zona de estacionamiento', 'precio': 0, 'precio_formateado': 'Consultar'},
-{'id': 'acceso-vip', 'categoria': 'Mejoras de experiencia', 'nombre': 'Acceso VIP', 'descripcion': 'Zona de espera previa con souvenir temático', 'precio': 0, 'precio_formateado': 'Consultar'}
+{'id': 'gaseosa-grande', 'categoria': 'Bebidas', 'nombre': 'Gaseosa grande', 'descripcion': 'Vaso de 750 ml · Cola o
+lima limón', 'precio': 2500, 'precio_formateado': '$2.500'},
+{'id': 'agua-mineral', 'categoria': 'Bebidas', 'nombre': 'Agua mineral', 'descripcion': 'Botella de 500 ml · Sin gas',
+'precio': 1800, 'precio_formateado': '$1.800'},
+{'id': 'pochoclos-medianos', 'categoria': 'Pochoclos', 'nombre': 'Pochoclos medianos', 'descripcion': 'Balde de 1,5 l ·
+Dulce o salado', 'precio': 3600, 'precio_formateado': '$3.600'},
+{'id': 'combo-duo', 'categoria': 'Pochoclos', 'nombre': 'Combo dúo', 'descripcion': 'Pochoclos grandes + 2 gaseosas',
+'precio': 8500, 'precio_formateado': '$8.500'},
+{'id': 'nachos-cheddar', 'categoria': 'Snacks', 'nombre': 'Nachos con cheddar', 'descripcion': 'Porción de 150 g ·
+Salsa', 'precio': 4000, 'precio_formateado': '$4.000'},
+{'id': 'pancho-clasico', 'categoria': 'Snacks', 'nombre': 'Pancho clásico', 'descripcion': 'Pan suave · Aderezos a
+elección', 'precio': 3000, 'precio_formateado': '$3.000'},
+{'id': 'estacionamiento', 'categoria': 'Mejoras de experiencia', 'nombre': 'Estacionamiento', 'descripcion': 'Zona de
+estacionamiento', 'precio': 0, 'precio_formateado': 'Consultar'},
+{'id': 'acceso-vip', 'categoria': 'Mejoras de experiencia', 'nombre': 'Acceso VIP', 'descripcion': 'Zona de espera
+previa con souvenir temático', 'precio': 0, 'precio_formateado': 'Consultar'}
 ] %}
 {% endif %}
 
@@ -25,15 +42,18 @@
 {'nombre': 'Bebidas', 'slug': 'bebidas', 'detalle': 'Bebidas frías, para acompañar tu función.'},
 {'nombre': 'Pochoclos', 'slug': 'pochoclos', 'detalle': 'Recién hechos. Elegí entre dulces o salados.'},
 {'nombre': 'Snacks', 'slug': 'snacks', 'detalle': 'Algo rico para completar el plan.'},
-{'nombre': 'Mejoras de experiencia', 'slug': 'mejoras de experiencia', 'detalle': 'Experiencias especiales para tu visita.'}
+{'nombre': 'Mejoras de experiencia', 'slug': 'mejoras de experiencia', 'detalle': 'Experiencias especiales para tu
+visita.'}
 ] %}
 
 <section class="services-page" aria-labelledby="services-title">
     <div class="services-breadcrumb">
         {% if entrada %}
-        <a href="{{ url_for('cliente_views.cartelera') }}">Películas</a><span>/</span><span>Funciones</span><span>/</span><span>Butacas</span><span>/</span><strong>Servicios</strong><span>/</span><span>Pago</span>
+        <a
+            href="{{ url_for('cliente_views.cartelera') }}">Películas</a><span>/</span><span>Funciones</span><span>/</span><span>Butacas</span><span>/</span><strong>Servicios</strong><span>/</span><span>Pago</span>
         {% else %}
-        <a href="{{ url_for('cliente_views.inicio') }}">Inicio</a><span>/</span><strong>Servicios</strong><span>/</span><span>Pago</span>
+        <a
+            href="{{ url_for('cliente_views.inicio') }}">Inicio</a><span>/</span><strong>Servicios</strong><span>/</span><span>Pago</span>
         {% endif %}
     </div>
 
@@ -45,30 +65,134 @@
         <p>Precios en pesos argentinos · IVA incluido · Retiro en el complejo</p>
     </header>
 
-    <div class="services-promo" aria-label="Promoción del cine">
+    {% if entrada %}
+    <div class="services-promo services-ticket-promo" aria-live="polite">
+        <div class="services-promo-copy">
+            <p class="services-promo-kicker">
+                {{ 'ENTRADA YA COMPRADA · ' ~ contexto.codigo_operacion if modo_compra == 'compra_existente' else 'COMPRA EN CURSO' }}
+            </p>
+            <h2>Película seleccionada: {{ entrada.pelicula }}</h2>
+            <p>{{ entrada.fecha }} · {{ entrada.sala }} · {{ entrada.asientos }}</p>
+        </div>
+        <div class="services-ticket-promo-actions">
+            <button type="button" class="btn-primary" data-open-ticket-modal>
+                Cambiar entrada
+            </button>
+            {% if modo_compra == 'compra_existente' %}
+            <form method="POST" action="{{ url_for('cliente_views.seleccionar_entrada_servicios') }}" style="margin: 0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="accion" value="limpiar">
+                <button type="submit" class="btn-secondary" title="Comprar servicios sin entrada">Quitar</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="services-promo services-ticket-promo" aria-live="polite">
+        <div class="services-promo-copy">
+            <p class="services-promo-kicker">ENTRADA REQUERIDA · SERVICIOS ADICIONALES</p>
+            <h2>No tenés ninguna película seleccionada.</h2>
+            <p>Seleccioná una de tus próximas entradas o elegí una función en la cartelera para poder agregar servicios.</p>
+        </div>
+        <div class="services-ticket-promo-actions">
+            {% if usuario_logueado %}
+            <button type="button" class="btn-primary" data-open-ticket-modal>
+                Seleccionar entrada
+            </button>
+            {% else %}
+            <a class="btn-primary" href="{{ url_for('auth_views.iniciar_sesion') }}">
+                Iniciar sesión para elegir entrada
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="profile-modal" id="modal-entradas-disponibles" data-ticket-modal hidden>
+        <div class="profile-modal-backdrop" data-close-ticket-modal></div>
+        <section class="profile-modal-dialog service-ticket-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-entradas-titulo">
+            <button class="profile-modal-close" type="button" aria-label="Cerrar" data-close-ticket-modal>×</button>
+            <p class="login-kicker">TU CUENTA PARADISO</p>
+            <h2 id="modal-entradas-titulo">Próximas entradas disponibles</h2>
+            <p class="login-description">
+                Elegí una de tus entradas activas para adjuntarle servicios bajo el mismo código QR.
+            </p>
+
+            {% if entradas_disponibles %}
+            <div class="service-ticket-list">
+                {% for item in entradas_disponibles %}
+                <article class="upcoming-ticket service-ticket-item">
+                    <div class="upcoming-ticket-heading">
+                        <h3>{{ item.pelicula.titulo }}</h3>
+                        <span class="profile-status profile-status-confirmed">{{ item.codigo_operacion }}</span>
+                    </div>
+                    <div class="upcoming-ticket-main">
+                        {% if item.pelicula.poster_url %}
+                        <img class="upcoming-poster" src="{{ item.pelicula.poster_url }}"
+                            alt="Póster de {{ item.pelicula.titulo }}">
+                        {% else %}
+                        <div class="upcoming-poster profile-poster-placeholder" aria-hidden="true">▧</div>
+                        {% endif %}
+                        <div class="upcoming-ticket-details">
+                            <p>{{ item.fecha }} · {{ item.horario }}</p>
+                            <p>{{ item.complejo }} · {{ item.sala }}</p>
+                            <p>Butacas: {{ item.butacas }} ({{ item.cantidad_entradas }} {{ 'entrada' if item.cantidad_entradas == 1 else 'entradas' }})</p>
+                        </div>
+                    </div>
+                    <div class="ticket-actions service-ticket-actions">
+                        <form method="POST" action="{{ url_for('cliente_views.seleccionar_entrada_servicios') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="compra_id" value="{{ item.id_compra }}">
+                            <button type="submit" class="btn-primary">Seleccionar entrada</button>
+                        </form>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state" style="margin-top: 1rem;">
+                <p>No tenés entradas activas para próximas funciones.</p>
+                <a class="btn-primary" href="{{ url_for('cliente_views.cartelera') }}">
+                    Ver cartelera
+                </a>
+            </div>
+            {% endif %}
+        </section>
+    </div>
+
+    <div class="services-promo services-food-promo" aria-label="Promoción del cine">
         <div class="services-promo-copy">
             <p class="services-promo-kicker">DISFRUTÁ · SUMÁ COMIDA Y BEBIDA</p>
             <h2>Agregá comida y bebida a tu compra.</h2>
             <p>Elegí tus favoritos y retiralos en el candy bar del complejo antes de entrar a la sala.</p>
         </div>
-        <div class="services-promo-image" role="img" aria-label="Espacio reservado para la imagen promocional"></div>
     </div>
 
     <input type="hidden" id="servicios-csrf-token" value="{{ csrf_token }}">
-    <div class="services-layout" id="servicios-contenedor">
+    <div class="services-layout" id="servicios-contenedor" data-ticket-mode="{{ modo_compra }}">
         <div class="services-catalog">
             {% for categoria in categorias %}
-            <section class="service-category" aria-labelledby="category-{{ loop.index }}">
+            <section class="service-category" id="servicios-{{ categoria.slug|replace(' ', '-') }}" aria-labelledby="category-{{ loop.index }}">
                 <header class="service-category-heading">
                     <span class="service-category-icon" aria-hidden="true">
                         {% if categoria.slug == 'bebidas' %}
-                        <svg viewBox="0 0 24 24"><path d="M5 8h12v8a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V8Zm12 2h1a2 2 0 0 1 0 4h-1M8 4h.01M12 4h.01M16 4h.01"/></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M5 8h12v8a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V8Zm12 2h1a2 2 0 0 1 0 4h-1M8 4h.01M12 4h.01M16 4h.01" />
+                        </svg>
                         {% elif categoria.slug == 'pochoclos' %}
-                        <svg viewBox="0 0 24 24"><path d="M5 8h14l-2 12H7L5 8Zm-1 0 2-4 3 2 3-3 3 3 3-2 3 4M9 11v5m3-5v5m3-5v5"/></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M5 8h14l-2 12H7L5 8Zm-1 0 2-4 3 2 3-3 3 3 3-2 3 4M9 11v5m3-5v5m3-5v5" />
+                        </svg>
                         {% elif categoria.slug == 'snacks' %}
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m8 6 2 3-2 2 3 2-1 4m5-12-1 3 3 2-2 3m-9-1 2 1m5-6h.01"/></svg>
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="8" />
+                            <path d="m8 6 2 3-2 2 3 2-1 4m5-12-1 3 3 2-2 3m-9-1 2 1m5-6h.01" />
+                        </svg>
                         {% else %}
-                        <svg viewBox="0 0 24 24"><path d="M4 15 6 9h12l2 6v4h-2v-2H6v2H4v-4Zm2-6 2-4h8l2 4M7 13h.01M17 13h.01"/></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 15 6 9h12l2 6v4h-2v-2H6v2H4v-4Zm2-6 2-4h8l2 4M7 13h.01M17 13h.01" />
+                        </svg>
                         {% endif %}
                     </span>
                     <div>
@@ -80,38 +204,36 @@
                 <div class="service-products">
                     {% set encontrados = namespace(total=0) %}
                     {% for servicio in lista_servicios %}
-                    {% set categoria_servicio = servicio.categoria|default(servicio.categoria_nombre|default('', true), true)|lower %}
+                    {% set categoria_servicio = servicio.categoria|default(servicio.categoria_nombre|default('', true),
+                    true)|lower %}
                     {% if categoria_servicio == categoria.slug %}
                     {% set encontrados.total = encontrados.total + 1 %}
                     {% set precio = servicio.precio|default(0, true)|int %}
                     {% set nombre_normalizado = servicio.nombre|lower %}
-                    {% set requiere_entrada = servicio.requiere_entrada|default(('estacionamiento' in nombre_normalizado or 'vip' in nombre_normalizado), true) %}
+                    {% set requiere_entrada = servicio.requiere_entrada|default(('estacionamiento' in nombre_normalizado
+                    or 'vip' in nombre_normalizado), true) %}
+
+                    {% set cupo_est_entrada = [entradas_asociadas - (estacionamiento_ya_comprado|default(0)), 0]|max %}
+                    {% set cupo_vip_entrada = [entradas_asociadas - (vip_ya_comprado|default(0)), 0]|max %}
                     {% if 'estacionamiento' in nombre_normalizado %}
-                    {% set limite_cantidad = [entradas_asociadas, estacionamiento_disponible]|min if estacionamiento_disponible is not none else 0 %}
+                    {% set limite_cantidad = [cupo_est_entrada, estacionamiento_disponible]|min if
+                    estacionamiento_disponible is not none else 0 %}
                     {% else %}
-                    {% set limite_cantidad = entradas_asociadas if 'vip' in nombre_normalizado else 9999 %}
+                    {% set limite_cantidad = cupo_vip_entrada if 'vip' in nombre_normalizado else 9999 %}
                     {% endif %}
-                    {% set imagen_servicio = servicio.imagen_url|default('', true) %}
-                    {% if not imagen_servicio and 'agua' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/agua-mineral.png') %}
-                    {% elif not imagen_servicio and 'combo' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/combo-duo.png') %}
-                    {% elif not imagen_servicio and 'nacho' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/machos-cheddar.png') %}
-                    {% elif not imagen_servicio and 'pancho' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/pancho-clasico.png') %}
-                    {% elif not imagen_servicio and 'pochoclo' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/balde-pochoclos.png') %}
-                    {% elif not imagen_servicio and 'estacionamiento' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/estacionamiento.png') %}
-                    {% elif not imagen_servicio and 'vip' in nombre_normalizado %}
-                    {% set imagen_servicio = url_for('static', filename='images/servicios/acceso-vip.png') %}
-                    {% endif %}
-                    <article class="service-product servicio-card" data-precio="{{ precio }}" data-service-card data-service-id="{{ servicio.id|default(servicio.nombre|lower|replace(' ', '-'), true) }}" data-service-name="{{ servicio.nombre }}" data-requires-ticket="{{ 'true' if requiere_entrada else 'false' }}" data-max-quantity="{{ limite_cantidad }}">
+
+                    {% set imagen_servicio = obtener_imagen_servicio(servicio) %}
+                    <article class="service-product servicio-card" data-precio="{{ precio }}" data-service-card
+                        data-service-id="{{ servicio.id|default(servicio.nombre|lower|replace(' ', '-'), true) }}"
+                        data-service-name="{{ servicio.nombre }}"
+                        data-requires-ticket="{{ 'true' if requiere_entrada else 'false' }}"
+                        data-max-quantity="{{ limite_cantidad }}">
                         {% if imagen_servicio %}
-                        <img class="service-product-image" src="{{ imagen_servicio }}" alt="Imagen de {{ servicio.nombre }}" loading="lazy">
+                        <img class="service-product-image" src="{{ imagen_servicio }}"
+                            alt="Imagen de {{ servicio.nombre }}" loading="lazy">
                         {% else %}
-                        <div class="service-product-image service-image-placeholder" role="img" aria-label="Imagen de {{ servicio.nombre }} pendiente"></div>
+                        <div class="service-product-image service-image-placeholder" role="img"
+                            aria-label="Imagen de {{ servicio.nombre }} pendiente"></div>
                         {% endif %}
                         <div class="service-product-copy">
                             <h3>{{ servicio.nombre }}</h3>
@@ -119,11 +241,17 @@
                             <strong>{{ servicio.precio_formateado|default('$ ' ~ precio|string, true) }}</strong>
                         </div>
                         <div class="service-product-controls controles-cantidad">
-                            <button class="service-add-button btn-sumar" type="button" data-add aria-label="Agregar {{ servicio.nombre }}" {% if limite_cantidad == 0 or (requiere_entrada and not entrada) %}disabled{% endif %} {% if requiere_entrada and not entrada %}title="Disponible solo con una entrada"{% endif %}>Agregar <span aria-hidden="true">+</span></button>
+                            <button class="service-add-button btn-sumar" type="button" data-add
+                                aria-label="Agregar {{ servicio.nombre }}" {% if limite_cantidad==0 or (requiere_entrada
+                                and not entrada) %}disabled{% endif %} {% if requiere_entrada and not entrada
+                                %}title="Disponible solo con una entrada" {% endif %}>Agregar <span
+                                    aria-hidden="true">+</span></button>
                             <div class="service-quantity" data-quantity-controls hidden>
-                                <button type="button" class="btn-restar" data-decrease aria-label="Quitar una unidad de {{ servicio.nombre }}">−</button>
+                                <button type="button" class="btn-restar" data-decrease
+                                    aria-label="Quitar una unidad de {{ servicio.nombre }}">−</button>
                                 <output class="input-cantidad" data-quantity>0</output>
-                                <button type="button" class="btn-sumar" data-increase aria-label="Agregar una unidad de {{ servicio.nombre }}">+</button>
+                                <button type="button" class="btn-sumar" data-increase
+                                    aria-label="Agregar una unidad de {{ servicio.nombre }}">+</button>
                             </div>
                             {% if 'estacionamiento' in nombre_normalizado and error_estacionamiento %}
                             <small class="service-requirement" role="alert">{{ error_estacionamiento }}</small>
@@ -131,8 +259,10 @@
                             <small class="service-requirement">Requiere entrada</small>
                             {% elif 'estacionamiento' in nombre_normalizado and estacionamiento_disponible == 0 %}
                             <small class="service-requirement">Estacionamiento agotado para esta función</small>
-                            {% elif 'estacionamiento' in nombre_normalizado and estacionamiento_disponible is not none %}
-                            <small class="service-requirement">Máx. {{ limite_cantidad }} (Quedan {{ estacionamiento_disponible }} lugares)</small>
+                            {% elif 'estacionamiento' in nombre_normalizado and estacionamiento_disponible is not none
+                            %}
+                            <small class="service-requirement">Máx. {{ limite_cantidad }} (Quedan {{
+                                estacionamiento_disponible }} lugares)</small>
                             {% elif 'vip' in nombre_normalizado %}
                             <small class="service-requirement">Máx. {{ entradas_asociadas }} (1 por entrada)</small>
                             {% endif %}
@@ -160,12 +290,18 @@
                 <strong>Total de servicios</strong>
                 <strong id="total-servicios" data-service-total>$0</strong>
             </div>
-            <p class="service-order-note">Precios en pesos argentinos. Retirá el pedido en el complejo de tu función.</p>
-            <button class="service-checkout-button" type="button" data-checkout disabled>Continuar al pago</button>
+            <p class="service-order-note">Precios en pesos argentinos. Retirá el pedido en el complejo de tu función.
+            </p>
+            <button class="service-checkout-button" type="button" data-checkout>Continuar al pago</button>
+            <div class="service-checkout-warning" data-checkout-warning role="status" aria-live="polite" hidden>
+                <span data-warning-message></span>
+                <a class="service-warning-link" href="{{ url_for('cliente_views.cartelera') }}" data-warning-cartelera hidden>Ir a la cartelera <span aria-hidden="true">→</span></a>
+            </div>
             <p class="service-checkout-message" data-checkout-message role="status" aria-live="polite"></p>
             <div class="service-pickup-note">
                 <h3><span aria-hidden="true">⌖</span> Retiro en el complejo</h3>
-                <p>Presentá tu comprobante en el candy bar del complejo. Te recomendamos llegar 20 minutos antes para retirar sin apuro.</p>
+                <p>Presentá tu comprobante en el candy bar del complejo. Te recomendamos llegar 20 minutos antes para
+                    retirar sin apuro.</p>
             </div>
         </aside>
     </div>
@@ -176,7 +312,8 @@
         <div class="service-context-ticket">
             <div>
                 <span>PELÍCULA</span>
-                <strong>{{ entrada.pelicula|default(contexto.pelicula|default('Película seleccionada', true), true) }}</strong>
+                <strong>{{ entrada.pelicula|default(contexto.pelicula|default('Película seleccionada', true), true)
+                    }}</strong>
                 <small>{{ entrada.fecha|default(contexto.fecha|default('Función seleccionada', true), true) }}</small>
             </div>
             <div class="service-context-venue">
@@ -188,28 +325,38 @@
         {% else %}
         <div class="service-context-ticket service-context-independent">
             <div>
-                <span>MODALIDAD</span>
-                <strong>Compra de servicios sin entrada</strong>
-                <small>No hace falta asociar una película ni una función.</small>
+                <span>ENTRADA</span>
+                <strong>Ninguna película seleccionada</strong>
+                <small>Seleccioná una entrada disponible arriba o elegí una función en cartelera.</small>
             </div>
             <div class="service-context-venue">
-                <span>RETIRO</span>
-                <strong>Complejo de tu elección</strong>
-                <small>Elegí el complejo al continuar con el pago.</small>
+                <span>ESTADO</span>
+                <strong>Pendiente de selección</strong>
+                <small>Necesitás una entrada asociada para continuar al pago.</small>
             </div>
         </div>
         {% endif %}
         <div class="service-purchase-summary">
             <h3>Resumen de compra</h3>
+            <div>
+                <span>Entradas</span>
+                <strong data-ticket-total-display>
+                    {{ '$0 (ya abonadas)' if modo_compra == 'compra_existente' else ('$ ' ~ (contexto.total_entradas|default(0, true)|int)) }}
+                </strong>
+            </div>
             <div class="service-summary-lines" data-purchase-lines>
                 <p class="service-summary-empty" data-purchase-empty>No hay servicios seleccionados.</p>
             </div>
-            <div><span>Entradas</span><strong data-ticket-total-display>{{ '$ ' ~ (contexto.total_entradas|default(0, true)|int) }}</strong></div>
             <div><span>Servicios</span><strong data-service-total-summary>$0</strong></div>
-            <div class="service-purchase-grand-total"><span>Total de compra</span><strong data-purchase-total>$0</strong></div>
+            <div class="service-purchase-grand-total"><span>Total de compra</span><strong
+                    data-purchase-total>$0</strong></div>
             <p>El importe final se confirma antes de completar el pago.</p>
         </div>
-        <button class="service-context-checkout" type="button" data-checkout-secondary disabled>Continuar al pago</button>
+        <button class="service-context-checkout" type="button" data-checkout-secondary>Continuar al pago</button>
+        <div class="service-checkout-warning" data-checkout-warning-secondary role="status" aria-live="polite" hidden>
+            <span data-warning-message></span>
+            <a class="service-warning-link" href="{{ url_for('cliente_views.cartelera') }}" data-warning-cartelera hidden>Ir a la cartelera <span aria-hidden="true">→</span></a>
+        </div>
         <a class="service-context-back" href="{{ url_for('cliente_views.cartelera') }}">Seguir explorando películas</a>
     </section>
 </section>

@@ -2,6 +2,11 @@
 
 {% block title %}Próximos Estrenos · Cine Paradiso{% endblock %}
 
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cartelera.css') }}">
+{% endblock %}
+
 {% block content %}
 {% set peliculas_estrenos = peliculas|default([], true) %}
 
@@ -19,7 +24,7 @@
 {% endif %}
 {% endmacro %}
 
-<div class="cartelera-page">
+<div class="cartelera-page estrenos-page">
     <div class="section-head">
         <h1>Próximos Estrenos</h1>
         <p class="cartelera-fechas">Próximamente en nuestras salas</p>
